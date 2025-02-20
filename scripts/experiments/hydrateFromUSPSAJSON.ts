@@ -1,36 +1,23 @@
 /* eslint-disable no-console */
 
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-import Piscina from "piscina";
-
-import { uspsaClassifiers } from "../../api/src/dataUtil/classifiersData";
-import { rehydrateClassifiers } from "../../api/src/db/classifiers";
 import { connect } from "../../api/src/db/index";
-import { rehydrateRecHHF } from "../../api/src/db/recHHF";
 import { Score, scoreFromUSPSAScore, Scores, USPSAScore } from "../../api/src/db/scores";
-import { reclassifyShooters, Shooter, Shooters } from "../../api/src/db/shooters";
-import { hydrateStats } from "../../api/src/db/stats";
-import uspsa1 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_1.json";
-import uspsa10 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_10.json";
-import uspsa11 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_11.json";
-import uspsa12 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_12.json";
-import uspsa13 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_13.json";
-import uspsa14 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_14.json";
-import uspsa15 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_15.json";
-import uspsa2 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_2.json";
-import uspsa3 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_3.json";
-import uspsa4 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_4.json";
-import uspsa5 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_5.json";
-import uspsa6 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_6.json";
-import uspsa7 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_7.json";
-import uspsa8 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_8.json";
-import uspsa9 from "../../data/uspsa/2025-02-07-07-46-59_classifier_data_9.json";
-import { uspsaDivShortNames } from "../../shared/constants/divisions";
+import { Shooter, Shooters } from "../../api/src/db/shooters";
+import uspsa1 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_1.json";
+import uspsa10 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_10.json";
+import uspsa11 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_11.json";
+import uspsa12 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_12.json";
+import uspsa13 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_13.json";
+import uspsa14 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_14.json";
+import uspsa15 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_15.json";
+import uspsa2 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_2.json";
+import uspsa3 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_3.json";
+import uspsa4 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_4.json";
+import uspsa5 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_5.json";
+import uspsa6 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_6.json";
+import uspsa7 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_7.json";
+import uspsa8 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_8.json";
+import uspsa9 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_9.json";
 
 const all: Score[] = (
   [
