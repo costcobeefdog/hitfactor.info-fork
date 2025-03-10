@@ -8,6 +8,7 @@ export const classificationDifficulty = {
     min: 4,
     best: 6,
     recent: 8,
+    // TODO: start with recent 15 for HFI current after USPSA update
   },
 
   percentCap: 110,
