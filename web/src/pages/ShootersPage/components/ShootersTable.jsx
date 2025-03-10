@@ -15,6 +15,7 @@ import {
   headerTooltipOptions,
   renderPercent,
   renderHFOrNA,
+  renderPercentAllowNegative,
 } from "../../../components/Table";
 import { useApi } from "../../../utils/client";
 import { useIsHFU } from "../../../utils/useIsHFU";
@@ -215,6 +216,15 @@ const ShootersTable = ({
           headerTooltipOptions={headerTooltipOptions}
           sortable
           body={renderPercent}
+        />
+        <Column
+          hidden
+          field="benefit"
+          header="benefit"
+          headerTooltip="Difference between Rec and HQ classification percentage"
+          headerTooltipOptions={headerTooltipOptions}
+          sortable
+          body={renderPercentAllowNegative}
         />
         <Column field="elo" header="ELO" sortable body={renderHFOrNA} />
         <Column

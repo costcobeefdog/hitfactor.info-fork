@@ -705,6 +705,9 @@ export const reclassifyShooters = async shooters => {
                     reclassificationsRecPercentUncappedCurrent:
                       recalcDivRecUncapped.current, //aka recPercentUncapped
 
+                    benefit: -(recalcDivCur.current - recalcDivRecUncapped.current),
+                    benefitHigh: -(recalcDivCur.high - recalcDivRecUncapped.high),
+
                     recClass: recalcDivRec.class,
                     recClassRank: rankForClass(recalcDivRec.class),
                     curHHFClass: recalcDivCur.class,

@@ -183,6 +183,8 @@ const shootersRoutes = async fastify => {
         "reclassificationsRecPercentHigh",
         "reclassificationsRecPercentUncappedHigh",
         "memberNumber",
+        "benefit",
+        "benefitHigh",
       ])
       .lean()
       .limit(0);
@@ -201,6 +203,8 @@ const shootersRoutes = async fastify => {
         recPercentHigh: c.reclassificationsRecPercentHigh,
         recPercentUncappedHigh: c.reclassificationsRecPercentUncappedHigh,
         memberNumber: c.memberNumber,
+        benefit: c.benefit,
+        benefitHigh: c.benefitHigh,
       }))
       .sort(safeNumSort("curPercent"))
       .map((c, i, all) => ({
@@ -241,6 +245,16 @@ const shootersRoutes = async fastify => {
       .map((c, i, all) => ({
         ...c,
         recPercentPercentile: (100 * i) / (all.length - 1),
+      }))
+      .sort(safeNumSort("benefit", { allowNegatives: true }))
+      .map((c, i, all) => ({
+        ...c,
+        benefitPercentile: (100 * i) / (all.length - 1),
+      }))
+      .sort(safeNumSort("benefitHigh", { allowNegatives: true }))
+      .map((c, i, all) => ({
+        ...c,
+        benefitHighPercentile: (100 * i) / (all.length - 1),
       }));
   });
   fastify.post("/whatif", async req => {

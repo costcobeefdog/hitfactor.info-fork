@@ -62,6 +62,19 @@ export const renderPercent = (c, { field }) => {
   return `${value.toFixed(2)}%`;
 };
 
+export const renderPercentAllowNegative = (c, { field }) => {
+  let value = c[field];
+  if (value === undefined) {
+    return "—";
+  }
+
+  if (typeof value !== "number") {
+    value = Number(value);
+  }
+
+  return `${value.toFixed(2)}%`;
+};
+
 export const renderHFOrNA = (c, { field }) => {
   let value = c[field];
   if (value < 0 || value === undefined || value === null) {
