@@ -2,6 +2,7 @@ import { Button } from "primereact/button";
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { uspsaClassifiers2025 } from "../../../../api/src/dataUtil/classifiersData";
 import { DivisionNavigation } from "../../components";
 import RunsTable from "../../components/RunsTable";
 import { useApi } from "../../utils/client";
@@ -44,6 +45,18 @@ const ClassifiersPage = () => {
 
   const onClubSelection = club => navigate(`/clubs/${club}`);
 
+  const handleNextClassifier =
+    (increment = 1) =>
+    () => {
+      const newClassifierIndex = Math.min(
+        uspsaClassifiers2025.length - 1,
+        Math.max(0, uspsaClassifiers2025.findIndex(c => c === classifier) + increment),
+      );
+      const nextClassifier = uspsaClassifiers2025[newClassifierIndex];
+
+      navigate(`/classifiers/${division}/${nextClassifier}`);
+    };
+
   return (
     <div>
       <DivisionNavigation onSelect={onDivisionSelect} />
@@ -59,6 +72,8 @@ const ClassifiersPage = () => {
             division={division}
             classifier={classifier}
             onBackToClassifiers={onBackToClassifiers}
+            onNextClassifier={handleNextClassifier()}
+            onPrevClassifier={handleNextClassifier(-1)}
             onShooterSelection={onShooterSelection}
             onClubSelection={onClubSelection}
           />
@@ -88,6 +103,8 @@ export const ClassifierRunsAndInfo = ({
   division,
   classifier,
   onBackToClassifiers,
+  onPrevClassifier,
+  onNextClassifier,
   onShooterSelection,
   onClubSelection,
 }) => {
@@ -110,6 +127,20 @@ export const ClassifierRunsAndInfo = ({
         <h2 className="mx-auto md:text-xl lg:text-xxl w-max">
           {code} {name}
         </h2>
+        <Button
+          className="vertical-align-middle text-color"
+          icon="pi pi-chevron-left"
+          text
+          aria-label="Previous"
+          onClick={onPrevClassifier}
+        />
+        <Button
+          className="vertical-align-middle text-color"
+          icon="pi pi-chevron-right"
+          text
+          aria-label="Next"
+          onClick={onNextClassifier}
+        />
         {/*<a href={downloadUrl} download className="px-5 py-2" style={{ fontSize: "1.625rem" }}>
           <i
             className="pi pi-download"

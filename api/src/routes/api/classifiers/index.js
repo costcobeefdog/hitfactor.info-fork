@@ -2,6 +2,7 @@ import {
   basicInfoForClassifier,
   classifiers,
   ScsaPointsPerString,
+  uspsaClassifiers2025,
 } from "../../../dataUtil/classifiersData";
 import {
   divisionsForScoresAdapter,
@@ -170,7 +171,7 @@ const classifiersRoutes = async fastify => {
     const [classifiersFromDB, classifiersAllDivQuality] = await Promise.all([
       Classifiers.find({
         division,
-        classifier: { $exists: true, $ne: null },
+        classifier: { $in: uspsaClassifiers2025 },
         code: { $exists: true, $ne: null },
       }).populate("recHHFs"),
       division.startsWith("scsa")

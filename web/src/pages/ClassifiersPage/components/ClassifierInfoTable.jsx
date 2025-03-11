@@ -13,7 +13,7 @@ export const ClassifierInfoTable = ({
   curHHF,
   ...info
 }) => (
-  <div className="flex flex-wrap gap-2 justify-content-around">
+  <div className="flex flex-wrap md:flex-nowrap gap-2 justify-content-around">
     <div
       className="flex-grow-1 flex flex-column sm:max-w-20rem md:max-w-30rem"
       style={{ minWidth: "16em", height: "28em" }}

@@ -13,7 +13,7 @@ export const postApi = async (endpoint, body) => {
         "content-type": "application/json",
       },
     });
-    return await response.json();
+    return { ...(await response.json()), status: response.status };
   } catch (e) {
     console.error(e);
     throw e;

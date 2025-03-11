@@ -79,8 +79,47 @@ export const ReportDialog = forwardRef(({ type }, ref) => {
         setSending(false);
         setVisible(true);
       },
+      markAsBad: async newDoc => {
+        try {
+          const reportDoc = Object.fromEntries(
+            Object.entries(newDoc || {}).filter(([key]) =>
+              reportDocSendFields.includes(key),
+            ),
+          );
+          reportDoc.url = location.toString();
+          reportDoc.reason = "bad";
+          reportDoc.comment = "";
+          reportDoc.type = type;
+          const response = await postApi("/report/bad", reportDoc);
+          if (response.status !== 200) {
+            throw new Error(JSON.stringify(response));
+          }
+          setVisible(false);
+          setSending(false);
+          toast.current.show({
+            severity: "success",
+            summary: "Marked Bad",
+            detail: (
+              <div>
+                {reportDocRenderFields
+                  .map(key => renderField(newDoc?.[key], key))
+                  .filter(Boolean)
+                  .join(" - ")}
+              </div>
+            ),
+            life: 3000,
+          });
+        } catch (e) {
+          toast.current.show({
+            severity: "error",
+            summary: "Error Marking as Bad",
+            detail: e.toString(),
+            life: 5000,
+          });
+        }
+      },
     }),
-    [],
+    [type],
   );
   const reportDocRender = reportDocRenderFields
     .map(key => renderField(doc?.[key], key))
@@ -197,6 +236,17 @@ export const ReportButton = ({ onClick }) => (
   />
 );
 
+export const MarkAsBadButton = ({ onClick }) => (
+  <Button
+    icon="pi pi-trash text-xs md:text-base"
+    size="small"
+    style={{ width: "1em" }}
+    onClick={onClick}
+    text
+  />
+);
+
 ReportDialog.Button = ReportButton;
+ReportDialog.MarkAsBadButton = MarkAsBadButton;
 
 export default ReportDialog;

@@ -164,7 +164,7 @@ export const uspsaClassifiers = [
   "24-09",
 ];
 
-const uspsaClassifiers2025 = [
+export const uspsaClassifiers2025 = [
   "99-08",
   "99-10",
   "99-11",
