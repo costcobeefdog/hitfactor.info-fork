@@ -1,92 +1,92 @@
-    99-02 Night Moves & 66.52 & 32.20 & 65.14 & 68.95 \\
+    99-02 Night Moves & 66.52 & 32.20 & 65.14 & 68.97 \\
     \hline
-    99-07 Both Sides Now \#1 & 50.64 & -16.68 & 32.57 & 71.22 \\
+    99-07 Both Sides Now \#1 & 50.64 & -16.68 & 32.57 & 71.27 \\
     \hline
     99-14 Hoser Heaven & -4.21 & -151.23 & -37.77 & -9.12 \\
     \hline
-    99-16 Both Sides Now \#2 & 72.86 & 33.43 & 76.43 & 64.12 \\
+    99-16 Both Sides Now \#2 & 72.85 & 33.43 & 76.43 & 64.15 \\
     \hline
-    99-21 Mini Mart & 67.22 & 64.13 & 73.95 & 68.55 \\
+    99-21 Mini Mart & 67.23 & 64.13 & 73.95 & 68.55 \\
     \hline
-    99-22 Nueve El Presidente & 43.58 & 15.15 & 53.74 & 71.72 \\
+    99-22 Nueve El Presidente & 43.60 & 15.15 & 53.74 & 71.72 \\
     \hline
-    99-23 Front Sight & 62.71 & 81.79 & 72.71 & 63.53 \\
+    99-23 Front Sight & 62.72 & 81.80 & 72.71 & 63.52 \\
     \hline
-    99-24 Front Sight 2 & 36.49 & 24.49 & 49.61 & 55.93 \\
+    99-24 Front Sight 2 & 36.49 & 24.50 & 49.61 & 55.95 \\
     \hline
-    99-33 Raw Deal & 62.31 & 39.18 & 68.99 & 62.88 \\
+    99-33 Raw Deal & 62.30 & 39.18 & 68.99 & 62.88 \\
     \hline
-    99-40 Partial People Eaters & 72.26 & 69.98 & 78.77 & -41.89 \\
+    99-40 Partial People Eaters & 72.25 & 69.98 & 78.77 & -41.88 \\
     \hline
-    99-41 Works For Me & 75.83 & 70.82 & 79.20 & 72.06 \\
+    99-41 Works For Me & 75.83 & 70.82 & 79.20 & 72.09 \\
     \hline
-    99-47 Triple Choice & 9.51 & -71.64 & -41.93 & 77.19 \\
+    99-47 Triple Choice & 9.50 & -71.61 & -41.93 & 77.20 \\
     \hline
-    99-48 Tight Squeeze & 40.17 & -42.93 & 39.17 & 71.31 \\
+    99-48 Tight Squeeze & 40.16 & -42.93 & 39.17 & 71.34 \\
     \hline
-    99-51 Single Tap Standards & 79.50 & 53.88 & 81.90 & 83.97 \\
+    99-51 Single Tap Standards & 79.50 & 53.88 & 81.90 & 83.98 \\
     \hline
-    99-56 On the Upper Pad II & 74.44 & 87.27 & 79.57 & 50.73 \\
+    99-56 On the Upper Pad II & 74.44 & 87.28 & 79.57 & 50.68 \\
     \hline
-    99-59 Lazy Man Standards & -0.27 & -110.37 & -71.74 & 72.34 \\
+    99-59 Lazy Man Standards & -0.27 & -110.37 & -71.73 & 72.34 \\
     \hline
-    99-61 Sit Or Get Off The Shot & 0.05 & -106.65 & -57.74 & 71.15 \\
+    99-61 Sit Or Get Off The Shot & 0.07 & -106.64 & -57.73 & 71.16 \\
     \hline
-    99-63 Merles Standards & -19.03 & -114.54 & -34.50 & 51.45 \\
+    99-63 Merles Standards & -19.02 & -114.54 & -34.49 & 51.45 \\
     \hline
-    03-02 Six Chickens & 41.03 & -54.43 & 21.35 & 72.87 \\
+    03-02 Six Chickens & 41.03 & -54.43 & 21.35 & 72.89 \\
     \hline
-    03-04 3-V & 50.09 & 10.62 & 35.75 & 44.11 \\
+    03-04 3-V & 50.10 & 10.60 & 35.75 & 44.10 \\
     \hline
-    03-11 El Strong \& Weak Pres & 30.56 & -72.16 & 0.83 & 68.85 \\
+    03-11 El Strong \& Weak Pres & 30.55 & -72.16 & 0.83 & 68.86 \\
     \hline
-    03-12 Ironsides & 76.28 & 33.33 & 75.67 & 76.49 \\
+    03-12 Ironsides & 76.27 & 33.33 & 75.68 & 76.49 \\
     \hline
-    03-14 Baseball Standards & 70.30 & 31.81 & 43.05 & 22.98 \\
+    03-14 Baseball Standards & 70.30 & 31.82 & 43.06 & 23.00 \\
     \hline
-    06-01 Big Barricade & 66.59 & 12.37 & 67.33 & 74.07 \\
+    06-01 Big Barricade & 66.60 & 12.37 & 67.33 & 74.06 \\
     \hline
-    06-02 Big Barricade II & 77.86 & 20.30 & 60.94 & 77.52 \\
+    06-02 Big Barricade II & 77.86 & 20.30 & 60.94 & 77.48 \\
     \hline
-    06-06 Golden Bullet Standards & 79.74 & 56.87 & 77.56 & 81.35 \\
+    06-06 Golden Bullet Standards & 79.74 & 56.87 & 77.56 & 81.36 \\
     \hline
-    08-01 4 Bill Drill & -10.33 & -125.68 & -56.62 & 47.13 \\
+    08-01 4 Bill Drill & -10.32 & -125.68 & -56.62 & 47.14 \\
     \hline
-    09-01 Six In Six Challenge & 78.47 & 68.94 & 76.17 & 20.20 \\
+    09-01 Six In Six Challenge & 78.48 & 68.94 & 76.17 & 20.22 \\
     \hline
-    09-02 Diamond Cutter & 24.46 & -2.14 & 28.65 & 35.80 \\
+    09-02 Diamond Cutter & 24.46 & -2.14 & 28.65 & 35.82 \\
     \hline
-    09-03 Oh No & 19.69 & -61.02 & -5.13 & 50.15 \\
+    09-03 Oh No & 19.69 & -61.02 & -5.13 & 50.18 \\
     \hline
-    09-04 Pucker Factor & 46.24 & -5.84 & 40.25 & 54.87 \\
+    09-04 Pucker Factor & 46.25 & -5.84 & 40.25 & 54.87 \\
     \hline
-    09-07 It's Not Brain Surgery & -37.71 & -80.49 & -33.24 & 33.54 \\
+    09-07 It's Not Brain Surgery & -37.72 & -80.50 & -33.24 & 33.55 \\
     \hline
-    09-08 Crackerjack & 71.99 & -12.47 & 58.97 & 73.17 \\
+    09-08 Crackerjack & 71.99 & -12.47 & 58.97 & 73.16 \\
     \hline
     09-09 Lightning And Thunder & 41.70 & 78.16 & 78.09 & -22.85 \\
     \hline
-    09-13 Table Stakes & 35.47 & -7.95 & 31.10 & 66.06 \\
+    09-13 Table Stakes & 35.48 & -7.95 & 31.10 & 66.06 \\
     \hline
-    09-14 Eye Of The Tiger & 7.30 & -34.00 & 2.34 & 33.03 \\
+    09-14 Eye Of The Tiger & 7.30 & -33.99 & 2.34 & 33.04 \\
     \hline
-    13-01 Disaster Factor & 49.69 & -3.76 & 48.68 & 65.46 \\
+    13-01 Disaster Factor & 49.70 & -3.76 & 48.68 & 65.46 \\
     \hline
-    13-03 Short Sprint Standards & 31.12 & -59.50 & 6.21 & 77.30 \\
+    13-03 Short Sprint Standards & 31.13 & -59.50 & 6.21 & 77.31 \\
     \hline
-    13-07 Double Deal 2 & 57.12 & 24.83 & 41.67 & 67.07 \\
+    13-07 Double Deal 2 & 57.12 & 24.83 & 41.65 & 67.03 \\
     \hline
-    13-08 More Disaster Factor & 39.61 & -10.89 & 47.33 & 61.06 \\
+    13-08 More Disaster Factor & 39.61 & -10.89 & 47.33 & 61.08 \\
     \hline
-    18-01 Of Course It Did & 47.35 & -51.34 & 8.94 & 77.13 \\
+    18-01 Of Course It Did & 47.33 & -51.38 & 8.94 & 77.14 \\
     \hline
-    18-02 What Is With You People & 31.66 & -35.82 & 9.04 & 70.14 \\
+    18-02 What Is With You People & 31.67 & -35.86 & 9.05 & 70.15 \\
     \hline
-    18-04 Didn’t You Send The Mailman & 66.81 & 36.24 & 51.07 & 64.22 \\
+    18-04 Didn’t You Send The Mailman & 66.81 & 36.24 & 51.10 & 64.24 \\
     \hline
-    18-06 For That Day & -35.00 & -115.28 & -82.22 & 41.15 \\
+    18-06 For That Day & -35.01 & -115.28 & -82.22 & 41.17 \\
     \hline
-    19-03 HI'er Love & 72.38 & 15.44 & 49.89 & 58.14 \\
+    19-03 HI'er Love & 72.39 & 15.40 & 49.89 & 58.13 \\
     \hline
-    22-05 Win Some Lose Some & 49.76 & 72.46 & 59.01 & 57.26 \\
+    22-05 Win Some Lose Some & 49.77 & 72.47 & 59.01 & 57.26 \\
     \hline
