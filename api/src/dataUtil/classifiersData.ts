@@ -47,6 +47,11 @@ export const basicInfoForClassifierCode = (
   return basicInfoForClassifier(c);
 };
 
+export const classifierToId = classifiers.reduce(
+  (acc, cur) => ({ ...acc, [cur.classifier]: cur.id }),
+  {},
+);
+
 /** whitelist for wsb downloads */
 export const classifierNumbers = classifiers.map(cur => cur.classifier);
 export const uspsaClassifiers = [
