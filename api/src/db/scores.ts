@@ -54,6 +54,9 @@ export interface Score {
   // compound keys for lookups
   classifierDivision: string;
   memberNumberDivision: string;
+
+  uploadedClass: string;
+  currentClass: string;
 }
 
 // TODO: move to RecHHF
@@ -474,5 +477,7 @@ export const scoreFromUSPSAScore = (uspsaScore: USPSAScore): Score => {
     source: "Stage Score",
     memberNumberDivision,
     classifierDivision,
+    uploadedClass: uspsaScore.uploaded_class,
+    currentClass: uspsaScore.current_class,
   };
 };
