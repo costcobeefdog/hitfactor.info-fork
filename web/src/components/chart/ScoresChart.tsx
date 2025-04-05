@@ -333,7 +333,8 @@ export const ScoresChart = ({ division, classifier, hhf, recHHF, totalScores }) 
         // wanted false for rezize but annotations are bugged and draw HHF/GM lines wrong
         maintainAspectRatio: false,
         scales: {
-          y: { reverse: yMode === "Rank" },
+          y: { reverse: yMode === "Rank", max: 100, min: -20 },
+          x: { min: 0, max: recHHF * 1.25 },
         },
         elements: {
           point: {
