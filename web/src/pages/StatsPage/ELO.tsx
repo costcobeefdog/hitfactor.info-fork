@@ -9,7 +9,7 @@ const ELO = () => {
 
   return (
     <>
-      <DivisionNavigation uspsaOnly onSelect={setDivision} />
+      <DivisionNavigation forcedDivision="co" onSelect={setDivision} />
       {division && <ShootersELODistributionChart division={division} />}
     </>
   );

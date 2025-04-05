@@ -35,7 +35,7 @@ const mainModeMap = {
 };
 const mainModeFieldForMode = mode => mainModeMap[mode];
 const mainModes = Object.keys(mainModeMap);
-const defaultMainMode = mainModes[0];
+const defaultMainMode = mainModes[1];
 
 const fieldModeMap = {
   ELO: "elo",
@@ -85,8 +85,8 @@ export const ShootersELODistributionChart = ({
 }: ShootersELODistributionChartProps) => {
   const [mainMode, setMainMode] = useState(defaultMainMode);
   const isVersus = mainModeFieldForMode(mainMode) === "vs";
-  const [colorMode, setColorMode] = useState(recommendedMode);
-  const [xMode, setXMode] = useState(recommendedMode);
+  const [colorMode, setColorMode] = useState(modes[0]);
+  const [xMode, setXMode] = useState(modes[0]);
   const [yMode, setYMode] = useState(recommendedMode);
 
   const { json: data, loading } = useApi(`/shooters/${division}/chart`);
