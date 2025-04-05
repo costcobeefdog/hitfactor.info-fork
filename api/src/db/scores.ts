@@ -55,8 +55,9 @@ export interface Score {
   classifierDivision: string;
   memberNumberDivision: string;
 
-  uploadedClass: string;
-  currentClass: string;
+  // USPSA Only
+  uploadedClass?: string;
+  currentClass?: string;
 }
 
 // TODO: move to RecHHF
