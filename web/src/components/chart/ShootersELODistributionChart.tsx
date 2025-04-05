@@ -12,6 +12,8 @@ import {
   covariance,
   correlation,
   weibulCDFFactory,
+  linearRegression,
+  linearFactory,
 } from "../../../../shared/utils/weibull";
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";
@@ -25,6 +27,7 @@ import {
   wbl1AnnotationColor,
   pointsGraph,
   closestYForX,
+  linearAnnotationColor,
 } from "./common";
 import { useAsyncWeibull } from "./useAsyncWeibull";
 import { WeibullStatus } from "./WeibullStatus";
@@ -158,6 +161,13 @@ export const ShootersELODistributionChart = ({
           ),
     [isVersus, curModeData],
   );
+  const lrr = useMemo(
+    () =>
+      !isVersus || !curModeData?.length
+        ? { slope: 0, intercept: 0 }
+        : linearRegression(curModeData),
+    [isVersus, curModeData],
+  );
 
   if (loading) {
     return <ProgressSpinner />;
@@ -269,7 +279,22 @@ export const ShootersELODistributionChart = ({
                 },
               ]),
           ...(isVersus
-            ? []
+            ? [
+                {
+                  label: "LinearRegression",
+                  data: pointsGraph({
+                    yFn: linearFactory(lrr),
+                    minX: 0,
+                    maxX: 1.05 * curModeData.toSorted((a, b) => b.x - a.x)[0].x,
+                    step: 1.0,
+                    name: "Linear Regression",
+                  }),
+                  pointRadius: 1,
+                  pointBorderColor: "black",
+                  pointBorderWidth: 0,
+                  pointBackgroundColor: linearAnnotationColor(0.44),
+                },
+              ]
             : [
                 {
                   label: "Weibull",
@@ -354,7 +379,12 @@ export const ShootersELODistributionChart = ({
           <div className="flex gap-4 text-sm">
             <div className="flex flex-column justify-content-center text-md text-500 font-bold">
               <div>Correlation = {correl.toFixed(6)}</div>
-              <div>Covariance = {covar.toFixed(6)}</div>
+              <div className="hidden">Covariance = {covar.toFixed(6)}</div>
+              <div>{"\u200B"}</div>
+              <div>Linear Regression</div>
+              <div>
+                y = {lrr.slope.toFixed(4)}x + {lrr.intercept.toFixed(4)}
+              </div>
             </div>
           </div>
         )}

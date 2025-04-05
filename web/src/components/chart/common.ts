@@ -142,3 +142,5 @@ export const wbl5AnnotationColor = alpha =>
   `#804bdd${Math.round(alpha * 255).toString(16)}`;
 export const wbl15AnnotationColor = alpha =>
   `#a44bdd${Math.round(alpha * 255).toString(16)}`;
+
+export const linearAnnotationColor = alpha => `rgba(255, 0, 235, ${alpha})`;

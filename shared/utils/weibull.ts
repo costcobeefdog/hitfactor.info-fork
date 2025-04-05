@@ -329,3 +329,31 @@ const optimizeNelderMead = (
   throttledCb.cancel();
   return [...simplex[0], lossFn(simplex[0])];
 };
+
+interface LinearRegressionResult {
+  slope: number;
+  intercept: number;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+export const linearFactory = (lrr: LinearRegressionResult) => (x: number) =>
+  lrr.slope * x + lrr.intercept;
+
+const linearRegressionSAE = (points: Point[]) => (lrrArray: number[]) =>
+  points.reduce(
+    (acc, cur: Point) =>
+      acc +
+      Math.abs(
+        cur.y - linearFactory({ slope: lrrArray[0], intercept: lrrArray[1] })(cur.x),
+      ),
+    0,
+  );
+
+export const linearRegression = (points: Point[]): LinearRegressionResult => {
+  const [m, b] = optimizeNelderMead(linearRegressionSAE(points), [0, 0], 1e-16);
+  return { slope: m, intercept: b };
+};
