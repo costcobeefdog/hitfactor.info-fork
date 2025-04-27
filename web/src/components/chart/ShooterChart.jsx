@@ -33,9 +33,7 @@ const yLine = (name, y, alpha) => ({
 export const ShooterChart = ({ division, memberNumber }) => {
   const isHFU = sportForDivision(division) === "hfu";
   const [full, setFull] = useState(false);
-  const { json: data, loading } = useApi(
-    `/shooters/${division}/${memberNumber}/chart?y=curPercent`,
-  );
+  const { json: data, loading } = useApi(`/shooters/${division}/${memberNumber}/chart`);
   if (loading) {
     return <ProgressSpinner />;
   }
