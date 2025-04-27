@@ -150,19 +150,21 @@ const fetchMatchesRange = async (
     })
   ).json();
 
-  return hits.map(h => ({
-    updated: new Date(`${h.updated}Z`),
-    created: new Date(`${h.created}Z`),
-    id: h.id,
-    name: h.match_name,
-    uuid: h.match_id,
-    date: h.match_date,
-    timestamp_utc_updated: h.timestamp_utc_updated,
-    type: h.match_type,
-    subType: h.match_subtype,
-    templateName: h.templateName,
-  }));
+  return hits.map(matchFromAlgoliaHit);
 };
+
+const matchFromAlgoliaHit = h => ({
+  updated: new Date(`${h.updated}Z`),
+  created: new Date(`${h.created}Z`),
+  id: h.id,
+  name: h.match_name,
+  uuid: h.match_id,
+  date: h.match_date,
+  timestamp_utc_updated: h.timestamp_utc_updated,
+  type: h.match_type,
+  subType: h.match_subtype,
+  templateName: h.templateName,
+});
 
 export const matchFromMatchDef = (
   h: MatchDef,
@@ -186,7 +188,7 @@ export const matchFromMatchDef = (
   };
 };
 
-const fetchMatchesRangeByTimestamp = async (
+export const fetchMatchesRangeByTimestamp = async (
   latestTimestamp: number,
 ): Promise<(Match & AlgoliaMatchNumericFilters)[]> => {
   console.log(`fetching up until ${latestTimestamp}`);
@@ -208,15 +210,7 @@ const fetchMatchesRangeByTimestamp = async (
     })
   ).json();
 
-  return hits.map(h => ({
-    updated: new Date(`${h.updated}Z`),
-    created: new Date(`${h.created}Z`),
-    id: h.id,
-    name: h.match_name,
-    uuid: h.match_id,
-    date: h.match_date,
-    timestamp_utc_updated: h.timestamp_utc_updated,
-  }));
+  return hits.map(matchFromAlgoliaHit);
 };
 
 /**
@@ -293,28 +287,15 @@ export const fetchAndSaveMoreMatchesById = async () => {
   );
 };
 
-/**
- * Same as fetchAndSaveMoreMatchesById, but uses updated date.
- *
- * Should overwrite some matches if they were updated after previous fetch.
- */
-export const fetchAndSaveMoreMatchesByUpdatedDate = async () => {
-  const lastMatch = await Matches.findOne().sort({ updated: -1 });
-  console.log(
-    `lastUpdatedMatch= ${lastMatch?.updated?.toLocaleDateString?.("en-us", {
-      timeZone: "UTC",
-    })}`,
-  );
-
+export const fetchAndSaveMoreMatchesSinceUpdatedDate = async (updatedDate?: Date) => {
   const now = new Date().getTime();
-  const lastMatchUpdated = lastMatch?.updated?.getTime() || now;
-  const validLastUpdated = lastMatchUpdated > now ? now : lastMatchUpdated;
+  const startDate = Math.min(updatedDate?.getTime() || now, now);
 
   // add extra 48 hours window to account for wrong timeZone on upload tablets
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
   return fetchMoreMatchesByTimestamp(
-    Math.floor((validLastUpdated - TWO_DAYS_MS) / 1000),
+    Math.floor((startDate - TWO_DAYS_MS) / 1000),
     async matches =>
       Matches.bulkWrite(
         matches.map(m => ({
@@ -328,4 +309,20 @@ export const fetchAndSaveMoreMatchesByUpdatedDate = async () => {
         })),
       ),
   );
+};
+
+/**
+ * Same as fetchAndSaveMoreMatchesById, but uses updated date.
+ *
+ * Should overwrite some matches if they were updated after previous fetch.
+ */
+export const fetchAndSaveMoreMatchesByUpdatedDate = async () => {
+  const lastMatch = await Matches.findOne().sort({ updated: -1 });
+  console.log(
+    `lastUpdatedMatch= ${lastMatch?.updated?.toLocaleDateString?.("en-us", {
+      timeZone: "UTC",
+    })}`,
+  );
+
+  return fetchAndSaveMoreMatchesSinceUpdatedDate(lastMatch?.updated);
 };
