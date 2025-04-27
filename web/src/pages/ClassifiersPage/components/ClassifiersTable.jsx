@@ -75,7 +75,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { resetSort, ...sortProps } = useTableSort({
-    initial: { field: "allDivQuality", order: -1 },
+    initial: { field: "code", order: 1 },
   });
   const [filter, setFilter] = useState("");
   const [nerdMode, setNerdMode] = useState(false);
