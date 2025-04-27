@@ -4,6 +4,7 @@ export interface AfterUploadClassifier {
   classifierDivision: string;
   classifier: string;
   division: string;
+  name: string;
 }
 
 const AfterUploadClassifierSchema = new Schema<AfterUploadClassifier>(
@@ -11,6 +12,7 @@ const AfterUploadClassifierSchema = new Schema<AfterUploadClassifier>(
     classifierDivision: String,
     classifier: String,
     division: String,
+    name: String,
   },
   { strict: false },
 );

@@ -728,7 +728,6 @@ const metaClassifiersLoop = async (batchSize = 8) => {
       break;
     }
 
-    await hydrateRecHHFsForClassifiers(classifiers);
     await rehydrateClassifiers(classifiers);
     await AfterUploadClassifiers.deleteMany({
       _id: { $in: classifiers.map(c => c._id) },
