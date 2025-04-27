@@ -1,10 +1,5 @@
 /* eslint-disable no-console */
 
-import { text } from "node:stream/consumers";
-import { createGunzip } from "node:zlib";
-import { Readable } from "stream";
-
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import uniqBy from "lodash.uniqby";
 import { ObjectId } from "mongoose";
 
@@ -12,12 +7,7 @@ import features from "../../../shared/features";
 import { UTCDate } from "../../../shared/utils/date";
 import { minorHF } from "../../../shared/utils/hitfactor";
 import { uuidsFromUrlString } from "../../../shared/utils/uuid";
-import {
-  normalizeClassifierCode,
-  scsaDivisionWithPrefix,
-  scsaPeakTime,
-  ScsaPeakTimesMap,
-} from "../dataUtil/classifiersData";
+import { normalizeClassifierCode } from "../dataUtil/classifiersData";
 import {
   arrayWithExplodedDivisions,
   hfuDivisionCompatabilityMap,
@@ -40,67 +30,12 @@ import { Scores } from "../db/scores";
 import { reclassifyShooters } from "../db/shooters";
 import { hydrateStats } from "../db/stats";
 
-export const _fetchPSS3ObjectJSON = async (objectKey: string, noGZip = false) => {
-  try {
-    const s3Client = new S3Client({
-      region: "us-east-1",
-      credentials: {
-        accessKeyId: process.env.PS_S3_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.PS_S3_SECRET_ACCESS_KEY!,
-      },
-    });
-
-    const s3Response = await s3Client.send(
-      new GetObjectCommand({
-        Bucket: "ps-scores",
-        Key: objectKey,
-      }),
-    );
-
-    const bodyStream = s3Response.Body;
-    if (!bodyStream) {
-      return null;
-    }
-
-    // try gzip first, if that crashes - refetch and don't decompress
-    // TODO: rewrite to re-use once fetched data for both (gz and not) pathways
-    // (refetching for now, because node closes streams and makes re-use challenging)
-    if (!noGZip) {
-      try {
-        const gz = createGunzip();
-        const body = (bodyStream as Readable).pipe(gz);
-        const bodyString = await text(body);
-        return JSON.parse(bodyString);
-      } catch (e) {
-        return _fetchPSS3ObjectJSON(objectKey, true);
-      }
-    } else {
-      const bodyString = await bodyStream.transformToString();
-      return JSON.parse(bodyString);
-    }
-  } catch (e) {
-    console.error(
-      `fetchPSS3ObjectJSON failed: ${objectKey}; ${(e as Error)?.message || ""}`,
-    );
-    return null;
-  }
-};
-
-export const fetchPS = async (uuid, { skipResults = false } = {}) => {
-  try {
-    const [matchDef, scores, results] = await Promise.all([
-      _fetchPSS3ObjectJSON(`production/${uuid}/match_def.json`),
-      _fetchPSS3ObjectJSON(`production/${uuid}/match_scores.json`),
-      skipResults
-        ? Promise.resolve(null)
-        : _fetchPSS3ObjectJSON(`production/${uuid}/results.json`),
-    ]);
-
-    return { matchDef, scores, results };
-  } catch (e) {}
-
-  return {};
-};
+import { scsaMatchInfo } from "./scsaUploads";
+import {
+  EmptyMatchResultsFactory,
+  EmptySingleMatchResultFactory,
+  fetchPS,
+} from "./uploadsCommon";
 
 const uniqByTruthyMap = (arr, cb) => uniqBy(arr, cb).filter(cb).map(cb);
 export const arrayCombination = (arr1, arr2, cb) => {
@@ -204,190 +139,40 @@ const normalizeDivision = divisionNameRaw => {
   return normalizationMap[lowercaseNoSpace] || lowercaseNoSpace;
 };
 
-const scsaMatchInfo = async matchInfo => {
-  const { uuid } = matchInfo;
-
-  // Unlike USPSA, SCSA does not have results.json.
-  const { matchDef: match, scores: scoresJson } = await fetchPS(matchInfo.uuid, {
-    skipResults: true,
-  });
-  if (!match || !scoresJson) {
-    return EmptyMatchResultsFactory();
+const badCharsRegExp = /[\s:\t.,\-_+=!?']/gi;
+const memberNumberFromMatchDefShooter = (s, mustHaveMemberNumbers) => {
+  if (mustHaveMemberNumbers) {
+    return s.sh_id?.toUpperCase();
   }
-  /*
-    match_penalties Structure:
-    [{
-      "pen_warn": false,
-      "pen_bin": false,
-      "pen_name": "Procedural",
-      "pen_val": 3
-    }]
-   */
-  try {
-    const { match_shooters, match_stages, match_penalties } = match;
-    const shootersMap = Object.fromEntries(match_shooters.map(s => [s.sh_uuid, s.sh_id]));
-    const shootersDivisionMap = Object.fromEntries(
-      match_shooters.map(s => [s.sh_uuid, s.sh_dvp]),
-    );
-    match.memberNumberToNamesMap = Object.fromEntries(
-      match_shooters.map(s => [s.sh_id, [s.sh_fn, s.sh_ln].filter(Boolean).join(" ")]),
-    );
-    const classifiersMap = Object.fromEntries(
-      match_stages
-        .filter(s => !!s.stage_classifiercode)
-        .map(s => [s.stage_uuid, s.stage_classifiercode]),
-    );
 
-    const { match_scores } = scoresJson;
-    const stageScoresMap = match_scores.reduce((acc, cur) => {
-      const curStage = acc[cur.stage_uuid] || {};
-      cur.stage_stagescores.forEach(cs => {
-        curStage[cs.shtr] = cs;
-      });
-      acc[cur.stage_uuid] = curStage;
-      return acc;
-    }, {});
-
-    const scores = match_scores
-      .filter(ms => {
-        const { stage_uuid } = ms;
-        const classifierCode = classifiersMap[stage_uuid];
-        return (
-          classifiersMap[stage_uuid] !== undefined && classifierCode.match(/SC-10[0-8]/g)
-        );
-      })
-      .map(ms => {
-        const { stage_uuid, stage_stagescores } = ms;
-        const classifier = classifiersMap[stage_uuid];
-
-        return stage_stagescores
-          .filter(ss => {
-            const divisionCode = shootersDivisionMap[ss.shtr]?.toUpperCase();
-            return (
-              divisionCode !== undefined &&
-              Object.keys(ScsaPeakTimesMap).find(div => div === divisionCode) !==
-                undefined
-            );
-          })
-          .filter(ss => {
-            const expectedNumStrings = classifier === "SC-104" ? 4 : 5;
-            const strings = ss.str;
-            // Exclude any score where the string count does not match
-            // the official string count for the stated classifier.
-            return strings.length === expectedNumStrings;
-          })
-          .map(ss => {
-            // str is the array of all strings for the stage
-            // e.g. [7, 5.46, 6.17, 23.13]
-            const strings = ss.str;
-
-            // penss is a two-dimensional array of the COUNT of all penalties, by index, on the stage.
-            // e.g.
-            //[
-            //  [
-            //    1,
-            //    0,
-            //    0,
-            //    0
-            //  ]
-            const pens = ss.penss || [];
-            const penaltyCount = pens.flat().reduce((p, c) => p + c, 0);
-            const detailedScores = stageScoresMap[stage_uuid]?.[ss.shtr] || {};
-
-            const adjustedStrings = strings
-              .map((s, idx) => {
-                try {
-                  const penCountsForString = pens[idx];
-                  // Multiply the count of each penalties by their value, and sum the result.
-                  const totalStringPenalties = (penCountsForString || []).reduce(
-                    (p, c, penIdx) => p + c * (match_penalties[penIdx]?.pen_val || 0),
-                    0,
-                  );
-                  const adjustedStringTotal = s + totalStringPenalties;
-                  // Strings max out at 30 seconds in SCSA.
-                  return Math.min(30, adjustedStringTotal);
-                } catch (e) {
-                  console.log(`bad SCSA match: ${uuid}`);
-                  throw e;
-                }
-              })
-              .sort((a, b) => b - a);
-
-            const memberNumber = shootersMap[ss.shtr]?.toUpperCase();
-            const divisionCode = shootersDivisionMap[ss.shtr]?.toUpperCase();
-            const division = scsaDivisionWithPrefix(divisionCode);
-
-            const modifiedDate = new Date(detailedScores.mod);
-            const modified = Number.isNaN(modifiedDate.getTime())
-              ? undefined
-              : modifiedDate;
-
-            // Worst string (front of the array) dropped.
-            const bestNStrings = adjustedStrings.slice(1);
-
-            const stageTotal = N(bestNStrings.reduce((p, c) => p + c, 0));
-
-            const pseudoHf = HF((25 * bestNStrings.length) / stageTotal);
-
-            const classifierPeakTime = scsaPeakTime(divisionCode, classifier);
-            const shooterFullName = match.memberNumberToNamesMap[memberNumber];
-            const classificationPercent = Percent(classifierPeakTime, stageTotal);
-
-            return {
-              stageTimeSecs: stageTotal,
-              stagePeakTimeSecs: classifierPeakTime,
-
-              penalties: penaltyCount,
-
-              // from algolia / matches collection
-              type: matchInfo?.type,
-              subType: matchInfo?.subType,
-              templateName: matchInfo?.templateName,
-
-              // from /match_scores.json
-              modified,
-              strings: adjustedStrings,
-              targetHits: detailedScores.ts,
-              device: detailedScores.dname,
-              bad: classificationPercent >= 175.0,
-              hf: pseudoHf,
-              percent: classificationPercent,
-              shooterFullName,
-              memberNumber,
-              classifier,
-              division,
-              upload: uuid,
-              clubid: match.match_clubcode,
-              club_name: match.match_clubname || match.match_name,
-              matchName: match.match_name,
-              sd: UTCDate(match.match_date),
-              code: "N",
-              source: "Stage Score",
-              memberNumberDivision: [memberNumber, division].join(":"),
-              classifierDivision: [classifier, division].join(":"),
-            };
-          });
-      })
-      .flat()
-      .filter(
-        r =>
-          r.strings.every(x => x > 0) &&
-          r.stageTimeSecs > 0 &&
-          !!r.memberNumber &&
-          !!r.classifier &&
-          !!r.division &&
-          !!r.memberNumberDivision,
-      );
-
-    return { scores, match, results: [] };
-  } catch (e) {}
-
-  return EmptyMatchResultsFactory();
+  return (
+    s.sh_id || [s.sh_fn, s.sh_ln].join("").replace(badCharsRegExp, "")
+  ).toUpperCase();
 };
 
-export const uspsaOrHitFactorMatchInfo = async matchInfo => {
-  const { uuid } = matchInfo;
-  const { matchDef: match, results, scores: scoresJson } = await fetchPS(uuid);
+const classifierCodeFromMatchDefStage = (s, onlyActualClassifiers) => {
+  if (onlyActualClassifiers) {
+    return normalizeClassifierCode(s.stage_classifiercode);
+  }
+
+  return `${s.stage_number || ""}.${s.stage_name.replace(badCharsRegExp, "").toUpperCase()}`;
+};
+
+interface IntermediateScore extends Score {
+  // Major Match Scores Fields
+  matchPercent?: number;
+  matchPoints?: number;
+  percentOfPossible?: number;
+}
+
+export const hitFactorLikeMatchInfo = (
+  matchInfo: Match,
+  s3MatchFiles,
+  onlyClassifiers: boolean = true,
+  mustHaveMemberNumbers: boolean = true,
+  includeMajorResults: boolean = false,
+): { match: MatchDef; results: unknown; scores: IntermediateScore[] } => {
+  const { matchDef: match, results, scores: scoresJson } = s3MatchFiles;
   if (!match || !results || !scoresJson) {
     return EmptyMatchResultsFactory();
   }
