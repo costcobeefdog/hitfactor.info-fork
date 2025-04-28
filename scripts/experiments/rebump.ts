@@ -1,13 +1,7 @@
 /* eslint-disable no-console */
 
-import uniqBy from "lodash.uniqby";
-
 import { connect } from "../../api/src/db";
-import {
-  MatchBumps,
-  matchBumpsForMatchResults,
-  saveMatchBumps,
-} from "../../api/src/db/matchBumps";
+import { matchBumpsForMatchResults, saveMatchBumps } from "../../api/src/db/matchBumps";
 import {
   backfillClassifications,
   MatchScores,
