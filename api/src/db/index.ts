@@ -60,18 +60,3 @@ export const connect = async () => {
   });
   await _connect();
 };
-
-// legacy hydration from USPSA json files, probably doesn't work anymore
-export const hydrate = async () => {
-  console.log("hydrating everything");
-  console.time("full hydration");
-
-  await hydrateScores();
-  await rehydrateRecHHF();
-  await hydrateShooters();
-  await hydrateClassifiersExtendedMeta();
-  await hydrateStats();
-
-  console.timeEnd("full hydration");
-  console.log("hydration done");
-};

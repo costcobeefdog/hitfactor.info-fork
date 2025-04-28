@@ -3,10 +3,10 @@
 import {
   classifierToId,
   deprecatedUSPSAClassifiers,
-} from "../api/src/dataUtil/classifiersData";
-import { Classifiers } from "../api/src/db/classifiers";
-import { connect } from "../api/src/db/index";
-import { divShortToId, uspsaDivShortNames } from "../shared/constants/divisions";
+} from "../../api/src/dataUtil/classifiersData";
+import { Classifiers } from "../../api/src/db/classifiers";
+import { connect } from "../../api/src/db/index";
+import { divShortToId, uspsaDivShortNames } from "../../shared/constants/divisions";
 
 const classifiersForDivision = async (division: string) =>
   Classifiers.find({

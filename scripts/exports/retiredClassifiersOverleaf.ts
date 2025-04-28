@@ -1,8 +1,12 @@
 /* eslint-disable no-console */
 
-import { deprecatedUSPSAClassifiers } from "../api/src/dataUtil/classifiersData";
-import { Classifier, Classifiers, ClassifierVirtuals } from "../api/src/db/classifiers";
-import { connect } from "../api/src/db/index";
+import { deprecatedUSPSAClassifiers } from "../../api/src/dataUtil/classifiersData";
+import {
+  Classifier,
+  Classifiers,
+  ClassifierVirtuals,
+} from "../../api/src/db/classifiers";
+import { connect } from "../../api/src/db/index";
 
 export const allDivisionClassifiersQuality = async () => {
   const [coDB, opnDB, ltdDB, pccDB] = await Promise.all([

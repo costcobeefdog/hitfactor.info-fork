@@ -5,6 +5,10 @@ import { Percent } from "../api/src/dataUtil/numbers";
 import { connect } from "../api/src/db/index";
 import { uspsaDivisionsPopularity } from "../api/src/db/scores";
 
+/**
+ * Updates data for Stats -> Divisions tab
+ * Just run and commit changes.
+ */
 const saveDivisionPopularityYear = async year => {
   console.log(`fetching year ${year}`);
   const data = await uspsaDivisionsPopularity(year);

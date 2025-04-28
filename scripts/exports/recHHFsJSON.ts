@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 
-import { deprecatedUSPSAClassifiers } from "../api/src/dataUtil/classifiersData";
-import { Classifiers } from "../api/src/db/classifiers";
-import { connect } from "../api/src/db/index";
-import { uspsaDivShortNames } from "../shared/constants/divisions";
+import { deprecatedUSPSAClassifiers } from "../../api/src/dataUtil/classifiersData";
+import { Classifiers } from "../../api/src/db/classifiers";
+import { connect } from "../../api/src/db/index";
+import { uspsaDivShortNames } from "../../shared/constants/divisions";
 
 const classifiersForDivision = async (division: string) =>
   Classifiers.find({

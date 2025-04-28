@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 import fs from "fs";
 
-import { saveActiveMembersFromPSClassUpdate } from "../api/src/db/activeMembers";
-import { connect } from "../api/src/db/index";
+import { saveActiveMembersFromPSClassUpdate } from "../../api/src/db/activeMembers";
+import { connect } from "../../api/src/db/index";
 import {
   fetchPSClassUpdateCSVTextFile,
   practiscoreClassUpdateFromTextFile,
-} from "../api/src/worker/classUpdate";
+} from "../../api/src/worker/classUpdate";
 
 const go = async () => {
   let text: string | null = null;
