@@ -3,6 +3,7 @@ import uniqBy from "lodash.uniqby";
 import mongoose, { Model } from "mongoose";
 
 import { MatchScore } from "../../../data/types/MatchScore";
+import { classificationDifficulty } from "../../../shared/constants/difficulty";
 import { calculateUSPSAClassification } from "../../../shared/utils/classification";
 
 import { scoresForRecommendedClassification, Shooter } from "./shooters";
@@ -123,10 +124,10 @@ export const backfillClassifications = async (
       "recPercent",
       date,
       "brutal",
-      8,
-      8,
-      12,
-      110,
+      classificationDifficulty.window.min,
+      classificationDifficulty.window.best,
+      classificationDifficulty.window.recent,
+      classificationDifficulty.percentCap,
     )[c.division];
 
     return {
