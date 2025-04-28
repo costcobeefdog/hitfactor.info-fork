@@ -2,6 +2,7 @@ import uniqBy from "lodash.uniqby";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { InputText } from "primereact/inputtext";
+import { ProgressSpinner } from "primereact/progressspinner";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDebounce } from "use-debounce";
@@ -90,7 +91,7 @@ const MatchSearchInput = forwardRef(
 const SearchUploads = () => {
   const searchRef = useRef();
   const [searchQuery, setSearchQuery] = useQueryState("q", "");
-  const { json: searchResults } = useApiQuery(
+  const { json: searchResults, loading } = useApiQuery(
     `/upload/searchMatches?q=${encodeURIComponent(searchQuery)}`,
     { enabled: !!searchQuery },
   );
@@ -115,9 +116,15 @@ const SearchUploads = () => {
             ref={searchRef}
           />
           {!tableData.length ? (
-            <div className="text-center mt-2 text-color-secondary">
-              Search for a match name to check its upload status
-            </div>
+            loading && !!searchQuery ? (
+              <div className="w-full flex justify-content-center">
+                <ProgressSpinner />
+              </div>
+            ) : (
+              <div className="text-center mt-2 text-color-secondary">
+                Search for a match name to check its upload status
+              </div>
+            )
           ) : (
             <DataTable
               stripedRows
