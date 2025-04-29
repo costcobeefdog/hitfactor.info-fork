@@ -7,6 +7,7 @@ import {
   masterPercent,
   maxPercentDifference,
 } from "../../../../data/types/MatchScore";
+import { matchBumpThresholds } from "../../../../shared/constants/difficulty";
 import { classForPercent } from "../../../../shared/utils/classification";
 import {
   correlation,
@@ -266,10 +267,10 @@ export const MatchBumpChart = ({ match, division, loading }) => {
   const eligibleGMs = eligibleData.filter(
     c => c.x >= grandmasterPercent && c.y >= grandmasterPercent,
   ).length;
-  const hasEnoughMs = eligibleMs >= 10;
-  const hasEnoughGMs = eligibleMs >= 3;
-  const hasEnoughData = eligibleData.length >= 30;
-  const goodCorrelation = eligibleCorrel >= 0.9;
+  const hasEnoughMs = eligibleMs >= matchBumpThresholds.filteredMasters;
+  const hasEnoughGMs = eligibleMs >= matchBumpThresholds.filteredGrandmasters;
+  const hasEnoughData = eligibleData.length >= matchBumpThresholds.filteredDataPoints;
+  const goodCorrelation = eligibleCorrel >= matchBumpThresholds.filteredCorrelation;
 
   return (
     <div>

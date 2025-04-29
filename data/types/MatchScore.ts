@@ -17,7 +17,7 @@ export interface MatchScore {
 }
 
 export const maxPercentDifference = 15;
-export const maxAge = 18;
+export const maxAge = 18; // months
 
 // minus 5 for both match and classification
 export const grandmasterPercent = 90;

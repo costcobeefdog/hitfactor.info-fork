@@ -13,6 +13,7 @@ import {
   linearRegression,
   reverseLinear,
 } from "../../../shared/utils/weibull";
+import {matchBumpThresholds } from "../../../shared/constants/difficulty";
 
 export interface MatchBump {
   upload: string;
@@ -75,18 +76,18 @@ const MatchBumpSchema = new mongoose.Schema<MatchBump>(
 );
 
 // Match Criteria:
-//     - Eligible Correlation  >= 90%
+//     - Eligible Correlation  >= 85%
 //     - Eligible Datapoints   >= 30
-//     ? Eligible Masters      >= 10 (>= 80% match, >= 80% classification, using best8 / 12 current)
+//     ? Eligible Masters      >= 5 (>= 80% match, >= 80% classification, using best8 / 12 current)
 //               - OR -
 //     ? Eligible Grandmasters >=  3  (>= 90%/90% match/classification using best8/12current)
 //
 // For current classification see db/matchScores#backfillClassifications()
 MatchBumpSchema.virtual("eligible").get(function () {
   return (
-    this.filteredDataPoints >= 30 &&
-    this.filteredCorrelation >= 0.9 &&
-    (this.filteredGrandmasters >= 3 || this.filteredMasters >= 10)
+    this.filteredDataPoints >= matchBumpThresholds.filteredDataPoints &&
+    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation &&
+    (this.filteredGrandmasters >= matchBumpThresholds.filteredGrandmasters || this.filteredMasters >= matchBumpThresholds.filteredMasters)
   );
 });
 

@@ -31,7 +31,7 @@
     "date-fns": "^3.3.1",
     "lodash.uniqby": "^4.7.0",
     "primeflex": "^3.3.1",
-    "primeicons": "^6.0.1",
+    "primeicons": "^7.0.0",
     "primereact": "^10.3.3",
     "qs": "^6.12.3",
     "query-string": "^8.2.0",

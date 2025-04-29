@@ -14,6 +14,7 @@ import {
   MatchScores,
   saveMatchScores,
 } from "../../api/src/db/matchScores";
+import { matchBumpThresholds } from "../../shared/constants/difficulty";
 
 const recalculateBumpForMatch = async (uuid: string) => {
   const scores = await MatchScores.find({ upload: uuid }).limit(0).lean();
@@ -27,11 +28,15 @@ const rebump = async () => {
   await connect();
 
   const maybeEligibleMatches = await MatchBumps.find({
-    filteredDataPoints: { $gte: 30 },
-    filteredCorrelation: { $gte: 0.8 },
-    $or: [{ filteredMasters: { $gte: 5 } }, { filteredGrandmasters: { $gte: 3 } }],
+    filteredDataPoints: { $gte: matchBumpThresholds.filteredDataPoints },
+    filteredCorrelation: { $gte: matchBumpThresholds.filteredCorrelation },
+    $or: [
+      { filteredMasters: { $gte: matchBumpThresholds.filteredMasters } },
+      { filteredGrandmasters: { $gte: matchBumpThresholds.filteredGrandmasters } },
+    ],
   })
     .limit(0)
+    .select(["upload", "division"])
     .lean();
 
   const uuids = uniqBy(
@@ -40,7 +45,10 @@ const rebump = async () => {
   );
   console.log(`${uuids.length} possibly eligible matches`);
 
-  const matches = await Matches.find({ uuid: { $in: uuids } }).limit(0);
+  const matches = await Matches.find({ uuid: { $in: uuids } })
+    .limit(0)
+    .select(["name", "created", "updated"])
+    .sort({ created: 1 });
   console.log(
     JSON.stringify(
       matches.map(m => m.name),

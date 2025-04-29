@@ -1,5 +1,8 @@
 import algoliasearch from "algoliasearch";
 
+import { matchBumpThresholds } from "../../../../../shared/constants/difficulty";
+import { mapDivisions } from "../../../dataUtil/divisions";
+import { MatchBumps } from "../../../db/matchBumps";
 import { Matches } from "../../../db/matches";
 import { MatchScores } from "../../../db/matchScores";
 
@@ -48,6 +51,36 @@ const uploadRoutes = async fastify => {
       ...result,
       uuid,
     };
+  });
+
+  fastify.get("/matchBumpMatches", async () => {
+    const maybeEligibleMatches = await MatchBumps.find({
+      filteredDataPoints: { $gte: matchBumpThresholds.filteredDataPoints },
+      filteredCorrelation: { $gte: matchBumpThresholds.filteredCorrelation },
+      $or: [
+        { filteredMasters: { $gte: matchBumpThresholds.filteredMasters } },
+        { filteredGrandmasters: { $gte: matchBumpThresholds.filteredGrandmasters } },
+      ],
+    })
+      .limit(0)
+      .select(["upload", "division"])
+      .lean();
+    const uuidsToDivisionMap = maybeEligibleMatches.reduce((acc, cur) => {
+      (acc[cur.upload] ??= []).push(cur.division);
+      return acc;
+    }, {});
+    const uuids = Object.keys(uuidsToDivisionMap);
+
+    const matches = await Matches.find({ uuid: { $in: uuids } })
+      .limit(0)
+      .select(["uuid", "name", "created", "updated", "date"])
+      .sort({ created: 1 })
+      .lean();
+
+    return matches.map(m => ({
+      ...m,
+      ...mapDivisions(div => uuidsToDivisionMap[m.uuid]?.includes(div)),
+    }));
   });
 
   fastify.get("/matchScores", async (req, res) => {

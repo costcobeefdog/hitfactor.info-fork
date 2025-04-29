@@ -122,6 +122,11 @@ const mainConfig = [
     path: "/upload",
   },
   {
+    label: "Match Bumps",
+    icon: "pi pi-trophy",
+    path: "/matchBumps",
+  },
+  {
     className: "flex-grow-1",
     separator: true,
     disabled: true,
@@ -239,6 +244,10 @@ const router = createBrowserRouter([
             {
               path: "upload/:uuid?/:division?",
               Component: React.lazy(() => import("../pages/UploadPage")),
+            },
+            {
+              path: "matchBumps",
+              Component: React.lazy(() => import("../pages/MatchBumpsPage")),
             },
           ]),
     ],

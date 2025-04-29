@@ -8,8 +8,14 @@ export const classificationDifficulty = {
     min: 4,
     best: 6,
     recent: 8,
-    // TODO: start with recent 15 for HFI current after USPSA update
   },
 
   percentCap: 110,
+};
+
+export const matchBumpThresholds = {
+  filteredDataPoints: 30,
+  filteredGrandmasters: 3,
+  filteredMasters: 5,
+  filteredCorrelation: 0.85,
 };
