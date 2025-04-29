@@ -8,7 +8,9 @@ import { mapDivisionsFlat } from "../../../../shared/constants/divisions";
 import useApiQuery from "../../query/useApiQuery";
 
 const MatchBumpMatches = () => {
-  const { json: searchResults, loading } = useApiQuery(`/upload/matchBumpMatches`);
+  const { json: searchResults, loading } = useApiQuery(`/upload/matchBumpMatches`, {
+    staleTime: 30 * 60 * 1000, // 30 mins
+  });
 
   const tableData = uniqBy(searchResults, c => c.uuid).map(c => ({
     ...c,
