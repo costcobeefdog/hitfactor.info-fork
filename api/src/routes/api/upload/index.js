@@ -54,18 +54,14 @@ const uploadRoutes = async fastify => {
   });
 
   fastify.get("/matchBumpMatches", async () => {
-    const maybeEligibleMatches = await MatchBumps.find({
+    const eligibleMatches = await MatchBumps.find({
       filteredDataPoints: { $gte: matchBumpThresholds.filteredDataPoints },
       filteredCorrelation: { $gte: matchBumpThresholds.filteredCorrelation },
-      $or: [
-        { filteredMasters: { $gte: matchBumpThresholds.filteredMasters } },
-        { filteredGrandmasters: { $gte: matchBumpThresholds.filteredGrandmasters } },
-      ],
     })
       .limit(0)
       .select(["upload", "division"])
       .lean();
-    const uuidsToDivisionMap = maybeEligibleMatches.reduce((acc, cur) => {
+    const uuidsToDivisionMap = eligibleMatches.reduce((acc, cur) => {
       (acc[cur.upload] ??= []).push(cur.division);
       return acc;
     }, {});

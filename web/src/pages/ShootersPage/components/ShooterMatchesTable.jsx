@@ -158,7 +158,15 @@ const ShooterMatchScoresTable = ({
         body={(c, meta) => {
           const value = renderPercent(c, meta);
           return (
-            <span className={c.matchBump?.eligible ? "text-green-600" : "text-red-600"}>
+            <span
+              className={
+                c.matchBump?.eligible
+                  ? "text-green-600"
+                  : c.matchBump?.maybeEligible
+                    ? "text-yellow-600"
+                    : "text-red-600"
+              }
+            >
               {value}
             </span>
           );

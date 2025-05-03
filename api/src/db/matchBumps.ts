@@ -7,13 +7,13 @@ import {
   masterPercent,
   MatchScore,
 } from "../../../data/types/MatchScore";
+import { matchBumpThresholds } from "../../../shared/constants/difficulty";
 import {
   correlation,
   EmptyLinearRegression,
   linearRegression,
   reverseLinear,
 } from "../../../shared/utils/weibull";
-import {matchBumpThresholds } from "../../../shared/constants/difficulty";
 
 export interface MatchBump {
   upload: string;
@@ -75,19 +75,20 @@ const MatchBumpSchema = new mongoose.Schema<MatchBump>(
   { strict: false },
 );
 
-// Match Criteria:
+// Eligibility Criteria:
 //     - Eligible Correlation  >= 85%
-//     - Eligible Datapoints   >= 30
-//     ? Eligible Masters      >= 5 (>= 80% match, >= 80% classification, using best8 / 12 current)
-//               - OR -
-//     ? Eligible Grandmasters >=  3  (>= 90%/90% match/classification using best8/12current)
-//
-// For current classification see db/matchScores#backfillClassifications()
+//     - Eligible Datapoints   >= 30 (maybe) >= 50 (eligible)
 MatchBumpSchema.virtual("eligible").get(function () {
   return (
     this.filteredDataPoints >= matchBumpThresholds.filteredDataPoints &&
-    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation &&
-    (this.filteredGrandmasters >= matchBumpThresholds.filteredGrandmasters || this.filteredMasters >= matchBumpThresholds.filteredMasters)
+    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation
+  );
+});
+
+MatchBumpSchema.virtual("maybeEligible").get(function () {
+  return (
+    this.filteredDataPoints >= matchBumpThresholds.filteredDataPointsMaybe &&
+    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation
   );
 });
 
