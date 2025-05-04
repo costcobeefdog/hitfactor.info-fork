@@ -3,11 +3,11 @@ import { SelectButton } from "primereact/selectbutton";
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { DivisionNavigation, ScoresChart } from "../../components";
-import MatchBumpChart from "../../components/chart/MatchBumpChart";
-import { useApi } from "../../utils/client";
-import useSearchParamState from "../../utils/useSearchParamState";
-import ShooterMatchScoresTable from "../ShootersPage/components/ShooterMatchesTable";
+import { DivisionNavigation, ScoresChart } from "@web/components";
+import MatchBumpChart from "@web/components/chart/MatchBumpChart";
+import ShooterMatchScoresTable from "@web/pages/ShootersPage/components/ShooterMatchesTable";
+import { useApi } from "@web/utils/client";
+import useSearchParamState from "@web/utils/useSearchParamState";
 
 import SearchUploads from "./SearchUploads";
 
