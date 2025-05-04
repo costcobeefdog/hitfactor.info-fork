@@ -3,11 +3,15 @@ import fs from "fs";
 
 import mongoose from "mongoose";
 
-import { hydrateClassifiersExtendedMeta } from "./classifiers";
-import { rehydrateRecHHF } from "./recHHF";
-import { hydrateScores } from "./scores";
-import { hydrateShooters } from "./shooters";
-import { hydrateStats } from "./stats";
+export { Matches } from "./matches";
+export { Scores } from "./scores";
+export { MatchScores } from "./matchScores";
+export { RecHHFs } from "./recHHF";
+export { Shooters } from "./shooters";
+export { Reports } from "./reports";
+export { Stats } from "./stats";
+export { AfterUploadClassifiers } from "./afterUploadClassifiers";
+export { AfterUploadShooters } from "./afterUploadShooters";
 
 const isDocker =
   fs.existsSync("/.dockerenv") ||

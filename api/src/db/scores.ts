@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 import mongoose, { Model } from "mongoose";
 
+import { curHHFForDivisionClassifier } from "@api/dataUtil/hhf";
+import { N, Percent, PositiveOrMinus1 } from "@api/dataUtil/numbers";
+import { processImportAsyncSeq } from "@api/utils";
+import { RecHHF } from "@data/types/RecHHF";
 import {
   divIdToShort,
   divisionsForScoresAdapter,
@@ -9,13 +13,8 @@ import {
   minorDivisions,
   uspsaDivIdToShort,
   uspsaDivShortNames,
-} from "../../../shared/constants/divisions";
-import { UTCDate } from "../../../shared/utils/date";
-import { curHHFForDivisionClassifier } from "../dataUtil/hhf";
-import { N, Percent, PositiveOrMinus1 } from "../dataUtil/numbers";
-import { processImportAsyncSeq } from "../utils";
-
-import { RecHHF } from "./recHHF";
+} from "@shared/constants/divisions";
+import { UTCDate } from "@shared/utils/date";
 
 export interface Score {
   upload?: string;

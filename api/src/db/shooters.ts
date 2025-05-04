@@ -3,6 +3,9 @@ import uniqBy from "lodash.uniqby";
 import mongoose, { Model, Schema } from "mongoose";
 import { v4 as randomUUID } from "uuid";
 
+import { ScoreObjectWithVirtuals, Scores } from "@api/db/scores";
+import { getField, percentAggregationOp } from "@api/db/utils";
+
 import { classificationDifficulty } from "../../../shared/constants/difficulty";
 import {
   calculateUSPSAClassification,
@@ -21,9 +24,6 @@ import {
 import { eloPointForShooter } from "../dataUtil/elo";
 import { psClassUpdatesByMemberNumber } from "../dataUtil/uspsa";
 import { loadJSON, processImportAsyncSeq } from "../utils";
-
-import { ScoreObjectWithVirtuals, Scores } from "./scores";
-import { getField, percentAggregationOp } from "./utils";
 
 const memberIdToNumberMap = loadJSON("../../data/meta/memberIdToNumber.json");
 const memberNumberFromMemberData = memberData => {

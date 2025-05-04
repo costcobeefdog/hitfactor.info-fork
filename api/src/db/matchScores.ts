@@ -2,15 +2,16 @@
 import uniqBy from "lodash.uniqby";
 import mongoose, { Model } from "mongoose";
 
-import { MatchScore } from "../../../data/types/MatchScore";
-import { classificationDifficulty } from "../../../shared/constants/difficulty";
-import { calculateUSPSAClassification } from "../../../shared/utils/classification";
-
-import { scoresForRecommendedClassification, Shooter } from "./shooters";
+import { scoresForRecommendedClassification, Shooter } from "@api/db/shooters";
+import { Match } from "@data/types/Match";
+import { MatchScore } from "@data/types/MatchScore";
+import { classificationDifficulty } from "@shared/constants/difficulty";
+import { calculateUSPSAClassification } from "@shared/utils/classification";
 
 export interface MatchScoreVirtuals {
   shooter: Shooter;
   shooterRecPercent: number;
+  match: Match;
 }
 
 type MatchScoreModel = Model<MatchScore, object, MatchScoreVirtuals>;

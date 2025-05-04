@@ -6,14 +6,14 @@ import {
   grandmasterPercent,
   masterPercent,
   MatchScore,
-} from "../../../data/types/MatchScore";
-import { matchBumpThresholds } from "../../../shared/constants/difficulty";
+} from "@data/types/MatchScore";
+import { matchBumpThresholds } from "@shared/constants/difficulty";
 import {
   correlation,
   EmptyLinearRegression,
   linearRegression,
   reverseLinear,
-} from "../../../shared/utils/weibull";
+} from "@shared/utils/weibull";
 
 export interface MatchBump {
   upload: string;

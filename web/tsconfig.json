@@ -18,6 +18,14 @@
       "es2023",
       "dom"
     ],
+
+    "baseUrl": ".",
+    "paths": {
+      "@api/*" : ["../api/src/*"],
+      "@web/*" : ["src/*"],
+      "@shared/*" : ["../shared/*"],
+      "@data/*" : ["../data/*"],
+    }
   }
 }
 
