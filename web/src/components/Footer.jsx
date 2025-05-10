@@ -27,9 +27,18 @@ export default ({ className }) => (
         <SimpleAnalyticsBadge />
       </div>
       <div className="font-medium text-900 mt-2 mb-1">
-        © 2024 Howler Monkey Data, Inc
+        © 2024 — 2025 Howler Monkey Data, Inc
       </div>
-      <p className="text-600 line-height-3 mt-0 mb-4">Made with 🧩 and 🍺 in 🇰🇷</p>
+      <p className="text-600 line-height-3 mt-0 mb-4">
+        Made with
+        <a href="https://www.benadryl.com/" target="_blank" rel="noreferrer">
+          <img
+            src="/img/home/pink.png"
+            alt="pink"
+            style={{ height: "1em", marginLeft: "0.5em", verticalAlign: "-0.125em" }}
+          />
+        </a>
+      </p>
       <div className="flex align-items-center justify-content-center">
         <a
           className="cursor-pointer text-700 mr-5"
