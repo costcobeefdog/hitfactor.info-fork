@@ -1,9 +1,9 @@
 import uniqBy from "lodash.uniqby";
 import { v4 as randomUUID } from "uuid";
 
-import { allDivShortNames, mapAllDivisions } from "../../api/src/dataUtil/divisions";
-
 import { dateSort, numSort } from "./sort";
+
+import { allDivShortNames, mapAllDivisions } from "../../api/src/dataUtil/divisions";
 
 const uspsaClassificationLetters = ["X", "U", "D", "C", "B", "A", "M", "GM"];
 export const classificationRank = classification =>
