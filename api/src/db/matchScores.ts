@@ -154,6 +154,7 @@ type MatchScoresExtra = MatchScoreObjectWithVirtuals &
     level: number;
     name: string;
     eligible: boolean;
+    maybeEligible: boolean;
     bump: number;
   };
 export const matchScoresFor = async ({
@@ -186,6 +187,7 @@ export const matchScoresFor = async ({
         level: c.match?.level,
         name: c.match?.name,
         eligible: c.matchBump.eligible,
+        maybeEligible: c.matchBump.maybeEligible,
         bump,
       };
     })
@@ -211,7 +213,7 @@ export const matchScoresForClassification = async ({
 }: MatchScoresFilter) => {
   const matchScores = await matchScoresFor({ division, memberNumber });
   const explodedMatchScores = matchScores
-    .filter(ms => ms.eligible)
+    .filter(ms => ms.maybeEligible)
     .map(ms => new Array(matchWeightForLevel(ms?.level || 0)).fill(ms))
     .flat();
 

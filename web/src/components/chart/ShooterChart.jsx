@@ -55,7 +55,7 @@ export const ShooterChart = ({ division, memberNumber }) => {
     [mappedData],
   );
   const bumpsData = useMemo(
-    () => mappedData?.filter(c => c.source === "Major Match" && c.eligible),
+    () => mappedData?.filter(c => c.source === "Major Match" && c.maybeEligible),
     [mappedData],
   );
   if (loading) {

@@ -366,6 +366,7 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
       curPercent: ms.bump,
       recPercent: ms.bump,
       eligible: ms.eligible,
+      maybeEligible: ms.maybeEligible,
     }));
   return classifiers
     .concat(convertedMatchScores)
