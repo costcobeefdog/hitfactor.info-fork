@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 import mongoose, { Model } from "mongoose";
 
-import { Match } from "@data/types/Match";
+import { Match, MatchVirtualsNoRefs } from "@data/types/Match";
 import { MatchScore } from "@data/types/MatchScore";
+import { matchLevel } from "@shared/utils/matchLevel";
 
 interface AlgoliaMatchNumericFilters {
   timestamp_utc_updated: number;
@@ -53,7 +54,7 @@ export interface MatchDef {
   templateName: string;
 }
 
-interface MatchVirtuals {
+interface MatchVirtuals extends MatchVirtualsNoRefs {
   scoresCount: number;
   matchScores: MatchScore[];
   matchScoresCount: number;
@@ -105,6 +106,9 @@ MatchesSchema.virtual("matchScoresCount", {
 });
 MatchesSchema.virtual("hasMatchScores").get(function () {
   return this.matchScoresCount > 0;
+});
+MatchesSchema.virtual("level").get(function () {
+  return matchLevel(this.name);
 });
 export const Matches = mongoose.model<typeof MatchesSchema>("Matches", MatchesSchema);
 

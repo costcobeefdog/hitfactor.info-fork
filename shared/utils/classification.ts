@@ -290,6 +290,7 @@ export const addToCurWindow = (c, curWindow, targetWindowSize = 8) => {
 interface ClassifierScore {
   source: string;
   classifier: string;
+  division: string;
   percent: number;
   curPercent: number;
   recPercent: number;
