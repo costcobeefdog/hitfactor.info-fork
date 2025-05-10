@@ -173,20 +173,18 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
 
   return (
     <>
-      <div className="flex justify-content-between flex-wrap">
-        {!isSCSA && (
-          <Button
-            className="text-sm md:text-lg lg:text-xl font-bold px-0 md:px-2"
-            icon="pi pi-chevron-left text-sm md:text-lg lg:text-xl "
-            rounded
-            text
-            aria-label="Back"
-            onClick={onBackToShooters}
-          >
-            Shooters List
-          </Button>
-        )}
-        <h3 className={cx("m-auto mt-4", { "md:hidden": !isSCSA })}>
+      <div className="flex justify-content-between align-items-center flex-wrap">
+        <Button
+          className="text-sm md:text-lg lg:text-xl font-bold px-0 md:px-2"
+          icon="pi pi-chevron-left text-sm md:text-lg lg:text-xl "
+          rounded
+          text
+          aria-label="Back"
+          onClick={onBackToShooters}
+        >
+          Shooters List
+        </Button>
+        <h3 className="mx-auto">
           {[memberNumber, name, nameForDivision(division)].filter(Boolean).join(" - ")}
         </h3>
       </div>
@@ -198,7 +196,7 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
           loading={loading}
         />
       ) : null}
-      <Divider />
+      <Divider className="my-3 md:my-4" />
       <div className="flex justify-content-between align-items-center">
         <h4 className="block md:text-lg lg:text-xl">Scores</h4>
         <div className="m-auto">

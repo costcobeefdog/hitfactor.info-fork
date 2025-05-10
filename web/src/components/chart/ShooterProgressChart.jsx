@@ -2,7 +2,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { SelectButton } from "primereact/selectbutton";
 import { useState } from "react";
 
-import { Line } from "./common";
+import { Line, r1annotationColor, xLine, yLine } from "./common";
 
 import { sportForDivision } from "../../../../shared/constants/divisions";
 import { keepPreviousData, useApi } from "../../utils/client";
@@ -18,115 +18,146 @@ const modes = Object.keys(modesMap);
 export const ShooterProgressChart = ({ division, memberNumber }) => {
   const isHFU = sportForDivision(division) === "hfu";
   const [mode, setMode] = useState(modes[0]);
-  const { json: data, loading } = useApi(
+  const { json: dataRaw, loading } = useApi(
     `/shooters/${division}/${memberNumber}/chart/progress/${modeBucketForMode(mode)}`,
     { placeholderData: keepPreviousData },
   );
-  if (loading && !data) {
+  if (loading && !dataRaw) {
     return <ProgressSpinner />;
   }
 
-  if (!data) {
+  if (!dataRaw) {
     return null;
   }
 
+  const data = dataRaw.map(c => ({
+    x: new Date(new Date(c.sd).toLocaleDateString("en-us", { timeZone: "UTC" })),
+    y: c.p.toFixed(2),
+  }));
+  const high = data.toSorted((a, b) => b.y - a.y)[0];
+
   return (
-    <div className="relative bg-primary-reverse flex-grow-1">
-      <Line
-        style={{ width: "100%", height: "100%", position: "relative" }}
-        adapters={null}
-        options={{
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              max: 120,
-              min: 0,
+    <>
+      <div className="flex justify-content-around bg-primary-reverse">
+        <h4 className="mb-0 mt-1 text-center text-lg">Classification Progress</h4>
+      </div>
+      <div className="relative bg-primary-reverse flex-grow-1">
+        <Line
+          style={{ width: "100%", height: "100%", position: "relative" }}
+          adapters={null}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                max: 120,
+                min: 0,
+              },
+              x: {
+                type: "time",
+                min: "auto",
+              },
             },
-            x: {
-              type: "time",
-              min: "auto",
+            elements: {
+              line: {
+                fill: "blue",
+                color: "blue",
+                borderColor: "pink",
+                borderWidth: 1,
+              },
+              point: {
+                label: "kek",
+                radius: 2,
+              },
             },
-          },
-          elements: {
-            line: {
-              fill: "blue",
-              color: "blue",
-              borderColor: "pink",
-              borderWidth: 1,
-            },
-            point: {
-              label: "kek",
-              radius: 2,
-            },
-          },
-          plugins: {
-            zoom: {
-              pan: { enabled: false },
+            plugins: {
               zoom: {
-                mode: "xy",
-                wheel: {
-                  enabled: false,
-                },
-                pinch: {
-                  enabled: false,
-                },
-              },
-            },
-            tooltip: {
-              callbacks: {
-                label: ({ raw: { y } }) => `${y}%`,
-                title: ([
-                  {
-                    raw: { x },
+                pan: { enabled: false },
+                zoom: {
+                  mode: "xy",
+                  wheel: {
+                    enabled: false,
                   },
-                ]) => x.toLocaleDateString(),
+                  pinch: {
+                    enabled: false,
+                  },
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: ({ raw: { y } }) => `${y}%`,
+                  title: ([
+                    {
+                      raw: { x },
+                    },
+                  ]) => x.toLocaleDateString(),
+                },
+              },
+
+              annotation: {
+                annotations: !high
+                  ? {}
+                  : {
+                      highLine: {
+                        type: "line",
+                        yMin: high.y || 0,
+                        yMax: high.y || 0,
+                        borderColor: r1annotationColor(1.0),
+                        borderWidth: 1,
+                      },
+                      highLabel: {
+                        type: "label",
+                        xValue: high.x || 0,
+                        yValue: high.y || 0,
+                        color: r1annotationColor(1.0),
+                        position: "end",
+                        content: [`High ${high.y}%`],
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
               },
             },
-          },
-        }}
-        data={{
-          datasets: [
-            {
-              label: "Rec. Percent",
-              data: data.map(c => ({
-                x: new Date(
-                  new Date(c.sd).toLocaleDateString("en-us", { timeZone: "UTC" }),
-                ),
-                y: c.p.toFixed(2),
-              })),
-              backgroundColor: "#ae9ef1",
-              borderColor: "#ca258a",
-            },
-          ],
-        }}
-      />
-      {loading && (
-        <ProgressSpinner
-          style={{
-            position: "absolute",
-            margin: "auto",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
+          }}
+          data={{
+            datasets: [
+              {
+                label: "Rec. Percent",
+                data,
+                backgroundColor: "#ae9ef1",
+                borderColor: "#ca258a",
+              },
+            ],
           }}
         />
-      )}
-      {!isHFU && (
-        <div className="flex justify-content-around absolute right-0 left-0 top-0">
-          <SelectButton
-            className="compact bg-primary-reverse"
-            allowEmpty={false}
-            options={modes}
-            value={mode}
-            onChange={e => setMode(e.value)}
-            size={10}
-            style={{ margin: "auto", transform: "scale(0.65)" }}
+        {loading && (
+          <ProgressSpinner
+            style={{
+              position: "absolute",
+              margin: "auto",
+              top: 0,
+              bottom: 0,
+              left: 0,
+              right: 0,
+            }}
           />
-        </div>
-      )}
-    </div>
+        )}
+        {!isHFU && (
+          <div className="flex justify-content-around absolute right-0 left-0 top-0">
+            <SelectButton
+              className="compact bg-primary-reverse"
+              allowEmpty={false}
+              options={modes}
+              value={mode}
+              onChange={e => setMode(e.value)}
+              size={10}
+              style={{ margin: "auto", transform: "scale(0.65)" }}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
