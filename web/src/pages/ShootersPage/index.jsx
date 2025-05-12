@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Divider } from "primereact/divider";
 import { SelectButton } from "primereact/selectbutton";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
 import { v4 as randomUUID } from "uuid";
@@ -59,11 +59,12 @@ const ShootersPage = () => {
 };
 
 const useShooterTableData = ({ division, memberNumber }) => {
+  const navigate = useNavigate();
   const apiEndpoint = !(division && memberNumber)
     ? null
     : `/shooters/${division}/${memberNumber}`;
   const { json: apiData, loading } = useApi(apiEndpoint);
-  const info = apiData?.info || {};
+  const info = useMemo(() => apiData?.info || {}, [apiData?.info]);
   const [classifiers, setClassifiers] = useState([]);
   const [lastFetchedClassifiers, setLastFetchedClassifiers] = useState([]);
   useEffect(() => {
@@ -71,6 +72,13 @@ const useShooterTableData = ({ division, memberNumber }) => {
     setClassifiers(classifiersFromApiData);
     setLastFetchedClassifiers(classifiersFromApiData);
   }, [apiData?.classifiers]);
+
+  // redirect to alternative memberNumber if available
+  useEffect(() => {
+    if (!!apiData?.info && !apiData?.info?.memberNumber && apiData?.altMemberNumber) {
+      navigate(`/shooters/${division}/${apiData.altMemberNumber}`, { replace: true });
+    }
+  }, [apiData, navigate, division]);
 
   const downloadUrl = `/api/shooters/download/${division}/${memberNumber}`;
 

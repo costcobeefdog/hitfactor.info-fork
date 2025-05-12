@@ -145,7 +145,23 @@ const shootersRoutes = async fastify => {
       }),
     );
 
-    const info = infos.find(s => s.division === division) || {};
+    // redirect helper for bad member numbers
+    const dbInfo = infos.find(s => s.division === division);
+    if (!dbInfo && memberNumber.match(/^(A|TY|FY)/)) {
+      const memberNumberDigits = memberNumber.replace(/^(A|TY|FY)/, "");
+      const alt = await Shooters.findOne({
+        memberNumber: new RegExp(`${memberNumberDigits}$`),
+      });
+      if (alt) {
+        return {
+          info: {},
+          classifiers: [],
+          altMemberNumber: alt.memberNumber,
+        };
+      }
+    }
+
+    const info = { ...dbInfo } as Record<string, unknown>;
     info.classificationByDivision = infos.reduce((acc, cur) => {
       const {
         reclassificationsRecPercentUncappedCurrent: recCurrent,
