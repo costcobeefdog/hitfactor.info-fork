@@ -201,18 +201,9 @@ const shootersRoutes = async fastify => {
   fastify.get("/:division/:memberNumber/chart/progress/:mode", async req => {
     const { division, memberNumber, mode } = req.params;
     const reclass = await reclassificationForProgressMode(mode, memberNumber, division);
-    return sortedUniqBy(
-      (reclass?.[division]?.percentWithDates || []).sort((a, b) => {
-        const aTime = a.sd.getTime();
-        const bTime = b.sd.getTime();
-        if (aTime && aTime === bTime) {
-          return b.p - a.p;
-        }
-
-        return aTime - bTime;
-      }),
-      c => c.sd.getTime(),
-    );
+    return sortedUniqBy((reclass?.[division]?.percentWithDates || []).toReversed(), c =>
+      c.sd.getTime(),
+    ).toReversed();
   });
 
   fastify.get("/:division/chart", async req => {
