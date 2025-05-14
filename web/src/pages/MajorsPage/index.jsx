@@ -11,7 +11,7 @@ import { renderMatchLevel } from "../../components/Table";
 import useApiQuery from "../../query/useApiQuery";
 import useSearchParamState from "../../utils/useSearchParamState";
 
-const MatchBumpMatches = () => {
+const MajorsPage = () => {
   const { json: searchResults, loading } = useApiQuery(`/upload/matchBumpMatches`, {
     staleTime: 30 * 60 * 1000, // 30 mins
   });
@@ -133,4 +133,4 @@ const MatchBumpMatches = () => {
   );
 };
 
-export default MatchBumpMatches;
+export default MajorsPage;
