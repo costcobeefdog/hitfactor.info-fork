@@ -38,15 +38,20 @@ const ShooterMatchScoresTable = ({
       return [];
     }
 
-    return (matches || [])
+    const mapped = (matches || [])
       .toSorted((a, b) => b.matchPercent - a.matchPercent)
       .map((c, index, all) => ({
         ...c,
         place: index + 1,
         percentile: (100 * index) / all.length,
         dateUnix: new Date(c.date).getTime(),
-      }))
-      .filter(c => mode === "match" || c.level >= 2);
+      }));
+
+    if (mode === "match") {
+      return mapped;
+    }
+
+    return mapped.filter(c => c.level >= 2 && c.eligible);
   }, [matches, loading, mode]);
 
   if (hidden) {
