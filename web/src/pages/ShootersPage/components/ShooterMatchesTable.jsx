@@ -18,15 +18,20 @@ const ShooterMatchScoresTable = ({
   match,
   hidden,
   nerdMode,
-  hideShooterName,
-  hideMatchName,
-  hideAnalysisButton,
-  hideDate,
+  mode, // "match" | "shooter"
 }) => {
   const { json: matches, loading } = useApiQuery(
     `/upload/matchScores?${qs.stringify({ memberNumber, division, match })}`,
   );
   const navigate = useNavigate();
+
+  // match
+  const hideAnalysisButton = mode === "match";
+  const hideMatchName = mode === "match";
+  const hideDate = mode === "match";
+
+  // shooter
+  const hideShooterName = mode === "shooter";
 
   const matchScores = useMemo(() => {
     if (loading) {
