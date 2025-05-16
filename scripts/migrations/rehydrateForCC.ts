@@ -34,10 +34,9 @@ export const goodClassifiers = [
 
 const rehydrateShooters = async (divisions: string[]) => {
   const shooters = await Shooters.find({
-    //memberNumberDivision: { $exists: true },
-    memberNumberDivision: "TY106174:co",
+    memberNumberDivision: { $exists: true },
     division: { $in: divisions },
-    // reclassificationsRecPercentCurrent: { $gt: 0 },
+    // reclassificationsRecPercentUncappedCurrent: { $gt: 0 },
     // elo: { $gt: 0 },
   })
     .limit(0)
@@ -69,22 +68,22 @@ const go = async () => {
   await connect();
 
   const classifiers = uspsaClassifiers;
-  const divisions = ["co"];
+  const divisions = uspsaDivShortNames;
   const classifierDivisions = divisions
     .map(division => classifiers.map(classifier => ({ classifier, division })))
     .flat();
 
   console.error("rechhf go");
-  //await rehydrateRecHHF(divisions, classifiers);
+  await rehydrateRecHHF(divisions, classifiers);
 
   console.error("shooters go");
   await rehydrateShooters(divisions);
 
   console.error("classifiers go");
-  //await rehydrateClassifiers(classifierDivisions);
+  await rehydrateClassifiers(classifierDivisions);
 
   console.error("stats go");
-  //await hydrateStats();
+  await hydrateStats();
 
   console.error("\ndone");
   process.exit(0);

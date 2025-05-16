@@ -425,13 +425,6 @@ export const reclassifyShooters = async shooters => {
         const recalcDivRecUncapped = recalc(recScores, now, division);
 
         const majorMatchScores = recScores.filter(s => s.source === "Major Match");
-        console.log(
-          JSON.stringify(
-            majorMatchScores.map(c => c.matchName),
-            null,
-            2,
-          ),
-        );
         const recalcMajors = recalc(majorMatchScores, now, division);
 
         const classifierScores = recScores.filter(s => s.source !== "Major Match");
