@@ -44,17 +44,6 @@ const HomePage = () => {
                 </p>
 
                 <p>And thanks to your support, we are now bringing it to USPSA!</p>
-                <p>
-                  We also have experimental{" "}
-                  <a href="https://scsa.hitfactor.info" target="_blank" rel="noreferrer">
-                    SCSA
-                  </a>
-                  &nbsp;and{" "}
-                  <a href="https://pcsl.hitfactor.info" target="_blank" rel="noreferrer">
-                    PCSL
-                  </a>{" "}
-                  support. Check It Out!
-                </p>
               </span>
 
               <div className="flex flex-row justify-content-center md:justify-content-start">
