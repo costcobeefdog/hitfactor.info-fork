@@ -1,12 +1,15 @@
-import cx from "classnames";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Divider } from "primereact/divider";
-import { SelectButton } from "primereact/selectbutton";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
 import { v4 as randomUUID } from "uuid";
+
+import {
+  ScoresModeSelectButton,
+  defaultScoresMode,
+} from "@web/components/ScoresModeSelectButton";
 
 import ShooterInfoTable from "./components/ShooterInfoTable";
 import ShooterMatchScoresTable from "./components/ShooterMatchesTable";
@@ -176,7 +179,7 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
   const { loading, whatIf } = tableData;
   const { name } = info;
 
-  const [scoresMode, setScoresMode] = useState("Classifiers");
+  const [scoresMode, setScoresMode] = useState(defaultScoresMode);
   const [nerdMode, setNerdMode] = useState(false);
 
   return (
@@ -205,25 +208,22 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
         />
       ) : null}
       <Divider className="my-3 md:my-4" />
-      <div className="flex justify-content-between align-items-center">
+      <div className="relative">
+        <div className="flex justify-content-around" />
+      </div>
+      <div className="flex relative justify-content-between align-items-center">
         <h4 className="block md:text-lg lg:text-xl">Scores</h4>
-        <div className="m-auto">
-          <SelectButton
-            size="small"
-            className="compact text-xs"
-            allowEmpty={false}
-            options={["Classifiers", "Majors"]}
-            value={scoresMode}
-            onChange={e => setScoresMode(e.value)}
+        <div className="absolute left-0 right-0 flex justify-content-center">
+          <ScoresModeSelectButton
+            className="compact"
+            mode={scoresMode}
+            setMode={setScoresMode}
           />
         </div>
         {whatIf && (
           <div className="m-auto">
             <h5 className="block md:inline mr-4">
-              Recommended: {renderPercent(whatIf, { field: "recPercent" })}
-            </h5>
-            <h5 className="block md:inline">
-              Current HHF: {renderPercent(whatIf, { field: "curPercent" })}
+              WhatIf: {renderPercent(whatIf, { field: "recPercent" })}
             </h5>
           </div>
         )}
@@ -238,9 +238,9 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
               onClick={resetWhatIfs}
             />
           )}
-          {!isSCSA && scoresMode === "Classifiers" && (
+          {!isSCSA && scoresMode === "combined" && (
             <Button
-              className="px-2 my-3 text-xs md:text-sm"
+              className="compact px-2 my-3 text-xs md:text-sm"
               label="What If"
               size="small"
               iconPos="left"
@@ -259,13 +259,14 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
 
       <ShooterRunsTable
         {...tableData}
-        hidden={scoresMode !== "Classifiers"}
+        scoresMode={scoresMode}
+        hidden={!["classifiers", "combined"].includes(scoresMode)}
         onClassifierSelection={number => navigate(`/classifiers/${division}/${number}`)}
         onClubSelection={club => navigate(`/clubs/${club}`)}
       />
       <ShooterMatchScoresTable
         mode="shooter"
-        hidden={scoresMode !== "Majors"}
+        hidden={scoresMode !== "majors"}
         nerdMode={nerdMode}
         memberNumber={memberNumber}
         division={division}
