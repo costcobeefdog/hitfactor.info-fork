@@ -36,7 +36,7 @@ import { DQs } from "../db/dq";
 import { connect } from "../db/index";
 import { matchBumpsForMatchResults, saveMatchBumps } from "../db/matchBumps";
 import { MatchDef, Matches } from "../db/matches";
-import { backfillClassifications, saveMatchScores } from "../db/matchScores";
+import { backfillComboClassifications, saveMatchScores } from "../db/matchScores";
 import { hydrateRecHHFsForClassifiers } from "../db/recHHF";
 import { Score, Scores } from "../db/scores";
 import { reclassifyShooters } from "../db/shooters";
@@ -784,7 +784,7 @@ const backfillMatchScoresClassifications = async (
       if (!matchScores.length) {
         break;
       }
-      matchScores = await backfillClassifications(matchScores);
+      matchScores = await backfillComboClassifications(matchScores);
       backfilled.push(...matchScores);
       await saveMatchScores(matchScores);
       updated += matchScores.length;

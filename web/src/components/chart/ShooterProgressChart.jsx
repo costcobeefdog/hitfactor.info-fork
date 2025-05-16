@@ -1,25 +1,19 @@
 import { ProgressSpinner } from "primereact/progressspinner";
-import { SelectButton } from "primereact/selectbutton";
 import { useState } from "react";
 
-import { Line, r1annotationColor, xLine, yLine } from "./common";
+import {
+  ScoresModeSelectButton,
+  defaultScoresMode,
+} from "@web/components/ScoresModeSelectButton";
 
-import { sportForDivision } from "../../../../shared/constants/divisions";
+import { Line, r1annotationColor } from "./common";
+
 import { keepPreviousData, useApi } from "../../utils/client";
 
-const modesMap = {
-  Combined: "combo",
-  Classifiers: "classifiers",
-  Majors: "majors",
-};
-const modeBucketForMode = mode => modesMap[mode];
-const modes = Object.keys(modesMap);
-
 export const ShooterProgressChart = ({ division, memberNumber }) => {
-  const isHFU = sportForDivision(division) === "hfu";
-  const [mode, setMode] = useState(modes[0]);
+  const [mode, setMode] = useState(defaultScoresMode);
   const { json: dataRaw, loading } = useApi(
-    `/shooters/${division}/${memberNumber}/chart/progress/${modeBucketForMode(mode)}`,
+    `/shooters/${division}/${memberNumber}/chart/progress/${mode.toLowerCase()}`,
     { placeholderData: keepPreviousData },
   );
   if (loading && !dataRaw) {
@@ -132,30 +126,17 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
           }}
         />
         {loading && (
-          <ProgressSpinner
-            style={{
-              position: "absolute",
-              margin: "auto",
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-            }}
+          <ProgressSpinner className="absolute m-auto top-0 bottom-0 left-0 right-0" />
+        )}
+        <div className="flex justify-content-around absolute right-0 left-0 top-0">
+          <ScoresModeSelectButton
+            className="compact bg-primary-reverse"
+            size={10}
+            style={{ margin: "auto", transform: "scale(0.65)" }}
+            mode={mode}
+            setMode={setMode}
           />
-        )}
-        {!isHFU && (
-          <div className="flex justify-content-around absolute right-0 left-0 top-0">
-            <SelectButton
-              className="compact bg-primary-reverse"
-              allowEmpty={false}
-              options={modes}
-              value={mode}
-              onChange={e => setMode(e.value)}
-              size={10}
-              style={{ margin: "auto", transform: "scale(0.65)" }}
-            />
-          </div>
-        )}
+        </div>
       </div>
     </>
   );

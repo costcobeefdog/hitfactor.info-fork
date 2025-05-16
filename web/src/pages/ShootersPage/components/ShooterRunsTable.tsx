@@ -2,8 +2,14 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { InputNumber } from "primereact/inputnumber";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+
+import {
+  ScoresMode,
+  ScoreSourceClassifier,
+  ScoreSourceMajor,
+} from "@data/types/ScoresModes";
 
 import ClassifierCell from "../../../components/ClassifierCell";
 import ClassifierDropdown from "../../../components/ClassifierDropdown";
@@ -14,15 +20,13 @@ import {
   renderPercent,
   clubMatchColumn,
 } from "../../../components/Table";
-import { useIsHFU } from "../../../utils/useIsHFU";
-import { useIsSCSA } from "../../../utils/useIsSCSA";
 
 const HFEdit = ({ value: valueProp, updateWhatIfs, id }) => {
   const [value, setValue] = useState(valueProp || 0);
-  const inputRef = useRef(null);
+  const inputRef = useRef<InputNumber>(null);
 
   useEffect(() => {
-    if (document.activeElement !== inputRef.current.getInput()) {
+    if (document.activeElement !== (inputRef.current?.getInput() as unknown as Element)) {
       setValue(valueProp);
     }
   }, [valueProp]);
@@ -47,17 +51,50 @@ const HFEdit = ({ value: valueProp, updateWhatIfs, id }) => {
   );
 };
 
+interface ShooterRunsTableProps {
+  classifiers: Record<string, any>[];
+  onClassifierSelection: (classifier: string) => void;
+  loading: boolean;
+  updateWhatIfs: (
+    id: string,
+    changes: Record<string, string | number | boolean>,
+    noDebounce?: boolean,
+  ) => void;
+  whatIf: boolean;
+  hidden: boolean;
+  scoresMode: ScoresMode;
+}
+
 const ShooterRunsTable = ({
-  classifiers,
+  classifiers: scores,
   onClassifierSelection,
   loading,
   updateWhatIfs,
   whatIf,
   hidden,
-}) => {
-  const isHFU = useIsHFU();
-  const isSCSA = useIsSCSA();
-  const reportDialogRef = useRef(null);
+  scoresMode,
+}: ShooterRunsTableProps) => {
+  const reportDialogRef = useRef<ReportDialog>(null);
+  const data = useMemo(() => {
+    const allScores = scores ?? [];
+    const filtered =
+      scoresMode === "combined"
+        ? allScores
+        : allScores.filter(c => {
+            if (scoresMode === "classifiers") {
+              return c.source === ScoreSourceClassifier;
+            } else if (scoresMode === "majors") {
+              return c.source === ScoreSourceMajor;
+            }
+          });
+    return filtered.map(c => ({
+      ...c,
+      sdUnix: new Date(c.sd).getTime(),
+      curPercent: c.source === "Major Match" ? -1 : c.curPercent,
+      oldPercent: c.source === "Major Match" ? -1 : c.oldPercent,
+    }));
+  }, [scores, scoresMode]);
+
   if (hidden) {
     return null;
   }
@@ -70,28 +107,9 @@ const ShooterRunsTable = ({
         sortField="sdUnix"
         loading={loading}
         stripedRows
-        /* lazy */
-        value={(classifiers ?? []).map(c => ({
-          ...c,
-          sdUnix: new Date(c.sd).getTime(),
-        }))}
+        value={data}
         tableStyle={{ minWidth: "50rem" }}
-        /*
-    {...sortProps}
-    {...pageProps}
-    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
-    paginatorLeft={<h2>Scores</h2>}
-    paginatorRight={
-      <TableFilter
-        placeholder="Filter by Club or Shooter"
-        onFilterChange={(f) => setFilter(f)}
-      />
-    }
-    totalRecords={runsTotal}
-    filterDisplay="row"
-    */
       >
-        {/*    <Column field="sd" header="Date" /> */}
         <Column
           field="sdUnix"
           header="Date"
@@ -131,7 +149,7 @@ const ShooterRunsTable = ({
               <ClassifierCell
                 division={c.division}
                 info={c.classifierInfo}
-                fallback={c.club_name}
+                fallback={c.matchName || c.club_name}
                 onClick={() => onClassifierSelection?.(c.classifier)}
               />
             )
@@ -139,14 +157,10 @@ const ShooterRunsTable = ({
         />
         <Column
           field="hf"
-          header={isSCSA ? "Time" : "HF"}
+          header="HF"
           style={{ maxWidth: "9.3em" }}
           sortable
           body={(c, { field }) => {
-            if (isSCSA) {
-              const time = c[field];
-              return <span>{(time || 0).toFixed(2)}</span>;
-            }
             if (c.whatIf) {
               return <HFEdit id={c._id} value={c.hf} updateWhatIfs={updateWhatIfs} />;
             }
@@ -159,13 +173,12 @@ const ShooterRunsTable = ({
         <Column
           body={renderPercent}
           field="recPercent"
-          header={isHFU ? "Percent" : "Rec. %"}
+          header="Rec. %"
           sortable
           headerTooltip="Recommended classifier percentage for this score."
           headerTooltipOptions={headerTooltipOptions}
         />
         <Column
-          hidden={isHFU}
           body={renderPercent}
           field="curPercent"
           header="HQ %"
@@ -174,7 +187,6 @@ const ShooterRunsTable = ({
           headerTooltipOptions={headerTooltipOptions}
         />
         <Column
-          hidden={isHFU}
           body={renderPercent}
           field="oldPercent"
           header="Old %"
@@ -208,12 +220,12 @@ const ShooterRunsTable = ({
         />
         <Column hidden field="code" header="Flag" sortable />
         <Column {...clubMatchColumn} />
-        <Column hidden={isHFU} field="source" header="Source" sortable />
+        <Column field="source" header="Source" sortable />
         <Column
           body={c =>
             !c.whatIf && !whatIf ? (
               <ReportDialog.Button
-                onClick={() => reportDialogRef.current.startReport(c)}
+                onClick={() => reportDialogRef.current?.startReport(c)}
               />
             ) : (
               <Button

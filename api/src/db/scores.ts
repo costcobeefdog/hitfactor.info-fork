@@ -16,7 +16,7 @@ import {
 } from "@shared/constants/divisions";
 import { UTCDate } from "@shared/utils/date";
 
-import { matchScoresFor } from "./matchScores";
+import { matchScoresFor, matchScoreToScoreAdapter, ScoreMini } from "./matchScores";
 
 export interface Score {
   upload?: string;
@@ -374,22 +374,36 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
 };
 
 export const scoresForDivisionForShooter = async ({ division, memberNumber }) => {
-  const scores = await Scores.find({
-    division: { $in: divisionsForScoresAdapter(division) },
-    memberNumber,
-    bad: { $ne: true },
-  })
-    .populate("HHFs")
-    .sort({ sd: -1, hf: -1 })
-    .limit(0);
+  const scores = (
+    await Scores.find({
+      division,
+      memberNumber,
+      bad: { $ne: true },
+      source: { $ne: "Major Match" },
+    })
+      .populate("HHFs")
+      .sort({ sd: -1, hf: -1 })
+      .limit(0)
+  ).map(s => s.toObject<ScoreObjectWithVirtuals>({ virtuals: true })) as ScoreMini[];
 
-  return minorHFScoresAdapter(
-    scores.map(s => s.toObject({ virtuals: true })),
-    division,
-  ).map((obj, index) => {
-    obj.index = index;
-    return obj;
-  });
+  const matchScores = await matchScoresFor({ division, memberNumber });
+  const majors = matchScores.filter(ms => ms.level >= 2 && ms.eligible);
+  const matchScoresConverted = majors.map(matchScoreToScoreAdapter);
+  const allScores = scores.concat(matchScoresConverted);
+
+  return allScores
+    .sort((a, b) => {
+      const sda = a.sd.getTime() || 0;
+      const sdb = b.sd.getTime() || 0;
+      if (sda === sdb) {
+        return b.hf - a.hf;
+      }
+      return sdb - sda;
+    })
+    .map((s, index) => {
+      (s as ScoreMini & { index: number }).index = index;
+      return s;
+    });
 };
 
 // TODO: intro same functionality for other sports

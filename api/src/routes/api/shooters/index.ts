@@ -5,7 +5,11 @@ import { classificationDifficulty } from "../../../../../shared/constants/diffic
 import { calculateUSPSAClassification } from "../../../../../shared/utils/classification";
 import { multisort, safeNumSort } from "../../../../../shared/utils/sort";
 import { basicInfoForClassifierCode } from "../../../dataUtil/classifiersData";
-import { matchScoresForClassification } from "../../../db/matchScores";
+import {
+  matchScoresForClassification,
+  scoresForMode,
+  ScoresMode,
+} from "../../../db/matchScores";
 import { RecHHFs } from "../../../db/recHHF";
 import { scoresForDivisionForShooter, shooterScoresChartData } from "../../../db/scores";
 import {
@@ -90,33 +94,13 @@ const shootersQueryAggregation = (params, query) => {
   ]);
 };
 
-const scoresForMode = async (
-  mode: "combo" | "classifiers" | "majors",
-  memberNumber: string,
-  division: string,
-) => {
-  const getClassifiers = async () =>
-    scoresForRecommendedClassification([memberNumber], division);
-  const getMatchScores = async () =>
-    matchScoresForClassification({ memberNumber, division });
-
-  switch (mode) {
-    case "combo":
-      return (await getClassifiers()).concat(await getMatchScores());
-    case "classifiers":
-      return getClassifiers();
-    case "majors":
-      return getMatchScores();
-  }
-};
-
 const reclassificationForProgressMode = async (
-  mode: "combo" | "classifiers" | "majors",
+  mode: ScoresMode,
   memberNumber: string,
   division: string,
 ) => {
   const now = new Date();
-  const scores = await scoresForMode(mode, memberNumber, division);
+  const scores = await scoresForMode({ mode, memberNumbers: [memberNumber], division });
   return calculateUSPSAClassification(
     scores,
     "recPercent",
@@ -164,27 +148,27 @@ const shootersRoutes = async fastify => {
     const info = infos.find(s => s.division === division) || {};
     info.classificationByDivision = infos.reduce((acc, cur) => {
       const {
-        reclassificationsCurPercentCurrent: curHHFCurrent,
         reclassificationsRecPercentUncappedCurrent: recCurrent,
-        reclassificationsCurPercentHigh: curHHFHigh,
         reclassificationsRecPercentUncappedHigh: recHigh,
+        reclassificationsMajorsCurrent: majors,
+        reclassificationsClassifiersCurrent: classifiers,
       } = cur;
 
       acc[cur.division] = {
-        reclassificationsCurPercentCurrent: curHHFCurrent || 0,
         reclassificationsRecPercentUncappedCurrent: recCurrent || 0,
-        reclassificationsCurPercentHigh: curHHFHigh || 0,
         reclassificationsRecPercentUncappedHigh: recHigh || 0,
+        reclassificationsMajorsCurrent: majors || 0,
+        reclassificationsClassifiersCurrent: classifiers || 0,
         age: cur.age,
         age1: cur.age1,
       };
       return acc;
     }, {});
+
     delete info.reclassifications;
     delete info.classes;
     delete info.currents;
     delete info.ages;
-
     delete info.age1s;
 
     return {
@@ -308,6 +292,7 @@ const shootersRoutes = async fastify => {
         benefitHighPercentile: (100 * i) / (all.length - 1),
       }));
   });
+
   fastify.post("/whatif", async req => {
     const { scores, division, memberNumber } = req.body;
     const now = new Date();
@@ -350,10 +335,12 @@ const shootersRoutes = async fastify => {
       }
       return c;
     });
-    const existingRecScores = await scoresForRecommendedClassification([memberNumber]);
-    const existingScores = await allDivisionsScores([memberNumber]);
+    const existingRecScores = await scoresForMode({
+      mode: "combined",
+      memberNumbers: [memberNumber],
+      division,
+    });
     const recScores = dedupeGrandbagging(hydratedScores);
-    const otherDivisionsScores = existingScores.filter(s => s.division !== division);
     const recPercentClassification = calculateUSPSAClassification(
       recScores,
       "recPercent",
@@ -363,16 +350,6 @@ const shootersRoutes = async fastify => {
       classificationDifficulty.window.best,
       classificationDifficulty.window.recent,
       classificationDifficulty.percentCap,
-    );
-    const curPercentClassification = calculateUSPSAClassification(
-      [...hydratedScores, ...otherDivisionsScores],
-      "curPercent",
-      now,
-      "uspsa",
-      4,
-      6,
-      8,
-      100,
     );
 
     return {
@@ -385,14 +362,10 @@ const shootersRoutes = async fastify => {
       recHHFsMap,
       whatIf: {
         recPercent: recPercentClassification[division]?.percent,
-        curPercent: curPercentClassification[division]?.percent,
       },
       scores: hydratedScores,
       existingRec: existingRecScores
-        .filter(s => s.division === "co")
-        .map(({ hf, classifier }) => ({ hf, classifier })),
-      existing: existingScores
-        .filter(s => s.division === "co")
+        .filter(s => s.division === division)
         .map(({ hf, classifier }) => ({ hf, classifier })),
     };
   });

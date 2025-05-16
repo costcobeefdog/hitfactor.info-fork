@@ -42,17 +42,23 @@ const cardRow = (classificationByDivision, div) => {
     age,
     reclassificationsRecPercentUncappedCurrent,
     reclassificationsRecPercentUncappedHigh,
+    reclassificationsMajorsCurrent,
+    reclassificationsClassifiersCurrent,
   } = classificationByDivision?.[div] || {
     hqClass: "U",
     current: 0,
     age: null,
     reclassificationsCurPercentCurrent: 0,
     reclassificationsRecPercentCurrent: 0,
+    reclassificationsMajorsCurrent: 0,
+    reclassificationsClassifiersCurrent: 0,
   };
   return {
     division: tableNameForDiv[div],
     recHigh: reclassificationsRecPercentUncappedHigh || -1,
     recCur: reclassificationsRecPercentUncappedCurrent || -1,
+    majors: reclassificationsMajorsCurrent || -1,
+    classifiers: reclassificationsClassifiersCurrent || -1,
     age: toFixedWithSuffixValueOrPlaceholder(age, 1, "mo"),
   };
 };
@@ -119,11 +125,11 @@ export const ShooterInfoTable = ({ info, division, loading }) => {
             />
             <Column
               align="center"
-              field="recHigh"
+              field="classifiers"
               header="Classifiers"
               body={renderPercent}
             />
-            <Column align="center" field="recHigh" header="Majors" body={renderPercent} />
+            <Column align="center" field="majors" header="Majors" body={renderPercent} />
             <Column field="age" header="Age" />
           </DataTable>
         )}
