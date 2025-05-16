@@ -103,7 +103,11 @@ const ShooterMatchScoresTable = ({
         style={{ minWidth: "18em" }}
         body={c => (
           <ShooterCell
-            data={{ ...c.shooter, shooterFullName: c.shooterFullName }}
+            data={{
+              ...c.shooter,
+              shooterFullName: c.shooterFullName,
+              memberNumber: c.memberNumber,
+            }}
             sport="uspsa"
             onClick={() => navigate(`/shooters/${division}/${c.memberNumber}`)}
           />
