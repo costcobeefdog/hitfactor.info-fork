@@ -1,11 +1,7 @@
 import cx from "classnames";
 import { Textfit } from "react-textfit";
 
-import { useIsHFU } from "../utils/useIsHFU";
-
-export const ClassifierCell = ({ info, onClick, fallback, showScoring, division }) => {
-  const isHFU = useIsHFU();
-
+export const ClassifierCell = ({ info, onClick, fallback, showScoring }) => {
   const { name, code, scoring } = info || {};
   return (
     <div
@@ -21,9 +17,6 @@ export const ClassifierCell = ({ info, onClick, fallback, showScoring, division 
         <div className={cx("font-bold", { "text-color-secondary": !!code })}>
           {code || fallback}
         </div>
-        {isHFU && (
-          <div className="text-xs text-color-secondary">{division?.toUpperCase()}</div>
-        )}
         {showScoring && scoring && (
           <div className="text-xs text-color-secondary">{scoring}</div>
         )}

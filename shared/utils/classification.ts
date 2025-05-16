@@ -5,7 +5,8 @@ import { dateSort, numSort } from "./sort";
 
 import { allDivShortNames, mapAllDivisions } from "../../api/src/dataUtil/divisions";
 
-const uspsaClassificationLetters = ["X", "U", "D", "C", "B", "A", "M", "GM"];
+const uspsaClassificationLetters = ["X", "U", "D", "C", "B", "A", "M", "GM"] as const;
+export type ClassLetter = (typeof uspsaClassificationLetters)[number];
 export const classificationRank = classification =>
   uspsaClassificationLetters.indexOf(classification);
 /* const hasClassification = (classification) =>
@@ -63,7 +64,7 @@ export const highestClassification = classificationsObj =>
     return curClass;
   }, undefined);
 
-export const classForPercent = curPercent => {
+export const classForPercent = (curPercent: number): ClassLetter => {
   if (curPercent <= 0) {
     return "U";
   } else if (curPercent < 40) {

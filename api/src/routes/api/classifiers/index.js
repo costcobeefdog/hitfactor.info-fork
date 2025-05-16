@@ -1,8 +1,9 @@
+import { uspsaClassifiers2025 } from "@shared/constants/classifiers";
+
 import {
   basicInfoForClassifier,
   classifiers,
   ScsaPointsPerString,
-  uspsaClassifiers2025,
 } from "../../../dataUtil/classifiersData";
 import {
   divisionsForScoresAdapter,
