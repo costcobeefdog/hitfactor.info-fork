@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
 
 import uniqBy from "lodash.uniqby";
-import { ObjectId } from "mongoose";
+import { Types } from "mongoose";
+
+import { Match } from "@data/types/Match";
 
 import { scsaMatchInfo } from "./scsaUploads";
 import {
@@ -721,7 +723,7 @@ const metaClassifiersLoop = async (batchSize = 8) => {
   console.log(`${totalCount} classifiers to update`);
 
   let updated = 0;
-  let classifiers = [] as (AfterUploadClassifier & { _id: ObjectId })[];
+  let classifiers = [] as (AfterUploadClassifier & { _id: Types.ObjectId })[];
   do {
     classifiers = await AfterUploadClassifiers.find({}).limit(batchSize).lean();
     if (!classifiers.length) {
@@ -746,7 +748,7 @@ const metaShootersLoop = async (batchSize = 8) => {
   console.log(`${totalCount} shooters to update`);
 
   let updated = 0;
-  let shooters = [] as (AfterUploadShooter & { _id: ObjectId })[];
+  let shooters = [] as (AfterUploadShooter & { _id: Types.ObjectId })[];
   do {
     shooters = await AfterUploadShooters.find({}).limit(batchSize).lean();
     if (!shooters.length) {

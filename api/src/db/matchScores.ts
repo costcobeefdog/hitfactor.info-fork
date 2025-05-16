@@ -83,10 +83,12 @@ export const MatchScores = mongoose.model<typeof MatchScoreSchema>(
   MatchScoreSchema,
 );
 
-export const saveMatchScores = async (matchResults: MatchScore[]) => {
+export const saveMatchScores = async (
+  matchResults: (MatchScore & { _id?: string })[],
+) => {
   try {
     await MatchScores.bulkWrite(
-      matchResults.map(matchScore => ({
+      matchResults.map(({ _id, ...matchScore }) => ({
         updateOne: {
           filter: {
             memberNumberDivision: matchScore.memberNumberDivision,
