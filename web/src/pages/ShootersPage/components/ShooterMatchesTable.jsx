@@ -46,8 +46,8 @@ const ShooterMatchScoresTable = ({
         percentile: (100 * index) / all.length,
         dateUnix: new Date(c.date).getTime(),
       }))
-      .filter(c => c.level >= 2);
-  }, [matches, loading]);
+      .filter(c => mode === "match" || c.level >= 2);
+  }, [matches, loading, mode]);
 
   if (hidden) {
     return null;
