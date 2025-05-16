@@ -1,69 +1,33 @@
 /* eslint-disable no-console */
 import mongoose from "mongoose";
 
-import { ClassificationLetter } from "../../../data/types/USPSA";
-import { divShortNames, mapDivisions, uspsaDivShortNames } from "../dataUtil/divisions";
-
 import { Shooters } from "./shooters";
+
+import { ClassificationLetters } from "../../../data/types/USPSA";
+import { divShortNames, mapDivisions, uspsaDivShortNames } from "../dataUtil/divisions";
 
 const StatsSchema = new mongoose.Schema({}, { strict: false });
 export const Stats = mongoose.model("Stats", StatsSchema);
 
-const addCurClassField = () => ({
-  $addFields: {
-    curClass: {
-      $switch: {
-        default: "U",
-        branches: [
-          {
-            case: { $gte: ["$current", 95] },
-            then: "GM",
-          },
-          {
-            case: {
-              $and: [{ $gte: ["$current", 85] }, { $lt: ["$current", 95] }],
-            },
-            then: "M",
-          },
-          {
-            case: {
-              $and: [{ $gte: ["$current", 75] }, { $lt: ["$current", 85] }],
-            },
-            then: "A",
-          },
-          {
-            case: {
-              $and: [{ $gte: ["$current", 60] }, { $lt: ["$current", 75] }],
-            },
-            then: "B",
-          },
-          {
-            case: {
-              $and: [{ $gte: ["$current", 40] }, { $lt: ["$current", 60] }],
-            },
-            then: "C",
-          },
-          {
-            case: {
-              $and: [{ $gte: ["$current", 0.01] }, { $lt: ["$current", 40] }],
-            },
-            then: "D",
-          },
-        ],
-      },
-    },
-  },
-});
-
 export const statsByDivision = async (field: string) => {
   const byDiv = mapDivisions(() => ({}));
   const dbResults = await Shooters.aggregate([
-    addCurClassField(),
+    {
+      $match: {
+        memberNumberDivision: { $exists: true },
+        division: { $in: uspsaDivShortNames },
+      },
+    },
     {
       $project: {
         division: true,
         [field]: true,
         _id: false,
+      },
+    },
+    {
+      $addFields: {
+        [field]: { $ifNull: [`$${field}`, "U"] },
       },
     },
     {
@@ -94,11 +58,12 @@ export const statsByDivision = async (field: string) => {
   return byDiv;
 };
 
-const classesRanked: ClassificationLetter[] = ["U", "X", "D", "C", "B", "A", "M", "GM"];
+const classesRanked = ClassificationLetters;
 export const statsByAll = async (field: string) => {
   const aggregateResult = await Shooters.aggregate([
     {
       $match: {
+        memberNumberDivision: { $exists: true },
         division: { $in: uspsaDivShortNames },
       },
     },
@@ -108,10 +73,13 @@ export const statsByAll = async (field: string) => {
         [field]: true,
         division: true,
         memberNumber: true,
-        current: true,
       },
     },
-    addCurClassField(),
+    {
+      $addFields: {
+        [field]: { $ifNull: [`$${field}`, "U"] },
+      },
+    },
     {
       $addFields: {
         classRank: {
@@ -188,28 +156,35 @@ const statsByDivAndAll = async (field: string) => {
 export const hydrateStats = async () => {
   console.log("hydrating stats");
   console.time("stats");
-  const byClass = await statsByDivAndAll("class");
-  const byPercent = await statsByDivAndAll("curClass");
-  const byCurHHFPercent = await statsByDivAndAll("curHHFClass");
-  const byRecHHFPercent = await statsByDivAndAll("recClass");
-  const byRecHHFOnlyPercent = await statsByDivAndAll("recHHFOnlyClass");
-  const byRecSoftPercent = await statsByDivAndAll("recSoftClass");
-  const byRecUncappedPercent = await statsByDivAndAll("recUncappedClass");
+  const byCurrent = await statsByDivAndAll("recUncappedClassCurrent");
+  const byHigh = await statsByDivAndAll("recUncappedClassHigh");
 
-  await Stats.updateOne(
-    {},
+  await Stats.bulkWrite([
     {
-      $set: {
-        byClass,
-        byPercent,
-        byCurHHFPercent,
-        byRecHHFPercent,
-        byRecHHFOnlyPercent,
-        byRecSoftPercent,
-        byRecUncappedPercent,
+      updateOne: {
+        filter: {},
+        upsert: true,
+        update: [
+          {
+            $unset: [
+              "byClass",
+              "byPercent",
+              "byCurHHFPercent",
+              "byRecHHFPercent",
+              "byRecHHFOnlyPercent",
+              "byRecSoftPercent",
+              "byRecUncappedPercent",
+            ],
+          },
+          {
+            $set: {
+              byCurrent,
+              byHigh,
+            },
+          },
+        ],
       },
     },
-    { upsert: true },
-  );
+  ]);
   console.timeEnd("stats");
 };

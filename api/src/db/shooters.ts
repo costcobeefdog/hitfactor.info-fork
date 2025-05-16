@@ -73,22 +73,6 @@ ShooterSchema.index({
 });
 ShooterSchema.index({
   division: 1,
-  reclassificationsRecHHFOnlyPercentCurrent: -1,
-});
-ShooterSchema.index({
-  division: 1,
-  reclassificationsRecHHFOnlyPercentCurrent: 1,
-});
-ShooterSchema.index({
-  division: 1,
-  reclassificationsSoftPercentCurrent: -1,
-});
-ShooterSchema.index({
-  division: 1,
-  reclassificationsSoftPercentCurrent: 1,
-});
-ShooterSchema.index({
-  division: 1,
   reclassificationsRecPercentUncappedCurrent: -1,
 });
 ShooterSchema.index({
@@ -387,7 +371,8 @@ export const scoresForRecommendedClassificationByMemberNumber = async memberNumb
 interface ReclassificationBreakdownResult {
   current: number;
   high: number;
-  class: ClassLetter;
+  classCurrent: ClassLetter;
+  classHigh: ClassLetter;
   age: number;
   age1: number;
 }
@@ -397,7 +382,8 @@ const reclassificationBreakdown = (
 ): ReclassificationBreakdownResult => ({
   current: Number((reclassificationInfo?.[division]?.percent ?? 0).toFixed(4)),
   high: Number((reclassificationInfo?.[division]?.highPercent ?? 0).toFixed(4)),
-  class: classForPercent(reclassificationInfo?.[division]?.highPercent),
+  classCurrent: classForPercent(reclassificationInfo?.[division]?.percent),
+  classHigh: classForPercent(reclassificationInfo?.[division]?.highPercent),
   age: reclassificationInfo?.[division]?.age,
   age1: reclassificationInfo?.[division]?.age1,
 });
@@ -484,6 +470,28 @@ export const reclassifyShooters = async shooters => {
                     "hqToBrutalPercent",
                     "hqToCurHHFPercent",
                     "hqToRecPercent",
+                    "reclassificationsCurPercentCurrent",
+                    "reclassificationsRecPercentCurrent",
+                    "curHHFClass",
+                    "curHHFClassRank",
+                    "recClass",
+                    "recClassRank",
+                    "brutalClass",
+                    "brutalClassRank",
+                    "reclassificationsRecHHFOnlyPercentCurrent",
+                    "reclassificationsSoftPercentCurrent",
+                    "recHHFOnlyClass",
+                    "recHHFOnlyClassRank",
+                    "recSoftClass",
+                    "recSoftClassRank",
+                    "recUncappedClass",
+                    "recUncappedClassRank",
+                    "reclassificationsCurPercentHigh",
+                    "reclassificationsRecHHFOnlyPercentHigh",
+                    "reclassificationsSoftPercentHigh",
+                    "reclassificationsRecPercentHigh",
+                    "benefit",
+                    "benefitHigh",
                   ],
                 },
                 {
@@ -504,8 +512,15 @@ export const reclassifyShooters = async shooters => {
                     reclassificationsMajorsCurrent: recalcMajors.current,
                     reclassificationsClassifiersCurrent: recalcClassifiers.current,
 
-                    recUncappedClass: recalcDivRecUncapped.class,
-                    recUncappedClassRank: rankForClass(recalcDivRecUncapped.class),
+                    recUncappedClassCurrent: recalcDivRecUncapped.classCurrent,
+                    recUncappedClassCurrentRank: rankForClass(
+                      recalcDivRecUncapped.classCurrent,
+                    ),
+
+                    recUncappedClassHigh: recalcDivRecUncapped.classHigh,
+                    recUncappedClassHighRank: rankForClass(
+                      recalcDivRecUncapped.classHigh,
+                    ),
                   },
                 },
               ],

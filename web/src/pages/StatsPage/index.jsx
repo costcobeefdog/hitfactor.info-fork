@@ -5,6 +5,11 @@ import { useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 import MultiProgress from "react-multi-progress";
 
+import Activity from "./Activity";
+import Distribution from "./Distribution";
+import ELO from "./ELO";
+import Inconsistencies from "./Inconsistencies";
+
 import divisionPopularity0 from "../../../../data/stats/divisions_0YTD.json";
 import divisionPopularity1 from "../../../../data/stats/divisions_1YTD.json";
 import divisionPopularity2 from "../../../../data/stats/divisions_2YTD.json";
@@ -17,11 +22,6 @@ import divisionPopularity8 from "../../../../data/stats/divisions_8YTD.json";
 import { Row, Column } from "../../components";
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";
-
-import Activity from "./Activity";
-import Distribution from "./Distribution";
-import ELO from "./ELO";
-import Inconsistencies from "./Inconsistencies";
 
 export const ClassificationsChart = ({
   division,
@@ -179,7 +179,6 @@ export const ClassificationsChart = ({
   );
 };
 
-/*
 const ModeSwitch = ({ mode, setMode, modes }) => (
   <div className="card flex justify-content-center mt-4 mb-2 text-xs md:text-sm">
     <SelectButton
@@ -190,7 +189,8 @@ const ModeSwitch = ({ mode, setMode, modes }) => (
       onChange={e => setMode(e.value)}
     />
   </div>
-);*/
+);
+
 const titleForDivMap = {
   opn: "Open",
   co: "Carry Optics",
@@ -205,19 +205,9 @@ const titleForDivMap = {
   all: "All Divisions",
 };
 
-// "By Cur. HHF Percent" => byCurHHFPercent
 const modeMap = {
-  /*
-  HQ: "byClass",
-  "HQ Cur.": "byPercent",
-  */
-  "HQ High": "byCurHHFPercent",
-  /*
-  "Rec. HHF Only": "byRecHHFOnlyPercent",
-  "Rec. Soft": "byRecSoftPercent",
-  Brutal: "byRecHHFPercent",
-  */
-  "Recommended High": "byRecUncappedPercent",
+  Current: "byCurrent",
+  High: "byHigh",
 };
 const modes = Object.keys(modeMap);
 const modeBucketForMode = mode => modeMap[mode];
@@ -307,8 +297,8 @@ const Divisions = () => (
 
 // main "page" of this file
 export const StatsPage = () => {
-  const [mode /*, setMode*/] = useState(modes[1]);
-  // const modeSwitchProps = { modes, mode, setMode };
+  const [mode, setMode] = useState(modes[0]);
+  const modeSwitchProps = { modes, mode, setMode };
   const modeBucket = modeBucketForMode(mode);
   const [includeU, setChecked] = useState(false);
   const { json: apiData } = useApi("/classifications");
@@ -328,7 +318,7 @@ export const StatsPage = () => {
     <div className="p-0 md:px-4">
       <TabView panelContainerClassName="p-0 md:px-4">
         <TabPanel header="Pie Charts" className="p-0 text-sm md:text-base">
-          {/*<ModeSwitch {...modeSwitchProps} />*/}
+          <ModeSwitch {...modeSwitchProps} />
           <div className="card flex justify-content-center m-0 mt-4">
             Include Unclassified
             <Checkbox onChange={e => setChecked(e.checked)} checked={includeU} />
@@ -438,7 +428,7 @@ export const StatsPage = () => {
         </TabPanel>
 
         <TabPanel header="Alignment" className="p-0 text-sm md:text-base">
-          {/*<ModeSwitch {...modeSwitchProps} />*/}
+          <ModeSwitch {...modeSwitchProps} />
           <div style={{ width: "100%", overflowX: "auto" }}>
             <div
               style={{
