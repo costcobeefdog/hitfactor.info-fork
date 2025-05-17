@@ -208,7 +208,6 @@ const shootersRoutes = async fastify => {
     })
       .select([
         "memberNumber",
-        //"name",
         "reclassificationsRecPercentUncappedCurrent",
         "reclassificationsRecPercentUncappedHigh",
         "reclassificationsMajorsCurrent",
