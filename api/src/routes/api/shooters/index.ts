@@ -1,23 +1,16 @@
 import sortedUniqBy from "lodash.sorteduniqby";
 import uniqBy from "lodash.uniqby";
 
+import { ScoresMode } from "@data/types/ScoresModes";
+
 import { classificationDifficulty } from "../../../../../shared/constants/difficulty";
 import { calculateUSPSAClassification } from "../../../../../shared/utils/classification";
 import { multisort, safeNumSort } from "../../../../../shared/utils/sort";
 import { basicInfoForClassifierCode } from "../../../dataUtil/classifiersData";
-import {
-  matchScoresForClassification,
-  scoresForMode,
-  ScoresMode,
-} from "../../../db/matchScores";
+import { scoresForMode } from "../../../db/matchScores";
 import { RecHHFs } from "../../../db/recHHF";
 import { scoresForDivisionForShooter, shooterScoresChartData } from "../../../db/scores";
-import {
-  Shooters,
-  allDivisionsScores,
-  dedupeGrandbagging,
-  scoresForRecommendedClassification,
-} from "../../../db/shooters";
+import { Shooters, dedupeGrandbagging } from "../../../db/shooters";
 import {
   addPlaceAndPercentileAggregation,
   multiSortAndPaginate,
@@ -208,96 +201,43 @@ const shootersRoutes = async fastify => {
 
   fastify.get("/:division/chart", async req => {
     const { division } = req.params;
+    const { xMode, colorMode, mode } = req.query;
     const shootersTable = await Shooters.find({
       division,
-      reclassificationsRecPercentCurrent: { $gt: 0 },
+      reclassificationsRecPercentUncappedCurrent: { $gt: 0 },
     })
       .select([
-        "current",
-        "reclassificationsCurPercentCurrent",
-        "reclassificationsRecHHFOnlyPercentCurrent",
-        "reclassificationsSoftPercentCurrent",
-        "reclassificationsRecPercentCurrent",
-        "reclassificationsRecPercentUncappedCurrent",
-        "reclassificationsCurPercentHigh",
-        "reclassificationsRecHHFOnlyPercentHigh",
-        "reclassificationsSoftPercentHigh",
-        "reclassificationsRecPercentHigh",
-        "reclassificationsRecPercentUncappedHigh",
         "memberNumber",
-        "benefit",
-        "benefitHigh",
+        //"name",
+        "reclassificationsRecPercentUncappedCurrent",
+        "reclassificationsRecPercentUncappedHigh",
+        "reclassificationsMajorsCurrent",
+        "reclassificationsClassifiersCurrent",
+        "elo",
       ])
       .lean()
       .limit(0);
 
-    return shootersTable
-      .map(c => ({
-        curPercent: c.current,
-        curHHFPercent: c.reclassificationsCurPercentCurrent,
-        recHHFOnlyPercent: c.reclassificationsRecHHFOnlyPercentCurrent,
-        recSoftPercent: c.reclassificationsSoftPercentCurrent,
-        recPercent: c.reclassificationsRecPercentCurrent,
-        recPercentUncapped: c.reclassificationsRecPercentUncappedCurrent,
-        curHHFPercentHigh: c.reclassificationsCurPercentHigh,
-        recHHFOnlyPercentHigh: c.reclassificationsRecHHFOnlyPercentHigh,
-        recSoftPercentHigh: c.reclassificationsSoftPercentHigh,
-        recPercentHigh: c.reclassificationsRecPercentHigh,
-        recPercentUncappedHigh: c.reclassificationsRecPercentUncappedHigh,
-        memberNumber: c.memberNumber,
-        benefit: c.benefit,
-        benefitHigh: c.benefitHigh,
-      }))
-      .sort(safeNumSort("curPercent"))
+    const mapped = shootersTable.map(c => ({
+      recPercentUncapped: c.reclassificationsRecPercentUncappedCurrent,
+      recPercentUncappedHigh: c.reclassificationsRecPercentUncappedHigh,
+      majors: c.reclassificationsMajorsCurrent,
+      classifiers: c.reclassificationsClassifiersCurrent,
+      memberNumber: c.memberNumber,
+    }));
+    if (mode === "elo") {
+      return mapped;
+    }
+
+    return mapped
+      .filter(c => !!c[xMode] && !!c[colorMode])
+      .sort(safeNumSort(xMode))
       .map((c, i, all) => ({
         ...c,
-        curPercentPercentile: (100 * i) / (all.length - 1),
+        x: c[xMode],
+        y: (100 * i) / (all.length - 1),
       }))
-      .sort(safeNumSort("curHHFPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        curHHFPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("curHHFPercentHigh"))
-      .map((c, i, all) => ({
-        ...c,
-        curHHFPercentHighPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recHHFOnlyPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        recHHFOnlyPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recSoftPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        recSoftPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recPercentUncapped"))
-      .map((c, i, all) => ({
-        ...c,
-        recPercentUncappedPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recPercentUncappedHigh"))
-      .map((c, i, all) => ({
-        ...c,
-        recPercentUncappedHighPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        recPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("benefit", { allowNegatives: true }))
-      .map((c, i, all) => ({
-        ...c,
-        benefitPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("benefitHigh", { allowNegatives: true }))
-      .map((c, i, all) => ({
-        ...c,
-        benefitHighPercentile: (100 * i) / (all.length - 1),
-      }));
+      .filter(c => c.y > 0 && c.x > 0);
   });
 
   fastify.post("/whatif", async req => {

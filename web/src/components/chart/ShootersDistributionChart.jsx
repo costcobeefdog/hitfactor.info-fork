@@ -2,12 +2,6 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { SelectButton } from "primereact/selectbutton";
 import { useMemo, useState } from "react";
 
-import { classForPercent } from "../../../../shared/utils/classification";
-import { weibulCDFFactory } from "../../../../shared/utils/weibull";
-import { useApi } from "../../utils/client";
-import { bgColorForClass } from "../../utils/color";
-import { useIsHFU } from "../../utils/useIsHFU";
-
 import {
   annotationColor,
   r5annotationColor,
@@ -21,15 +15,15 @@ import {
 import { useAsyncWeibull } from "./useAsyncWeibull";
 import { WeibullStatus } from "./WeibullStatus";
 
+import { classForPercent } from "../../../../shared/utils/classification";
+import { weibulCDFFactory } from "../../../../shared/utils/weibull";
+import { useApi } from "../../utils/client";
+import { bgColorForClass } from "../../utils/color";
+import { useIsHFU } from "../../utils/useIsHFU";
+
 const fieldModeMap = {
-  //HQ: "curPercent",
-  //HQ: "curHHFPercent",
-  //"HQ High": "curHHFPercentHigh",
-  /*
-  "Rec.HHFOnly": "recHHFOnlyPercent",
-  "Rec.Soft": "recSoftPercent",
-  "Rec.Brutal": "recPercent",
-  */
+  Classifiers: "classifiers",
+  Majors: "majors",
   Recommended: "recPercentUncapped",
   "Recommended High": "recPercentUncappedHigh",
 };
@@ -42,23 +36,14 @@ export const ShootersDistributionChart = ({ division, style }) => {
   const [colorModeState, setColorMode] = useState(recommendedMode);
   const [xModeState, setXMode] = useState(recommendedMode);
 
-  // only use recommended in HFU
-  const colorMode = isHFU ? recommendedMode : colorModeState;
-  const xMode = isHFU ? recommendedMode : xModeState;
+  const colorMode = colorModeState;
+  const xMode = xModeState;
 
-  const { json: data, loading } = useApi(`/shooters/${division}/chart`);
-
-  const curModeData = useMemo(
-    () =>
-      data
-        ?.map(c => ({
-          ...c,
-          x: c[fieldForMode(xMode)],
-          y: c[`${fieldForMode(xMode)}Percentile`],
-        }))
-        ?.filter(c => c.y > 0 && c.x > 0) || [],
-    [data, xMode],
+  const { json: data, loading } = useApi(
+    `/shooters/${division}/chart?xMode=${fieldForMode(xMode)}&colorMode=${fieldForMode(colorMode)}`,
   );
+
+  const curModeData = useMemo(() => data || [], [data]);
 
   const percentiles = useMemo(
     () => [

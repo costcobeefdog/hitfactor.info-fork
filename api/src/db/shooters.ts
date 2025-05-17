@@ -31,11 +31,25 @@ export interface Shooter {
   memberNumber: string;
   memberNumberDivision: string;
   name: string;
+  memberId: string;
+  current: number;
+  hqClass: string;
+  hqClassRank: number;
+  class: string;
 
-  reclassificationsCurPercentCurrent: number;
+  elo?: number;
+
+  // current
   reclassificationsRecPercentUncappedCurrent: number;
-  reclassificationsRecPercentUncappedHigh: number;
+  recUncappedClassCurrent: string;
+  recUncappedClassCurrentRank: number;
 
+  // high
+  reclassificationsRecPercentUncappedHigh: number;
+  recUncappedClassHigh: string;
+  recUncappedClassHighRank: number;
+
+  // majors vs classifiers
   reclassificationsMajorsCurrent: number;
   reclassificationsClassifiersCurrent: number;
 
