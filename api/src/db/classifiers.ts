@@ -1,29 +1,30 @@
 /* eslint-disable no-console */
+
 import transform from "lodash.transform";
 import uniqBy from "lodash.uniqby";
 import mongoose, { Model } from "mongoose";
 
-import recHHFsPSData from "../../../data/recHHFsPSData.json";
-import { stringSort } from "../../../shared/utils/sort";
-import { correlation } from "../../../shared/utils/weibull";
 import {
   basicInfoForClassifier,
   classifiers as _classifiers,
   classifiersByNumber,
   ClassifierJSON,
-} from "../dataUtil/classifiersData";
+} from "@api/dataUtil/classifiersData";
 import {
   divisionsForScoresAdapter,
   divShortNames,
   L10_OPTICS_EFFECTIVE_TS,
   PROD_15_EFFECTIVE_TS,
-} from "../dataUtil/divisions";
-import { hhfsForDivision } from "../dataUtil/hhf";
-import { HF, Percent } from "../dataUtil/numbers";
+} from "@api/dataUtil/divisions";
+import { hhfsForDivision } from "@api/dataUtil/hhf";
+import { HF, Percent } from "@api/dataUtil/numbers";
+import recHHFsPSData from "@data/recHHFsPSData.json";
+import { RecHHF } from "@data/types/RecHHF";
+import { stringSort } from "@shared/utils/sort";
+import { correlation } from "@shared/utils/weibull";
 
-import { RecHHFs, RecHHF } from "./recHHF";
-import { minorHFScoresAdapter, ScoreObjectWithVirtuals, Scores } from "./scores";
-import { Score } from "./scores";
+import { RecHHFs } from "./recHHF";
+import { minorHFScoresAdapter, ScoreObjectWithVirtuals, Scores, Score } from "./scores";
 
 export interface Classifier {
   classifier: string;

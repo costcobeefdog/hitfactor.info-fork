@@ -2,39 +2,38 @@
 
 import uniqBy from "lodash.uniqby";
 
-import { connect } from "../../api/src/db";
 import {
+  connect,
   MatchBumps,
   matchBumpsForMatchResults,
   saveMatchBumps,
-} from "../../api/src/db/matchBumps";
-import { Matches } from "../../api/src/db/matches";
-import {
-  backfillClassifications,
+  backfillComboClassifications,
   MatchScores,
   saveMatchScores,
-} from "../../api/src/db/matchScores";
-import { matchBumpThresholds } from "../../shared/constants/difficulty";
+} from "@api/db";
+import { matchBumpThresholds } from "@shared/constants/difficulty";
 
 const recalculateBumpForMatch = async (uuid: string) => {
   const scores = await MatchScores.find({ upload: uuid }).limit(0).lean();
-  const backfilled = await backfillClassifications(scores);
+  const backfilled = await backfillComboClassifications(scores);
   await saveMatchScores(backfilled);
   const bumps = matchBumpsForMatchResults(backfilled);
   await saveMatchBumps(bumps);
 };
 
-const rebump = async () => {
+/**
+ * Recalculates MatchScores and MatchBumps for all potentially eligible matches.
+ * Uses >= 30 datapoints filter on MatchBumps only.
+ *
+ * DOES NOT SAVE SHOOTER'S CLASSIFICATION.
+ */
+const rebumpAll = async () => {
   await connect();
 
   const maybeEligibleMatches = await MatchBumps.find({
-    filteredDataPoints: { $gte: matchBumpThresholds.filteredDataPoints },
-    filteredCorrelation: { $gte: matchBumpThresholds.filteredCorrelation },
-    $or: [
-      { filteredMasters: { $gte: matchBumpThresholds.filteredMasters } },
-      { filteredGrandmasters: { $gte: matchBumpThresholds.filteredGrandmasters } },
-    ],
+    dataPoints: { $gte: matchBumpThresholds.filteredDataPointsMaybe },
   })
+    .sort({ date: 1 })
     .limit(0)
     .select(["upload", "division"])
     .lean();
@@ -45,24 +44,12 @@ const rebump = async () => {
   );
   console.log(`${uuids.length} possibly eligible matches`);
 
-  const matches = await Matches.find({ uuid: { $in: uuids } })
-    .limit(0)
-    .select(["name", "created", "updated"])
-    .sort({ created: 1 });
-  console.log(
-    JSON.stringify(
-      matches.map(m => m.name),
-      null,
-      2,
-    ),
-  );
-
   let i = 0;
   for (const uuid of uuids) {
-    console.log(`processing ${++i}/${uuids.length}`);
+    console.log(`processing ${uuid} ${++i}/${uuids.length}`);
     await recalculateBumpForMatch(uuid);
   }
   process.exit(0);
 };
 
-rebump();
+rebumpAll();

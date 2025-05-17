@@ -28,7 +28,7 @@ module.exports = {
     "arrow-parens": ["error", "as-needed"],
     "no-console": ["error", { allow: ["error"] }],
     "no-empty": ["error", {allowEmptyCatch: true}],
-    "@typescript-eslint/no-unused-vars": ["error",{ caughtErrors: "none"}],
+    "@typescript-eslint/no-unused-vars": ["error",{ caughtErrors: "none", ignoreRestSiblings: true }],
     "@typescript-eslint/no-explicit-any": "error",
     "no-use-before-define": "off",
 
@@ -63,6 +63,14 @@ module.exports = {
         groups: ["builtin", "external", "internal", "sibling", "parent", "index"],
         "newlines-between": "always",
         alphabetize: { order: "asc", caseInsensitive: true },
+        "pathGroups": [
+          {
+            "pattern": "@{api,web,data,shared}/**",
+            "group": "internal",
+            "position": "before",
+          },
+        ],
+        "pathGroupsExcludedImportTypes": ["builtin"],
       },
     ],
     "import/prefer-default-export": "off",
@@ -112,17 +120,6 @@ module.exports = {
     "react/jsx-boolean-value": "error",
     "react/jsx-no-useless-fragment": ["error", { allowExpressions: true }],
     "react-hooks/exhaustive-deps": "error",
-
-    "import/order": [
-      "error",
-      {
-        groups: ["builtin", "external", "parent", "sibling", "index"],
-        "newlines-between": "always",
-        alphabetize: { order: "asc", caseInsensitive: true },
-      },
-    ],
-    "import/prefer-default-export": 0,
-    "import/extensions": 0,
 
     "no-console": ["error", { allow: ["warn", "error"] }],
 

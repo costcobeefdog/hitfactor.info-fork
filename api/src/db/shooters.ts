@@ -3,52 +3,58 @@ import uniqBy from "lodash.uniqby";
 import mongoose, { Model, Schema } from "mongoose";
 import { v4 as randomUUID } from "uuid";
 
+import { ScoreObjectWithVirtuals, Scores } from "@api/db/scores";
+import { getField, percentAggregationOp } from "@api/db/utils";
+
+import { scoresForMode } from "./matchScores";
+
 import { classificationDifficulty } from "../../../shared/constants/difficulty";
 import {
   calculateUSPSAClassification,
   classForPercent,
-  ClassificationMode,
   ClassificationsRecord,
+  ClassLetter,
   rankForClass,
 } from "../../../shared/utils/classification";
 import {
   divIdToShort,
   hfuDivisionCompatabilityMap,
   hfuDivisionsShortNamesThatNeedMinorHF,
-  mapDivisions,
   uspsaDivShortNames,
 } from "../dataUtil/divisions";
 import { eloPointForShooter } from "../dataUtil/elo";
 import { psClassUpdatesByMemberNumber } from "../dataUtil/uspsa";
-import { loadJSON, processImportAsyncSeq } from "../utils";
-
-import { ScoreObjectWithVirtuals, Scores } from "./scores";
-import { getField, percentAggregationOp } from "./utils";
-
-const memberIdToNumberMap = loadJSON("../../data/meta/memberIdToNumber.json");
-const memberNumberFromMemberData = memberData => {
-  try {
-    const easy = memberData.member_number;
-    if (!easy || easy.trim().toLowerCase() === "private") {
-      return memberIdToNumberMap[String(memberData.member_id)];
-    }
-    return easy;
-  } catch (err) {
-    console.log(err);
-  }
-
-  return "BAD DATA";
-};
 
 // TODO: finish up the interfaces as schema
 export interface Shooter {
+  division: string;
   memberNumber: string;
   memberNumberDivision: string;
   name: string;
+  memberId: string;
+  current: number;
+  hqClass: string;
+  hqClassRank: number;
+  class: string;
 
-  reclassificationsCurPercentCurrent: number;
+  elo?: number;
+
+  // current
   reclassificationsRecPercentUncappedCurrent: number;
+  recUncappedClassCurrent: string;
+  recUncappedClassCurrentRank: number;
+
+  // high
   reclassificationsRecPercentUncappedHigh: number;
+  recUncappedClassHigh: string;
+  recUncappedClassHighRank: number;
+
+  // majors vs classifiers
+  reclassificationsMajorsCurrent: number;
+  reclassificationsClassifiersCurrent: number;
+
+  age: number;
+  age1: number;
 }
 
 type ShooterModel = Model<Shooter, object>;
@@ -81,27 +87,27 @@ ShooterSchema.index({
 });
 ShooterSchema.index({
   division: 1,
-  reclassificationsRecHHFOnlyPercentCurrent: -1,
-});
-ShooterSchema.index({
-  division: 1,
-  reclassificationsRecHHFOnlyPercentCurrent: 1,
-});
-ShooterSchema.index({
-  division: 1,
-  reclassificationsSoftPercentCurrent: -1,
-});
-ShooterSchema.index({
-  division: 1,
-  reclassificationsSoftPercentCurrent: 1,
-});
-ShooterSchema.index({
-  division: 1,
   reclassificationsRecPercentUncappedCurrent: -1,
 });
 ShooterSchema.index({
   division: 1,
   reclassificationsRecPercentUncappedCurrent: 1,
+});
+ShooterSchema.index({
+  division: 1,
+  reclassificationsMajorsCurrent: -1,
+});
+ShooterSchema.index({
+  division: 1,
+  reclassificationsMajorsCurrent: 1,
+});
+ShooterSchema.index({
+  division: 1,
+  reclassificationsClassifiersCurrent: -1,
+});
+ShooterSchema.index({
+  division: 1,
+  reclassificationsClassifiersCurrent: 1,
 });
 
 export const Shooters = mongoose.model("Shooters", ShooterSchema);
@@ -130,7 +136,9 @@ export const allDivisionsScores = async memberNumbers => {
   const data = await query;
 
   return data.map(doc => {
-    const obj: ScoreObjectWithVirtuals = doc.toObject({ virtuals: true });
+    const obj: ScoreObjectWithVirtuals = doc.toObject<ScoreObjectWithVirtuals>({
+      virtuals: true,
+    });
     const classifier = obj.isMajor ? obj._id : obj.classifier;
     const classifierDivision = `${classifier}:${obj.division}`;
     return { ...obj, classifier, classifierDivision };
@@ -224,17 +232,20 @@ export const dedupeGrandbagging = (scores: ScoreObjectWithVirtuals[]) =>
 
 export const scoresForRecommendedClassification = (
   memberNumbers: string[],
+  division?: string,
   until?: Date,
 ) =>
   Scores.aggregate([
     {
       $match: {
         bad: { $ne: true },
+        source: { $ne: "Major Match" }, // majors only come from MatchScores now
         memberNumber: { $in: memberNumbers },
         $or: [{ hf: { $gt: 0 } }, { percent: { $gt: 0 } }],
 
-        // optional date filtering for matchBump historical scores
-        ...(!until ? {} : { sd: { $lte: until } }),
+        // optional filtering
+        ...(!division ? {} : { division }),
+        ...(!until ? {} : { sd: { $lt: until } }),
       },
     },
     {
@@ -362,7 +373,7 @@ export const scoresForRecommendedClassification = (
   ]);
 
 export const scoresForRecommendedClassificationByMemberNumber = async memberNumbers => {
-  const scores = await scoresForRecommendedClassification(memberNumbers);
+  const scores = await scoresForMode({ mode: "combined", memberNumbers });
   return scores.reduce((acc, cur) => {
     const curMemberScores = acc[cur.memberNumber] ?? [];
     curMemberScores.push(cur);
@@ -371,292 +382,67 @@ export const scoresForRecommendedClassificationByMemberNumber = async memberNumb
   }, {});
 };
 
+interface ReclassificationBreakdownResult {
+  current: number;
+  high: number;
+  classCurrent: ClassLetter;
+  classHigh: ClassLetter;
+  age: number;
+  age1: number;
+}
 const reclassificationBreakdown = (
   reclassificationInfo: ClassificationsRecord,
   division: string,
-) => ({
+): ReclassificationBreakdownResult => ({
   current: Number((reclassificationInfo?.[division]?.percent ?? 0).toFixed(4)),
   high: Number((reclassificationInfo?.[division]?.highPercent ?? 0).toFixed(4)),
-  currents: mapDivisions(div => reclassificationInfo?.[div]?.percent), //< TODO: unused?
-  class: classForPercent(reclassificationInfo?.[division]?.highPercent),
-  classes: mapDivisions(div => classForPercent(reclassificationInfo?.[div]?.highPercent)),
+  classCurrent: classForPercent(reclassificationInfo?.[division]?.percent),
+  classHigh: classForPercent(reclassificationInfo?.[division]?.highPercent),
+  age: reclassificationInfo?.[division]?.age,
+  age1: reclassificationInfo?.[division]?.age1,
 });
 
-// upload from uspsa api
-export const shooterObjectsFromClassificationFile = async c => {
-  if (!c?.member_data) {
-    return [];
-  }
-  const memberNumber = memberNumberFromMemberData(c.member_data);
-  const recMemberScores = await scoresForRecommendedClassification([memberNumber]);
-  const curMemberScores = await allDivisionsScores([memberNumber]);
-
-  return shooterObjectsForMemberNumber(c, recMemberScores, curMemberScores);
-};
-
-// upload from uspsa api OR hydration from uspsa json files
-const shooterObjectsForMemberNumber = (c, recMemberScores, curMemberScores) => {
-  if (!c?.member_data) {
-    return [];
-  }
-  const memberNumber = memberNumberFromMemberData(c.member_data);
-  const hqClasses = reduceByDiv(c.classifications, r => r.class);
-  const hqCurrents = reduceByDiv(c.classifications, r => Number(r.current_percent));
-  const now = new Date();
-  const recalcByCurPercent = calculateUSPSAClassification(
-    curMemberScores,
-    "curPercent",
-    now,
-    "uspsa",
-    4,
-    6,
-    8,
-    100,
+const recalc = (scores, date: Date, division: string) =>
+  reclassificationBreakdown(
+    calculateUSPSAClassification(
+      scores,
+      "recPercent",
+      date,
+      "brutal",
+      classificationDifficulty.window.min,
+      classificationDifficulty.window.best,
+      classificationDifficulty.window.recent,
+      classificationDifficulty.percentCap,
+    ),
+    division,
   );
-  const recalcByRecPercent = calculateUSPSAClassification(
-    recMemberScores,
-    "recPercent",
-    now,
-    "brutal",
-    classificationDifficulty.window.min,
-    classificationDifficulty.window.best,
-    classificationDifficulty.window.recent,
-    classificationDifficulty.percentCap,
-  );
-
-  return Object.values(
-    mapDivisions(division => {
-      const recalcDivCur = reclassificationBreakdown(recalcByCurPercent, division);
-      const recalcDivRec = reclassificationBreakdown(recalcByRecPercent, division);
-
-      const hqClass = hqClasses[division];
-      const hqCurrent = hqCurrents[division];
-      const hqToCurHHFPercent = hqCurrent - recalcDivCur.current;
-      const hqToRecPercent = hqCurrent - recalcDivRec.current;
-
-      return {
-        data: c.member_data,
-        memberId: c.member_data.member_id,
-        memberNumber,
-        name: [c.member_data.first_name, c.member_data.last_name, c.member_data.suffix]
-          .filter(Boolean)
-          .join(" "),
-
-        hqClass,
-        hqClassRank: rankForClass(hqClass),
-        class: hqClass,
-        current: hqCurrent,
-
-        age: recalcByRecPercent?.[division]?.age,
-        age1: recalcByRecPercent?.[division]?.age1,
-
-        reclassificationsCurPercentCurrent: recalcDivCur.current, // aka curHHFPercent
-        reclassificationsRecPercentCurrent: recalcByRecPercent.current, // aka recPercent
-
-        curHHFClass: recalcDivCur.class,
-        curHHFClassRank: rankForClass(recalcDivCur.class),
-        recClass: recalcDivRec.class,
-        recClassRank: rankForClass(recalcDivRec.class),
-
-        hqToCurHHFPercent,
-        hqToRecPercent,
-        division,
-        memberNumberDivision: [memberNumber, division].join(":"),
-      };
-    }),
-  );
-};
-
-// hydration from uspsa json files
-const processBatchHydrateShooters = async batchRaw => {
-  const batch = batchRaw.filter(c => !!c?.member_data);
-  const memberNumbers = batch.map(c => memberNumberFromMemberData(c.member_data));
-  const [recScoresByMemberNumber, curScoresByMemberNumber] = await Promise.all([
-    scoresForRecommendedClassificationByMemberNumber(memberNumbers),
-    allDivisionsScoresByMemberNumber(memberNumbers),
-  ]);
-
-  const shooterObjects = batch
-    .map(c => {
-      const memberNumber = memberNumberFromMemberData(c.member_data);
-      return shooterObjectsForMemberNumber(
-        c,
-        recScoresByMemberNumber[memberNumber],
-        curScoresByMemberNumber[memberNumber],
-      );
-    })
-    .flat();
-
-  await Shooters.bulkWrite(
-    shooterObjects.map(s => ({
-      updateOne: {
-        filter: {
-          memberNumber: s.memberNumber,
-          division: s.division,
-        },
-        update: { $set: s },
-        upsert: true,
-      },
-    })),
-  );
-  process.stdout.write(".");
-};
-
-interface USPSAAPIClassificationBlob {
-  id: string; // number in string
-  division_id: string; // number in string
-  division: string;
-  class: "X" | "U" | "D" | "C" | "B" | "A" | "M" | "GM";
-  current_percent: string; // number in string
-  high_percent: string; // number in string
-}
-
-interface USPSAAPIClassificationResponse {
-  value: {
-    status: number;
-    member_data: {
-      member_id: string; // number in string
-      member_number: string;
-      first_name: string;
-      middle_name: string;
-      last_name: string;
-      suffix: string;
-      salutation: string;
-      joined_date: string; // date in format: "1986-12-15 00:00:00";
-      expiration_date: string; // date in format : "2024-12-02 00:00:00";
-      life_member: string; // number 1 or 0 in string
-      privacy: string; // number 1 or 0 in string
-    };
-    classifications: USPSAAPIClassificationBlob[];
-  };
-}
-
-// hydration from uspsa json files
-const batchHydrateShooters = async letter => {
-  process.stdout.write("\n");
-  process.stdout.write(letter);
-  process.stdout.write(": ");
-
-  let curBatch = [] as USPSAAPIClassificationResponse[];
-
-  await processImportAsyncSeq(
-    "../../data/imported",
-    new RegExp(`classification\\.${letter}\\.\\d+\\.json`),
-    async obj => {
-      curBatch.push(obj.value as USPSAAPIClassificationResponse);
-      if (curBatch.length >= 128) {
-        await processBatchHydrateShooters(curBatch);
-        curBatch = [];
-      }
-    },
-  );
-
-  // final batch that isn't big enough to be processed before
-  if (curBatch.length) {
-    await processBatchHydrateShooters(curBatch);
-  }
-};
-
-export const hydrateShooters = async () => {
-  console.log("hydrating shooters");
-  console.time("shooters");
-
-  await batchHydrateShooters("gm");
-  await batchHydrateShooters("m");
-  await batchHydrateShooters("a");
-  await batchHydrateShooters("b");
-  await batchHydrateShooters("c");
-  await batchHydrateShooters("d");
-
-  console.timeEnd("shooters");
-};
 
 export const reclassifyShooters = async shooters => {
   try {
+    const now = new Date();
     const memberNumbers = uniqBy(shooters, s => s.memberNumber).map(s => s.memberNumber);
-    const [recScoresByMemberNumber, curScoresByMemberNumber, psClassUpdates] =
-      await Promise.all([
-        scoresForRecommendedClassificationByMemberNumber(memberNumbers),
-        allDivisionsScoresByMemberNumber(memberNumbers),
-        psClassUpdatesByMemberNumber(),
-      ]);
+    const [recScoresByMemberNumber, psClassUpdates] = await Promise.all([
+      scoresForRecommendedClassificationByMemberNumber(memberNumbers),
+      psClassUpdatesByMemberNumber(),
+    ]);
 
     const updates = shooters
       .filter(
         ({ memberNumber, division }) =>
-          // TODO: Implement Reclassify Shooters for SCSA
-          // https://github.com/CodeHowlerMonkey/hitfactor.info/issues/69
           memberNumber && uspsaDivShortNames.find(x => x === division),
       )
       .map(({ memberNumber, division, name }) => {
         if (!memberNumber) {
           return [];
         }
-        const recMemberScores = recScoresByMemberNumber[memberNumber];
-        const curMemberScores = curScoresByMemberNumber[memberNumber];
-        const now = new Date();
-        const recalcByCurPercent = calculateUSPSAClassification(
-          curMemberScores,
-          "curPercent",
-          now,
-          "uspsa",
-          4,
-          6,
-          8,
-          100,
-        );
-        const recalcByRecHHFOnlyPercent = calculateUSPSAClassification(
-          curMemberScores, // cur, not rec, to enable old D flag behavior
-          "recPercent",
-          now,
-          "uspsa",
-          4,
-          6,
-          8,
-          100,
-        );
-        const recalcByRecPercentSoft = calculateUSPSAClassification(
-          curMemberScores, // cur, not rec, to enable old D flag behavior
-          "recPercent",
-          now,
-          "soft",
-          classificationDifficulty.window.min,
-          classificationDifficulty.window.best,
-          classificationDifficulty.window.recent,
-          100,
-        );
-        const recalcByRecPercent = calculateUSPSAClassification(
-          recMemberScores,
-          "recPercent",
-          now,
-          "brutal",
-          classificationDifficulty.window.min,
-          classificationDifficulty.window.best,
-          classificationDifficulty.window.recent,
-          100,
-        );
-        const recalcByRecPercentUncapped = calculateUSPSAClassification(
-          recMemberScores,
-          "recPercent",
-          now,
-          "brutal",
-          classificationDifficulty.window.min,
-          classificationDifficulty.window.best,
-          classificationDifficulty.window.recent,
-          classificationDifficulty.percentCap,
-        );
+        const recScores = recScoresByMemberNumber[memberNumber] || [];
+        const recalcDivRecUncapped = recalc(recScores, now, division);
 
-        const recalcDivCur = reclassificationBreakdown(recalcByCurPercent, division);
-        const recalcDivRecHHFOnly = reclassificationBreakdown(
-          recalcByRecHHFOnlyPercent,
-          division,
-        );
-        const recalcDivSoft = reclassificationBreakdown(recalcByRecPercentSoft, division);
-        const recalcDivRec = reclassificationBreakdown(recalcByRecPercent, division);
-        const recalcDivRecUncapped = reclassificationBreakdown(
-          recalcByRecPercentUncapped,
-          division,
-        );
+        const majorMatchScores = recScores.filter(s => s.source === "Major Match");
+        const recalcMajors = recalc(majorMatchScores, now, division);
+
+        const classifierScores = recScores.filter(s => s.source !== "Major Match");
+        const recalcClassifiers = recalc(classifierScores, now, division);
 
         const hqClass = psClassUpdates?.[memberNumber]?.[division] || "U";
 
@@ -691,6 +477,28 @@ export const reclassifyShooters = async shooters => {
                     "hqToBrutalPercent",
                     "hqToCurHHFPercent",
                     "hqToRecPercent",
+                    "reclassificationsCurPercentCurrent",
+                    "reclassificationsRecPercentCurrent",
+                    "curHHFClass",
+                    "curHHFClassRank",
+                    "recClass",
+                    "recClassRank",
+                    "brutalClass",
+                    "brutalClassRank",
+                    "reclassificationsRecHHFOnlyPercentCurrent",
+                    "reclassificationsSoftPercentCurrent",
+                    "recHHFOnlyClass",
+                    "recHHFOnlyClassRank",
+                    "recSoftClass",
+                    "recSoftClassRank",
+                    "recUncappedClass",
+                    "recUncappedClassRank",
+                    "reclassificationsCurPercentHigh",
+                    "reclassificationsRecHHFOnlyPercentHigh",
+                    "reclassificationsSoftPercentHigh",
+                    "reclassificationsRecPercentHigh",
+                    "benefit",
+                    "benefitHigh",
                   ],
                 },
                 {
@@ -700,38 +508,26 @@ export const reclassifyShooters = async shooters => {
                     class: hqClass,
                     memberId: psClassUpdates?.[memberNumber]?.memberId,
 
-                    age: recalcByRecPercent?.[division]?.age,
-                    age1: recalcByRecPercent?.[division]?.age1,
+                    age: recalcDivRecUncapped?.age,
+                    age1: recalcDivRecUncapped?.age1,
 
                     elo: eloPointForShooter(division, memberNumber)?.rating,
-                    reclassificationsCurPercentCurrent: recalcDivCur.current, // aka curHHFPercent
-                    reclassificationsRecHHFOnlyPercentCurrent:
-                      recalcDivRecHHFOnly.current, //aka recHHFOnlyPercent
-                    reclassificationsSoftPercentCurrent: recalcDivSoft.current, //aka recSoftPercent
-                    reclassificationsRecPercentCurrent: recalcDivRec.current, // aka recPercent
                     reclassificationsRecPercentUncappedCurrent:
                       recalcDivRecUncapped.current, //aka recPercentUncapped
+                    reclassificationsRecPercentUncappedHigh: recalcDivRecUncapped.high, // aka recPercentUncappedHigh
 
-                    benefit: -(recalcDivCur.current - recalcDivRecUncapped.current),
-                    benefitHigh: -(recalcDivCur.high - recalcDivRecUncapped.high),
+                    reclassificationsMajorsCurrent: recalcMajors.current,
+                    reclassificationsClassifiersCurrent: recalcClassifiers.current,
 
-                    recClass: recalcDivRec.class,
-                    recClassRank: rankForClass(recalcDivRec.class),
-                    curHHFClass: recalcDivCur.class,
-                    curHHFClassRank: rankForClass(recalcDivCur.class),
-                    recHHFOnlyClass: recalcDivRecHHFOnly.class,
-                    recHHFOnlyClassRank: rankForClass(recalcDivRecHHFOnly.class),
-                    recSoftClass: recalcDivSoft.class,
-                    recSoftClassRank: rankForClass(recalcDivSoft.class),
-                    recUncappedClass: recalcDivRecUncapped.class,
-                    recUncappedClassRank: rankForClass(recalcDivRecUncapped.class),
+                    recUncappedClassCurrent: recalcDivRecUncapped.classCurrent,
+                    recUncappedClassCurrentRank: rankForClass(
+                      recalcDivRecUncapped.classCurrent,
+                    ),
 
-                    // same as reclassificaiton fields above, but highPercent, short form uses "High" suffix, e.g. recPercentUncappedHigh
-                    reclassificationsCurPercentHigh: recalcDivCur.high,
-                    reclassificationsRecHHFOnlyPercentHigh: recalcDivRecHHFOnly.high,
-                    reclassificationsSoftPercentHigh: recalcDivSoft.high,
-                    reclassificationsRecPercentHigh: recalcDivRec.high,
-                    reclassificationsRecPercentUncappedHigh: recalcDivRecUncapped.high,
+                    recUncappedClassHigh: recalcDivRecUncapped.classHigh,
+                    recUncappedClassHighRank: rankForClass(
+                      recalcDivRecUncapped.classHigh,
+                    ),
                   },
                 },
               ],
@@ -746,47 +542,4 @@ export const reclassifyShooters = async shooters => {
     console.log("reclassifyShooters error:");
     console.log(error);
   }
-};
-
-/** used for shooter's page chart / progression */
-export const reclassificationForProgressMode = async (
-  mode: ClassificationMode | "curPercent" | "recPercent",
-  memberNumber: string,
-) => {
-  const classificationMode: ClassificationMode =
-    mode === "curPercent" ? "uspsa" : mode === "recPercent" ? "brutal" : mode;
-
-  const now = new Date();
-  switch (classificationMode) {
-    case "uspsa": {
-      const scores = await allDivisionsScores([memberNumber]);
-      return calculateUSPSAClassification(
-        scores,
-        "curPercent",
-        now,
-        classificationMode,
-        4,
-        6,
-        8,
-        100,
-      );
-    }
-
-    case "soft":
-    case "brutal": {
-      const scores = await scoresForRecommendedClassification([memberNumber]);
-      return calculateUSPSAClassification(
-        scores,
-        "recPercent",
-        now,
-        classificationMode,
-        classificationDifficulty.window.min,
-        classificationDifficulty.window.best,
-        classificationDifficulty.window.recent,
-        classificationDifficulty.percentCap,
-      );
-    }
-  }
-
-  return null;
 };

@@ -35,7 +35,6 @@ const scoresLoop = async ({ batchSize = 12 } = {}) => {
     );
     console.log(uuidsWithStatus);
 
-    // console.log(JSON.stringify(uploadResults, null, 2));
     console.log(
       `${uploadResults?.classifiers?.length || 0} classifiers; ${
         uploadResults?.shooters?.length || 0

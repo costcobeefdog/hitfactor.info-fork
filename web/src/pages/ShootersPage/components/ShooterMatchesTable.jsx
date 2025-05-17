@@ -5,7 +5,11 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import ShooterCell from "../../../components/ShooterCell";
-import { headerTooltipOptions, renderPercent } from "../../../components/Table";
+import {
+  headerTooltipOptions,
+  renderMatchLevel,
+  renderPercent,
+} from "../../../components/Table";
 import useApiQuery from "../../../query/useApiQuery";
 
 const ShooterMatchScoresTable = ({
@@ -14,22 +18,27 @@ const ShooterMatchScoresTable = ({
   match,
   hidden,
   nerdMode,
-  hideShooterName,
-  hideMatchName,
-  hideAnalysisButton,
-  hideDate,
+  mode, // "match" | "shooter"
 }) => {
   const { json: matches, loading } = useApiQuery(
     `/upload/matchScores?${qs.stringify({ memberNumber, division, match })}`,
   );
   const navigate = useNavigate();
 
+  // match
+  const hideAnalysisButton = mode === "match";
+  const hideMatchName = mode === "match";
+  const hideDate = mode === "match";
+
+  // shooter
+  const hideShooterName = mode === "shooter";
+
   const matchScores = useMemo(() => {
     if (loading) {
       return [];
     }
 
-    return (matches || [])
+    const mapped = (matches || [])
       .toSorted((a, b) => b.matchPercent - a.matchPercent)
       .map((c, index, all) => ({
         ...c,
@@ -37,7 +46,13 @@ const ShooterMatchScoresTable = ({
         percentile: (100 * index) / all.length,
         dateUnix: new Date(c.date).getTime(),
       }));
-  }, [matches, loading]);
+
+    if (mode === "match") {
+      return mapped;
+    }
+
+    return mapped.filter(c => c.level >= 2 && c.eligible);
+  }, [matches, loading, mode]);
 
   if (hidden) {
     return null;
@@ -79,13 +94,25 @@ const ShooterMatchScoresTable = ({
         body={run => new Date(run.date).toLocaleDateString("en-us", { timeZone: "UTC" })}
       />
       <Column
+        hidden={hideDate}
+        sortable
+        field="level"
+        header="Level"
+        align="center"
+        body={renderMatchLevel}
+      />
+      <Column
         hidden={hideShooterName}
         field="shooterFullName"
         header="Shooter"
         style={{ minWidth: "18em" }}
         body={c => (
           <ShooterCell
-            data={{ ...c.shooter, shooterFullName: c.shooterFullName }}
+            data={{
+              ...c.shooter,
+              shooterFullName: c.shooterFullName,
+              memberNumber: c.memberNumber,
+            }}
             sport="uspsa"
             onClick={() => navigate(`/shooters/${division}/${c.memberNumber}`)}
           />
@@ -158,7 +185,15 @@ const ShooterMatchScoresTable = ({
         body={(c, meta) => {
           const value = renderPercent(c, meta);
           return (
-            <span className={c.matchBump?.eligible ? "text-green-600" : "text-red-600"}>
+            <span
+              className={
+                c.matchBump?.eligible
+                  ? "text-green-600"
+                  : c.matchBump?.maybeEligible
+                    ? "text-yellow-600"
+                    : "text-red-600"
+              }
+            >
               {value}
             </span>
           );

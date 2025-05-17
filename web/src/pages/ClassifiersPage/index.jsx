@@ -2,13 +2,14 @@ import { Button } from "primereact/button";
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { uspsaClassifiers2025 } from "../../../../api/src/dataUtil/classifiersData";
-import { DivisionNavigation } from "../../components";
-import RunsTable from "../../components/RunsTable";
-import { useApi } from "../../utils/client";
+import { uspsaClassifiers2025 } from "@shared/constants/classifiers";
 
 import ClassifierInfoTable from "./components/ClassifierInfoTable";
 import ClassifiersTable from "./components/ClassifiersTable";
+
+import { DivisionNavigation } from "../../components";
+import RunsTable from "../../components/RunsTable";
+import { useApi } from "../../utils/client";
 
 // TODO: shooters table for single classifier? # attempts, low HF, high HF, same for percent, same for curPercent
 // TODO: all classifiers total number of reshoots (non-uniqueness)

@@ -36,7 +36,7 @@ const rehydrateShooters = async (divisions: string[]) => {
   const shooters = await Shooters.find({
     memberNumberDivision: { $exists: true },
     division: { $in: divisions },
-    // reclassificationsRecPercentCurrent: { $gt: 0 },
+    // reclassificationsRecPercentUncappedCurrent: { $gt: 0 },
     // elo: { $gt: 0 },
   })
     .limit(0)

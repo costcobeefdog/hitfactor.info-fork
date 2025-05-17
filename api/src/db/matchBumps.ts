@@ -1,48 +1,20 @@
 /* eslint-disable no-console */
 import mongoose from "mongoose";
 
+import { MatchBump } from "@data/types/MatchBump";
 import {
   eligibilityFilter,
   grandmasterPercent,
   masterPercent,
   MatchScore,
-} from "../../../data/types/MatchScore";
+} from "@data/types/MatchScore";
+import { matchBumpThresholds } from "@shared/constants/difficulty";
 import {
   correlation,
   EmptyLinearRegression,
   linearRegression,
   reverseLinear,
-} from "../../../shared/utils/weibull";
-import {matchBumpThresholds } from "../../../shared/constants/difficulty";
-
-export interface MatchBump {
-  upload: string;
-  division: string;
-  uploadDivision: string;
-
-  date: Date;
-
-  // Linear Regression
-  slope: number;
-  intercept: number;
-  mae: number;
-
-  maxClassification: number;
-  minClassification: number;
-  maxBump: number;
-  minBump: number;
-
-  correlation: number;
-  filteredCorrelation: number;
-
-  dataPoints: number;
-  masters: number;
-  grandmasters: number;
-
-  filteredDataPoints: number;
-  filteredMasters: number;
-  filteredGrandmasters: number;
-}
+} from "@shared/utils/weibull";
 
 const MatchBumpSchema = new mongoose.Schema<MatchBump>(
   {
@@ -75,21 +47,25 @@ const MatchBumpSchema = new mongoose.Schema<MatchBump>(
   { strict: false },
 );
 
-// Match Criteria:
+// Eligibility Criteria:
 //     - Eligible Correlation  >= 85%
-//     - Eligible Datapoints   >= 30
-//     ? Eligible Masters      >= 5 (>= 80% match, >= 80% classification, using best8 / 12 current)
-//               - OR -
-//     ? Eligible Grandmasters >=  3  (>= 90%/90% match/classification using best8/12current)
-//
-// For current classification see db/matchScores#backfillClassifications()
+//     - Eligible Datapoints   >= 30 (maybe) >= 50 (eligible)
 MatchBumpSchema.virtual("eligible").get(function () {
   return (
     this.filteredDataPoints >= matchBumpThresholds.filteredDataPoints &&
-    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation &&
-    (this.filteredGrandmasters >= matchBumpThresholds.filteredGrandmasters || this.filteredMasters >= matchBumpThresholds.filteredMasters)
+    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation
   );
 });
+
+MatchBumpSchema.virtual("maybeEligible").get(function () {
+  return (
+    this.filteredDataPoints >= matchBumpThresholds.filteredDataPointsMaybe &&
+    this.filteredCorrelation >= matchBumpThresholds.filteredCorrelation
+  );
+});
+
+MatchBumpSchema.set("toObject", { virtuals: true });
+MatchBumpSchema.set("toJSON", { virtuals: true });
 
 MatchBumpSchema.index({ upload: 1 });
 MatchBumpSchema.index({ date: 1 });

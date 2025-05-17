@@ -1,11 +1,12 @@
 import uniqBy from "lodash.uniqby";
 import { v4 as randomUUID } from "uuid";
 
-import { allDivShortNames, mapAllDivisions } from "../../api/src/dataUtil/divisions";
-
 import { dateSort, numSort } from "./sort";
 
-const uspsaClassificationLetters = ["X", "U", "D", "C", "B", "A", "M", "GM"];
+import { allDivShortNames, mapAllDivisions } from "../../api/src/dataUtil/divisions";
+
+const uspsaClassificationLetters = ["X", "U", "D", "C", "B", "A", "M", "GM"] as const;
+export type ClassLetter = (typeof uspsaClassificationLetters)[number];
 export const classificationRank = classification =>
   uspsaClassificationLetters.indexOf(classification);
 /* const hasClassification = (classification) =>
@@ -63,7 +64,7 @@ export const highestClassification = classificationsObj =>
     return curClass;
   }, undefined);
 
-export const classForPercent = curPercent => {
+export const classForPercent = (curPercent: number): ClassLetter => {
   if (curPercent <= 0) {
     return "U";
   } else if (curPercent < 40) {
@@ -290,6 +291,7 @@ export const addToCurWindow = (c, curWindow, targetWindowSize = 8) => {
 interface ClassifierScore {
   source: string;
   classifier: string;
+  division: string;
   percent: number;
   curPercent: number;
   recPercent: number;

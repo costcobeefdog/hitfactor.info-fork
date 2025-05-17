@@ -1,11 +1,14 @@
 import { Dropdown } from "primereact/dropdown";
 
+import { uspsaClassifiers2025 } from "@shared/constants/classifiers";
+
 import classifiers from "../../../data/classifiers/classifiers.json";
 import { classifierCodeSort } from "../../../shared/utils/sort";
 
 const classifierOptions = classifiers.classifiers
   .map(c => ({ ...c, optionLabel: `${c.classifier}  ${c.name}` }))
-  .sort((a, b) => classifierCodeSort(a, b, "classifier", 1));
+  .sort((a, b) => classifierCodeSort(a, b, "classifier", 1))
+  .filter(c => uspsaClassifiers2025.includes(c.classifier));
 
 /**
  * Component to select classifiers for WhatIfs, with value being

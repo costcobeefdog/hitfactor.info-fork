@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 import mongoose, { Model } from "mongoose";
 
+import { curHHFForDivisionClassifier } from "@api/dataUtil/hhf";
+import { N, Percent, PositiveOrMinus1 } from "@api/dataUtil/numbers";
+import { processImportAsyncSeq } from "@api/utils";
+import { RecHHF } from "@data/types/RecHHF";
 import {
   divIdToShort,
   divisionsForScoresAdapter,
@@ -9,13 +13,10 @@ import {
   minorDivisions,
   uspsaDivIdToShort,
   uspsaDivShortNames,
-} from "../../../shared/constants/divisions";
-import { UTCDate } from "../../../shared/utils/date";
-import { curHHFForDivisionClassifier } from "../dataUtil/hhf";
-import { N, Percent, PositiveOrMinus1 } from "../dataUtil/numbers";
-import { processImportAsyncSeq } from "../utils";
+} from "@shared/constants/divisions";
+import { UTCDate } from "@shared/utils/date";
 
-import { RecHHF } from "./recHHF";
+import { matchScoresFor, matchScoreToScoreAdapter, ScoreMini } from "./matchScores";
 
 export interface Score {
   upload?: string;
@@ -339,7 +340,7 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
     .limit(0)
     .sort({ sd: -1 });
 
-  return minorHFScoresAdapter(
+  const classifiers = minorHFScoresAdapter(
     scores.map(s => s.toObject({ virtuals: true })),
     division,
   )
@@ -349,27 +350,60 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
       curPercent: run.curPercent,
       percent: run.percent,
       classifier: run.classifier,
+      source: "Stage Score",
     }))
-    .filter(run => !!run.classifier); // no majors for now in the graph
+    .filter(run => !!run.classifier); // no legacy majors in the graph
+
+  const matchScores = await matchScoresFor({ division, memberNumber });
+  const convertedMatchScores = matchScores
+    .filter(c => c!.level >= 2)
+    .map(ms => ({
+      x: ms.date,
+      classifier: ms.name,
+      source: "Major Match",
+      sd: ms.date,
+      percent: ms.matchPercent,
+      curPercent: ms.bump,
+      recPercent: ms.bump,
+      eligible: ms.eligible,
+      maybeEligible: ms.maybeEligible,
+    }));
+  return classifiers
+    .concat(convertedMatchScores)
+    .sort((a, b) => a.x.getTime() - b.x.getTime());
 };
 
 export const scoresForDivisionForShooter = async ({ division, memberNumber }) => {
-  const scores = await Scores.find({
-    division: { $in: divisionsForScoresAdapter(division) },
-    memberNumber,
-    bad: { $ne: true },
-  })
-    .populate("HHFs")
-    .sort({ sd: -1, hf: -1 })
-    .limit(0);
+  const scores = (
+    await Scores.find({
+      division,
+      memberNumber,
+      bad: { $ne: true },
+      source: { $ne: "Major Match" },
+    })
+      .populate("HHFs")
+      .sort({ sd: -1, hf: -1 })
+      .limit(0)
+  ).map(s => s.toObject<ScoreObjectWithVirtuals>({ virtuals: true })) as ScoreMini[];
 
-  return minorHFScoresAdapter(
-    scores.map(s => s.toObject({ virtuals: true })),
-    division,
-  ).map((obj, index) => {
-    obj.index = index;
-    return obj;
-  });
+  const matchScores = await matchScoresFor({ division, memberNumber });
+  const majors = matchScores.filter(ms => ms.level >= 2 && ms.eligible);
+  const matchScoresConverted = majors.map(matchScoreToScoreAdapter);
+  const allScores = scores.concat(matchScoresConverted);
+
+  return allScores
+    .sort((a, b) => {
+      const sda = a.sd.getTime() || 0;
+      const sdb = b.sd.getTime() || 0;
+      if (sda === sdb) {
+        return b.hf - a.hf;
+      }
+      return sdb - sda;
+    })
+    .map((s, index) => {
+      (s as ScoreMini & { index: number }).index = index;
+      return s;
+    });
 };
 
 // TODO: intro same functionality for other sports

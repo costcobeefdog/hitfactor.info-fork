@@ -2,6 +2,20 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { SelectButton } from "primereact/selectbutton";
 import { useMemo, useState } from "react";
 
+import {
+  annotationColor,
+  r5annotationColor,
+  xLine,
+  yLine,
+  Scatter,
+  wbl1AnnotationColor,
+  pointsGraph,
+  closestYForX,
+  linearAnnotationColor,
+} from "./common";
+import { useAsyncWeibull } from "./useAsyncWeibull";
+import { WeibullStatus } from "./WeibullStatus";
+
 import { eloPointForShooter } from "../../../../api/src/dataUtil/elo";
 import {
   classForELO,
@@ -18,20 +32,6 @@ import {
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";
 
-import {
-  annotationColor,
-  r5annotationColor,
-  xLine,
-  yLine,
-  Scatter,
-  wbl1AnnotationColor,
-  pointsGraph,
-  closestYForX,
-  linearAnnotationColor,
-} from "./common";
-import { useAsyncWeibull } from "./useAsyncWeibull";
-import { WeibullStatus } from "./WeibullStatus";
-
 const mainModeMap = {
   "ELO Only": "elo",
   Versus: "vs",
@@ -42,6 +42,8 @@ const defaultMainMode = mainModes[0];
 
 const fieldModeMap = {
   ELO: "elo",
+  Classifiers: "classifiers",
+  Majors: "majors",
   //HQ: "curPercent",
   // HQ: "curHHFPercent",
   // "HQ High": "curHHFPercentHigh",
@@ -92,7 +94,7 @@ export const ShootersELODistributionChart = ({
   const [xMode, setXMode] = useState(recommendedMode);
   const [yMode, setYMode] = useState(recommendedMode);
 
-  const { json: data, loading } = useApi(`/shooters/${division}/chart`);
+  const { json: data, loading } = useApi(`/shooters/${division}/chart?mode=elo`);
   const curModeData = useMemo(() => {
     if (!data) {
       return [];

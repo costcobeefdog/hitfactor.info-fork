@@ -1,3 +1,5 @@
+import { fileURLToPath } from "url";
+
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
 
@@ -14,6 +16,14 @@ export default defineConfig(({ mode }) => {
         supported: {
           "top-level-await": true,
         },
+      },
+    },
+    resolve: {
+      alias: {
+        "@web/": fileURLToPath(new URL("./src/", import.meta.url)),
+        "@api/": fileURLToPath(new URL("../api/src/", import.meta.url)),
+        "@data/": fileURLToPath(new URL("../data/", import.meta.url)),
+        "@shared/": fileURLToPath(new URL("../shared/", import.meta.url)),
       },
     },
   };

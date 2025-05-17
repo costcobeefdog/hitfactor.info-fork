@@ -1,23 +1,26 @@
-import cx from "classnames";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Divider } from "primereact/divider";
-import { SelectButton } from "primereact/selectbutton";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
 import { v4 as randomUUID } from "uuid";
+
+import {
+  ScoresModeSelectButton,
+  defaultScoresMode,
+} from "@web/components/ScoresModeSelectButton";
+
+import ShooterInfoTable from "./components/ShooterInfoTable";
+import ShooterMatchScoresTable from "./components/ShooterMatchesTable";
+import ShooterRunsTable from "./components/ShooterRunsTable";
+import ShootersTable from "./components/ShootersTable";
 
 import { nameForDivision } from "../../../../api/src/dataUtil/divisions";
 import { DivisionNavigation } from "../../components";
 import { renderPercent } from "../../components/Table";
 import { postApi, useApi } from "../../utils/client";
 import { useIsSCSA } from "../../utils/useIsSCSA";
-
-import ShooterInfoTable from "./components/ShooterInfoTable";
-import ShooterMatchScoresTable from "./components/ShooterMatchesTable";
-import ShooterRunsTable from "./components/ShooterRunsTable";
-import ShootersTable from "./components/ShootersTable";
 
 // TODO: shooters table for single classifier? # attempts, low HF, high HF, same for percent, same for curPercent
 // TODO: all classifiers total number of reshoots (non-uniqueness)
@@ -59,11 +62,12 @@ const ShootersPage = () => {
 };
 
 const useShooterTableData = ({ division, memberNumber }) => {
+  const navigate = useNavigate();
   const apiEndpoint = !(division && memberNumber)
     ? null
     : `/shooters/${division}/${memberNumber}`;
   const { json: apiData, loading } = useApi(apiEndpoint);
-  const info = apiData?.info || {};
+  const info = useMemo(() => apiData?.info || {}, [apiData?.info]);
   const [classifiers, setClassifiers] = useState([]);
   const [lastFetchedClassifiers, setLastFetchedClassifiers] = useState([]);
   useEffect(() => {
@@ -71,6 +75,13 @@ const useShooterTableData = ({ division, memberNumber }) => {
     setClassifiers(classifiersFromApiData);
     setLastFetchedClassifiers(classifiersFromApiData);
   }, [apiData?.classifiers]);
+
+  // redirect to alternative memberNumber if available
+  useEffect(() => {
+    if (!!apiData?.info && !apiData?.info?.memberNumber && apiData?.altMemberNumber) {
+      navigate(`/shooters/${division}/${apiData.altMemberNumber}`, { replace: true });
+    }
+  }, [apiData, navigate, division]);
 
   const downloadUrl = `/api/shooters/download/${division}/${memberNumber}`;
 
@@ -168,25 +179,23 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
   const { loading, whatIf } = tableData;
   const { name } = info;
 
-  const [scoresMode, setScoresMode] = useState("Classifiers");
+  const [scoresMode, setScoresMode] = useState(defaultScoresMode);
   const [nerdMode, setNerdMode] = useState(false);
 
   return (
     <>
-      <div className="flex justify-content-between flex-wrap">
-        {!isSCSA && (
-          <Button
-            className="text-sm md:text-lg lg:text-xl font-bold px-0 md:px-2"
-            icon="pi pi-chevron-left text-sm md:text-lg lg:text-xl "
-            rounded
-            text
-            aria-label="Back"
-            onClick={onBackToShooters}
-          >
-            Shooters List
-          </Button>
-        )}
-        <h3 className={cx("m-auto mt-4", { "md:hidden": !isSCSA })}>
+      <div className="flex justify-content-between align-items-center flex-wrap">
+        <Button
+          className="text-sm md:text-lg lg:text-xl font-bold px-0 md:px-2"
+          icon="pi pi-chevron-left text-sm md:text-lg lg:text-xl "
+          rounded
+          text
+          aria-label="Back"
+          onClick={onBackToShooters}
+        >
+          Shooters List
+        </Button>
+        <h3 className="mx-auto">
           {[memberNumber, name, nameForDivision(division)].filter(Boolean).join(" - ")}
         </h3>
       </div>
@@ -198,26 +207,23 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
           loading={loading}
         />
       ) : null}
-      <Divider />
-      <div className="flex justify-content-between align-items-center">
+      <Divider className="my-3 md:my-4" />
+      <div className="relative">
+        <div className="flex justify-content-around" />
+      </div>
+      <div className="flex relative justify-content-between align-items-center">
         <h4 className="block md:text-lg lg:text-xl">Scores</h4>
-        <div className="m-auto">
-          <SelectButton
-            size="small"
-            className="compact text-xs"
-            allowEmpty={false}
-            options={["Classifiers", "Matches"]}
-            value={scoresMode}
-            onChange={e => setScoresMode(e.value)}
+        <div className="absolute left-0 right-0 flex justify-content-center">
+          <ScoresModeSelectButton
+            className="compact"
+            mode={scoresMode}
+            setMode={setScoresMode}
           />
         </div>
         {whatIf && (
           <div className="m-auto">
             <h5 className="block md:inline mr-4">
-              Recommended: {renderPercent(whatIf, { field: "recPercent" })}
-            </h5>
-            <h5 className="block md:inline">
-              Current HHF: {renderPercent(whatIf, { field: "curPercent" })}
+              WhatIf: {renderPercent(whatIf, { field: "recPercent" })}
             </h5>
           </div>
         )}
@@ -232,9 +238,9 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
               onClick={resetWhatIfs}
             />
           )}
-          {!isSCSA && scoresMode === "Classifiers" && (
+          {!isSCSA && scoresMode === "combined" && (
             <Button
-              className="px-2 my-3 text-xs md:text-sm"
+              className="compact px-2 my-3 text-xs md:text-sm"
               label="What If"
               size="small"
               iconPos="left"
@@ -242,7 +248,7 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
               onClick={addWhatIf}
             />
           )}
-          {!isSCSA && scoresMode === "Matches" && (
+          {!isSCSA && scoresMode === "Majors" && (
             <div className="flex gap-2 align-items-center">
               Nerd Mode
               <Checkbox onChange={e => setNerdMode(e.checked)} checked={nerdMode} />
@@ -253,13 +259,14 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
 
       <ShooterRunsTable
         {...tableData}
-        hidden={scoresMode !== "Classifiers"}
+        scoresMode={scoresMode}
+        hidden={!["classifiers", "combined"].includes(scoresMode)}
         onClassifierSelection={number => navigate(`/classifiers/${division}/${number}`)}
         onClubSelection={club => navigate(`/clubs/${club}`)}
       />
       <ShooterMatchScoresTable
-        hideShooterName
-        hidden={scoresMode !== "Matches"}
+        mode="shooter"
+        hidden={scoresMode !== "majors"}
         nerdMode={nerdMode}
         memberNumber={memberNumber}
         division={division}

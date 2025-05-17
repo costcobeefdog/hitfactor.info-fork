@@ -1,24 +1,9 @@
 /* eslint-disable no-console */
 import mongoose, { Model } from "mongoose";
 
-import { MatchScore } from "../../../data/types/MatchScore";
-
-export interface Match {
-  updated: Date;
-  created: Date;
-  uuid: string;
-  id: number;
-  name: string;
-
-  type: string;
-  subType: string;
-  templateName: string;
-
-  /* match_date string as-is e.g. "2024-01-01" */
-  date: string;
-  fetched?: Date;
-  uploaded?: Date;
-}
+import { Match, MatchVirtualsNoRefs } from "@data/types/Match";
+import { MatchScore } from "@data/types/MatchScore";
+import { matchLevel } from "@shared/utils/matchLevel";
 
 interface AlgoliaMatchNumericFilters {
   timestamp_utc_updated: number;
@@ -69,7 +54,7 @@ export interface MatchDef {
   templateName: string;
 }
 
-interface MatchVirtuals {
+interface MatchVirtuals extends MatchVirtualsNoRefs {
   scoresCount: number;
   matchScores: MatchScore[];
   matchScoresCount: number;
@@ -122,7 +107,10 @@ MatchesSchema.virtual("matchScoresCount", {
 MatchesSchema.virtual("hasMatchScores").get(function () {
   return this.matchScoresCount > 0;
 });
-export const Matches = mongoose.model("Matches", MatchesSchema);
+MatchesSchema.virtual("level").get(function () {
+  return matchLevel(this.name);
+});
+export const Matches = mongoose.model<typeof MatchesSchema>("Matches", MatchesSchema);
 
 const MATCHES_PER_FETCH = 1000;
 const _idRange = fromId =>

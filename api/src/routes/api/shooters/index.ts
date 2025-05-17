@@ -1,18 +1,16 @@
+import sortedUniqBy from "lodash.sorteduniqby";
 import uniqBy from "lodash.uniqby";
+
+import { ScoresMode } from "@data/types/ScoresModes";
 
 import { classificationDifficulty } from "../../../../../shared/constants/difficulty";
 import { calculateUSPSAClassification } from "../../../../../shared/utils/classification";
 import { multisort, safeNumSort } from "../../../../../shared/utils/sort";
 import { basicInfoForClassifierCode } from "../../../dataUtil/classifiersData";
+import { scoresForMode } from "../../../db/matchScores";
 import { RecHHFs } from "../../../db/recHHF";
 import { scoresForDivisionForShooter, shooterScoresChartData } from "../../../db/scores";
-import {
-  Shooters,
-  allDivisionsScores,
-  dedupeGrandbagging,
-  reclassificationForProgressMode,
-  scoresForRecommendedClassification,
-} from "../../../db/shooters";
+import { Shooters, dedupeGrandbagging } from "../../../db/shooters";
 import {
   addPlaceAndPercentileAggregation,
   multiSortAndPaginate,
@@ -89,6 +87,25 @@ const shootersQueryAggregation = (params, query) => {
   ]);
 };
 
+const reclassificationForProgressMode = async (
+  mode: ScoresMode,
+  memberNumber: string,
+  division: string,
+) => {
+  const now = new Date();
+  const scores = await scoresForMode({ mode, memberNumbers: [memberNumber], division });
+  return calculateUSPSAClassification(
+    scores,
+    "recPercent",
+    now,
+    "brutal",
+    classificationDifficulty.window.min,
+    classificationDifficulty.window.best,
+    classificationDifficulty.window.recent,
+    classificationDifficulty.percentCap,
+  );
+};
+
 const shootersRoutes = async fastify => {
   fastify.get("/:division", async req => {
     const shooters = await shootersQueryAggregation(req.params, req.query);
@@ -121,25 +138,42 @@ const shootersRoutes = async fastify => {
       }),
     );
 
-    const info = infos.find(s => s.division === division) || {};
+    // redirect helper for bad member numbers
+    const dbInfo = infos.find(s => s.division === division);
+    if (!dbInfo && memberNumber.match(/^(A|TY|FY)/)) {
+      const memberNumberDigits = memberNumber.replace(/^(A|TY|FY)/, "");
+      const alt = await Shooters.findOne({
+        memberNumber: new RegExp(`${memberNumberDigits}$`),
+      });
+      if (alt) {
+        return {
+          info: {},
+          classifiers: [],
+          altMemberNumber: alt.memberNumber,
+        };
+      }
+    }
+
+    const info = { ...dbInfo } as Record<string, unknown>;
     info.classificationByDivision = infos.reduce((acc, cur) => {
       const {
-        reclassificationsCurPercentCurrent: curHHFCurrent,
         reclassificationsRecPercentUncappedCurrent: recCurrent,
-        reclassificationsCurPercentHigh: curHHFHigh,
         reclassificationsRecPercentUncappedHigh: recHigh,
+        reclassificationsMajorsCurrent: majors,
+        reclassificationsClassifiersCurrent: classifiers,
       } = cur;
 
       acc[cur.division] = {
-        reclassificationsCurPercentCurrent: curHHFCurrent || 0,
         reclassificationsRecPercentUncappedCurrent: recCurrent || 0,
-        reclassificationsCurPercentHigh: curHHFHigh || 0,
         reclassificationsRecPercentUncappedHigh: recHigh || 0,
+        reclassificationsMajorsCurrent: majors || 0,
+        reclassificationsClassifiersCurrent: classifiers || 0,
         age: cur.age,
         age1: cur.age1,
       };
       return acc;
     }, {});
+
     delete info.reclassifications;
     delete info.classes;
     delete info.currents;
@@ -159,103 +193,53 @@ const shootersRoutes = async fastify => {
 
   fastify.get("/:division/:memberNumber/chart/progress/:mode", async req => {
     const { division, memberNumber, mode } = req.params;
-    const reclass = await reclassificationForProgressMode(mode, memberNumber);
-    return reclass?.[division]?.percentWithDates || [];
+    const reclass = await reclassificationForProgressMode(mode, memberNumber, division);
+    return sortedUniqBy((reclass?.[division]?.percentWithDates || []).toReversed(), c =>
+      c.sd.getTime(),
+    ).toReversed();
   });
 
   fastify.get("/:division/chart", async req => {
     const { division } = req.params;
+    const { xMode, colorMode, mode } = req.query;
     const shootersTable = await Shooters.find({
       division,
-      reclassificationsRecPercentCurrent: { $gt: 0 },
+      reclassificationsRecPercentUncappedCurrent: { $gt: 0 },
     })
       .select([
-        "current",
-        "reclassificationsCurPercentCurrent",
-        "reclassificationsRecHHFOnlyPercentCurrent",
-        "reclassificationsSoftPercentCurrent",
-        "reclassificationsRecPercentCurrent",
-        "reclassificationsRecPercentUncappedCurrent",
-        "reclassificationsCurPercentHigh",
-        "reclassificationsRecHHFOnlyPercentHigh",
-        "reclassificationsSoftPercentHigh",
-        "reclassificationsRecPercentHigh",
-        "reclassificationsRecPercentUncappedHigh",
         "memberNumber",
-        "benefit",
-        "benefitHigh",
+        //"name",
+        "reclassificationsRecPercentUncappedCurrent",
+        "reclassificationsRecPercentUncappedHigh",
+        "reclassificationsMajorsCurrent",
+        "reclassificationsClassifiersCurrent",
+        "elo",
       ])
       .lean()
       .limit(0);
 
-    return shootersTable
-      .map(c => ({
-        curPercent: c.current,
-        curHHFPercent: c.reclassificationsCurPercentCurrent,
-        recHHFOnlyPercent: c.reclassificationsRecHHFOnlyPercentCurrent,
-        recSoftPercent: c.reclassificationsSoftPercentCurrent,
-        recPercent: c.reclassificationsRecPercentCurrent,
-        recPercentUncapped: c.reclassificationsRecPercentUncappedCurrent,
-        curHHFPercentHigh: c.reclassificationsCurPercentHigh,
-        recHHFOnlyPercentHigh: c.reclassificationsRecHHFOnlyPercentHigh,
-        recSoftPercentHigh: c.reclassificationsSoftPercentHigh,
-        recPercentHigh: c.reclassificationsRecPercentHigh,
-        recPercentUncappedHigh: c.reclassificationsRecPercentUncappedHigh,
-        memberNumber: c.memberNumber,
-        benefit: c.benefit,
-        benefitHigh: c.benefitHigh,
-      }))
-      .sort(safeNumSort("curPercent"))
+    const mapped = shootersTable.map(c => ({
+      recPercentUncapped: c.reclassificationsRecPercentUncappedCurrent,
+      recPercentUncappedHigh: c.reclassificationsRecPercentUncappedHigh,
+      majors: c.reclassificationsMajorsCurrent,
+      classifiers: c.reclassificationsClassifiersCurrent,
+      memberNumber: c.memberNumber,
+    }));
+    if (mode === "elo") {
+      return mapped;
+    }
+
+    return mapped
+      .filter(c => !!c[xMode] && !!c[colorMode])
+      .sort(safeNumSort(xMode))
       .map((c, i, all) => ({
         ...c,
-        curPercentPercentile: (100 * i) / (all.length - 1),
+        x: c[xMode],
+        y: (100 * i) / (all.length - 1),
       }))
-      .sort(safeNumSort("curHHFPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        curHHFPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("curHHFPercentHigh"))
-      .map((c, i, all) => ({
-        ...c,
-        curHHFPercentHighPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recHHFOnlyPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        recHHFOnlyPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recSoftPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        recSoftPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recPercentUncapped"))
-      .map((c, i, all) => ({
-        ...c,
-        recPercentUncappedPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recPercentUncappedHigh"))
-      .map((c, i, all) => ({
-        ...c,
-        recPercentUncappedHighPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("recPercent"))
-      .map((c, i, all) => ({
-        ...c,
-        recPercentPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("benefit", { allowNegatives: true }))
-      .map((c, i, all) => ({
-        ...c,
-        benefitPercentile: (100 * i) / (all.length - 1),
-      }))
-      .sort(safeNumSort("benefitHigh", { allowNegatives: true }))
-      .map((c, i, all) => ({
-        ...c,
-        benefitHighPercentile: (100 * i) / (all.length - 1),
-      }));
+      .filter(c => c.y > 0 && c.x > 0);
   });
+
   fastify.post("/whatif", async req => {
     const { scores, division, memberNumber } = req.body;
     const now = new Date();
@@ -298,10 +282,12 @@ const shootersRoutes = async fastify => {
       }
       return c;
     });
-    const existingRecScores = await scoresForRecommendedClassification([memberNumber]);
-    const existingScores = await allDivisionsScores([memberNumber]);
+    const existingRecScores = await scoresForMode({
+      mode: "combined",
+      memberNumbers: [memberNumber],
+      division,
+    });
     const recScores = dedupeGrandbagging(hydratedScores);
-    const otherDivisionsScores = existingScores.filter(s => s.division !== division);
     const recPercentClassification = calculateUSPSAClassification(
       recScores,
       "recPercent",
@@ -311,16 +297,6 @@ const shootersRoutes = async fastify => {
       classificationDifficulty.window.best,
       classificationDifficulty.window.recent,
       classificationDifficulty.percentCap,
-    );
-    const curPercentClassification = calculateUSPSAClassification(
-      [...hydratedScores, ...otherDivisionsScores],
-      "curPercent",
-      now,
-      "uspsa",
-      4,
-      6,
-      8,
-      100,
     );
 
     return {
@@ -333,14 +309,10 @@ const shootersRoutes = async fastify => {
       recHHFsMap,
       whatIf: {
         recPercent: recPercentClassification[division]?.percent,
-        curPercent: curPercentClassification[division]?.percent,
       },
       scores: hydratedScores,
       existingRec: existingRecScores
-        .filter(s => s.division === "co")
-        .map(({ hf, classifier }) => ({ hf, classifier })),
-      existing: existingScores
-        .filter(s => s.division === "co")
+        .filter(s => s.division === division)
         .map(({ hf, classifier }) => ({ hf, classifier })),
     };
   });

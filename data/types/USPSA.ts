@@ -21,17 +21,8 @@ export interface USPSAHHFJSON extends HHFJSON {
 
 export type USPSAHHFJSONDivision = string;
 
-export enum ClassificationLetterEnum {
-  X = "X",
-  U = "U",
-  D = "D",
-  C = "C",
-  B = "B",
-  A = "A",
-  M = "M",
-  GM = "GM",
-}
-export type ClassificationLetter = keyof typeof ClassificationLetterEnum;
+export const ClassificationLetters = ["U", "X", "D", "C", "B", "A", "M", "GM"] as const;
+export type ClassificationLetter = (typeof ClassificationLetters)[number];
 
 export interface ActiveMember {
   generated: Date;

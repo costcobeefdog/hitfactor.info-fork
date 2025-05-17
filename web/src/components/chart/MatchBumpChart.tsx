@@ -2,6 +2,15 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { useMemo } from "react";
 
 import {
+  Scatter,
+  pointsGraph,
+  linearAnnotationColor,
+  xLine,
+  r1annotationColor,
+  yLine,
+} from "./common";
+
+import {
   eligibilityFilter,
   grandmasterPercent,
   masterPercent,
@@ -17,15 +26,6 @@ import {
   reverseLinear,
 } from "../../../../shared/utils/weibull";
 import { bgColorForClass } from "../../utils/color";
-
-import {
-  Scatter,
-  pointsGraph,
-  linearAnnotationColor,
-  xLine,
-  r1annotationColor,
-  yLine,
-} from "./common";
 
 interface DataPoint {
   x: number;
@@ -267,9 +267,9 @@ export const MatchBumpChart = ({ match, division, loading }) => {
   const eligibleGMs = eligibleData.filter(
     c => c.x >= grandmasterPercent && c.y >= grandmasterPercent,
   ).length;
-  const hasEnoughMs = eligibleMs >= matchBumpThresholds.filteredMasters;
-  const hasEnoughGMs = eligibleMs >= matchBumpThresholds.filteredGrandmasters;
   const hasEnoughData = eligibleData.length >= matchBumpThresholds.filteredDataPoints;
+  const hasMaybeEnoughData =
+    eligibleData.length >= matchBumpThresholds.filteredDataPointsMaybe;
   const goodCorrelation = eligibleCorrel >= matchBumpThresholds.filteredCorrelation;
 
   return (
@@ -282,15 +282,19 @@ export const MatchBumpChart = ({ match, division, loading }) => {
               <div className={goodCorrelation ? "text-green-600" : "text-red-600"}>
                 Correlation = {(eligibleCorrel * 100).toFixed(2)}%
               </div>
-              <div className={hasEnoughData ? "text-green-600" : "text-red-600"}>
+              <div
+                className={
+                  hasEnoughData
+                    ? "text-green-600"
+                    : hasMaybeEnoughData
+                      ? "text-yellow-600"
+                      : "text-red-600"
+                }
+              >
                 Datapoints = {eligibleData.length}
               </div>
-              <div className={hasEnoughMs ? "text-green-600" : "text-red-600"}>
-                Ms= {eligibleMs}
-              </div>
-              <div className={hasEnoughGMs ? "text-green-600" : "text-red-600"}>
-                GMs= {eligibleGMs}
-              </div>
+              <div>Ms= {eligibleMs}</div>
+              <div>GMs= {eligibleGMs}</div>
               <div className="hidden">
                 GMs= {eligibleData.filter(c => c.x >= 90 && c.y >= 90).length}
               </div>
