@@ -11,6 +11,7 @@ const specialAreas = [
   "Go Fast Don’t Suck",
   "Final GFDS 2021",
   "GFDS USPSA POSTAL MATCH - FINAL",
+  "2016 US Infinity Open",
 ];
 const specialMajors = [
   "Red Rock Rumble",
@@ -34,6 +35,22 @@ const specialMajors = [
   'Gary "Doc" Welt Memorial Match',
   "Ozarks Classic",
   "2016 Swamp Challenge",
+  "Wyoming Governors Match",
+  "Wisconsin Sectio REDACTED pionship", //< lol wtf
+  "Remember the Fallen USPSA Level II",
+  "Rocky\\s+Mountain\\s+300",
+  "Ohio CK Arms Buckeye Blast",
+  "Left Out Match 2016",
+  "Tennessee Atomic Blast",
+  "ICARUS III Shootfest",
+  "WAC Factory Gun Classic",
+  "2018 Factory Gun Challenge",
+  "THE ROCK ISLAND ARMORY BAD BEAT SHOOT OUT",
+  "Ryan Rocks Charity Blast",
+  "High Desert Classic",
+  "Bighorn Classic",
+  "High Desert Classic",
+  "Left Out Match 2020",
 
   // Anything with "Championship" in it is at least level 2, if eligible
   "championship",
