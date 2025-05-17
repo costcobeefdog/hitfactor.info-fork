@@ -89,10 +89,9 @@ MatchScoreSchema.index({ memberNumberDivision: 1 });
 MatchScoreSchema.index({ upload: 1 });
 MatchScoreSchema.index({ memberNumberDivision: 1, upload: 1 });
 
-export const MatchScores = mongoose.model<typeof MatchScoreSchema>(
-  "MatchScores",
-  MatchScoreSchema,
-);
+export const MatchScores =
+  (mongoose.models.MatchScores as MatchScoreModel) ||
+  mongoose.model<typeof MatchScoreSchema>("MatchScores", MatchScoreSchema);
 
 export const saveMatchScores = async (
   matchResults: (MatchScore & { _id?: string })[],

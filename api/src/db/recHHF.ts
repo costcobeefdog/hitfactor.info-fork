@@ -116,7 +116,7 @@ const RecHHFSchema = new mongoose.Schema<RecHHF>({
 RecHHFSchema.index({ classifier: 1, division: 1 }, { unique: true });
 RecHHFSchema.index({ classifierDivision: 1 }, { unique: true });
 
-export const RecHHFs = mongoose.model("RecHHFs", RecHHFSchema);
+export const RecHHFs = mongoose.models.RecHHFs || mongoose.model("RecHHFs", RecHHFSchema);
 
 const classifiersThatUseMoreThan10RoundsBetweenReloads = [
   "99-10",

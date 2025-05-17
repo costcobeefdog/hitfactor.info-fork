@@ -184,7 +184,9 @@ ScoreSchema.index({ classifierDivision: 1 });
 ScoreSchema.index({ hf: -1 });
 ScoreSchema.index({ classifier: 1, division: 1, hf: -1 });
 
-export const Scores = mongoose.model<typeof ScoreSchema>("Scores", ScoreSchema);
+export const Scores =
+  (mongoose.models.Scores as mongoose.Model<Score, unknown, ScoreVirtuals>) ||
+  mongoose.model<typeof ScoreSchema>("Scores", ScoreSchema);
 
 const classifierScoreId = (memberId, obj) =>
   [memberId, obj.classifier, obj.sd, obj.clubid, obj.hf].join("=");
