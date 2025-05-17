@@ -41,7 +41,7 @@ const MajorsPage = () => {
 
   return (
     <div className="p-0 md:px-4">
-      <div className="flex flex-column flex align-items-center mt-2">
+      <div className="flex flex-column flex align-items-center mt-3">
         <div className="card flex justify-content-center">
           <SelectButton
             className="compact text-xs"
@@ -55,7 +55,7 @@ const MajorsPage = () => {
             multiple
           />
         </div>
-        <div className="flex flex-column" style={{ width: "min(64rem, 90vw)" }}>
+        <div className="flex flex-column" style={{ width: "min(64rem, 100vw)" }}>
           {!tableData.length ? (
             loading ? (
               <div className="w-full flex justify-content-center">
@@ -66,6 +66,7 @@ const MajorsPage = () => {
             )
           ) : (
             <DataTable
+              className="text-sm md:text-base"
               stripedRows
               value={filteredTableData}
               size="small"
@@ -74,20 +75,20 @@ const MajorsPage = () => {
               sortOrder={-1}
             >
               <Column
-                field="date"
-                header="Date"
-                style={{ minWidth: "8em", verticalAlign: "baseline" }}
-              />
-              <Column
                 field="level"
-                header="Level"
+                header={() => (
+                  <>
+                    <div className="hidden md:inline-block">Level</div>
+                    <div className="md:hidden">Lvl</div>
+                  </>
+                )}
                 align="center"
-                style={{ verticalAlign: "baseline" }}
+                style={{ width: "4em", verticalAlign: "baseline" }}
                 body={renderMatchLevel}
               />
               <Column
                 field="name"
-                style={{ minWidth: "24em", verticalAlign: "baseline" }}
+                style={{ minWidth: "calc(min(42em, 68vw))", verticalAlign: "baseline" }}
                 header="Match"
                 body={match => (
                   <a
@@ -108,22 +109,31 @@ const MajorsPage = () => {
                 field="divisions"
                 header="Divisions"
                 align="center"
-                style={{ verticalAlign: "baseline" }}
+                style={{ maxWidth: "calc(min(24em, 20vw))", verticalAlign: "baseline" }}
                 body={match => {
                   const divisions = mapDivisionsFlat(div =>
                     match[div] ? div : "",
                   ).filter(Boolean);
 
-                  return divisions.map(division => (
-                    <Link
-                      className="m-1 weight-normal"
-                      key={division}
-                      to={`/upload/${match.uuid}/${division}`}
-                    >
-                      {division}
-                    </Link>
-                  ));
+                  return (
+                    <div className="flex flex-wrap justify-content-center gap-1">
+                      {divisions.map(division => (
+                        <Link
+                          className="weight-normal"
+                          key={division}
+                          to={`/upload/${match.uuid}/${division}`}
+                        >
+                          {division}
+                        </Link>
+                      ))}
+                    </div>
+                  );
                 }}
+              />
+              <Column
+                field="date"
+                header="Date"
+                style={{ minWidth: "7em", verticalAlign: "baseline" }}
               />
             </DataTable>
           )}

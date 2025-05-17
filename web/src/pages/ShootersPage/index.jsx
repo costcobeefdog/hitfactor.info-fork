@@ -215,7 +215,7 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
         <h4 className="block md:text-lg lg:text-xl">Scores</h4>
         <div className="absolute left-0 right-0 flex justify-content-center">
           <ScoresModeSelectButton
-            className="compact"
+            className="compact text-xs md:text-base"
             mode={scoresMode}
             setMode={setScoresMode}
           />
