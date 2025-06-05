@@ -8,7 +8,7 @@ import { MatchBumpWithVirtuals } from "@data/types/MatchBump";
 import { MatchScore } from "@data/types/MatchScore";
 import { ScoresMode, ScoreSource } from "@data/types/ScoresModes";
 import { classificationDifficulty } from "@shared/constants/difficulty";
-import { calculateUSPSAClassification } from "@shared/utils/classification";
+import { calculateUSPSAClassification } from "@shared/classification/engine";
 import { UTCDate } from "@shared/utils/date";
 
 export interface MatchScoreVirtuals {

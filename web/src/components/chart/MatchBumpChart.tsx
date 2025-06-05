@@ -17,7 +17,7 @@ import {
   maxPercentDifference,
 } from "../../../../data/types/MatchScore";
 import { matchBumpThresholds } from "../../../../shared/constants/difficulty";
-import { classForPercent } from "../../../../shared/utils/classification";
+import { classForPercent } from "../../../../shared/classification/engine";
 import {
   correlation,
   linearRegression,

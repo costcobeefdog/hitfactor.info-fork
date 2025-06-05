@@ -11,7 +11,7 @@ import { useDebounce } from "use-debounce";
 
 import { Percent, PositiveOrMinus1 } from "../../../../api/src/dataUtil/numbers";
 import { sportForDivision } from "../../../../shared/constants/divisions";
-import { classForELO, classForPercent } from "../../../../shared/utils/classification";
+import { classForELO, classForPercent } from "../../../../shared/classification/engine";
 import { correlation, weibulCDFFactory } from "../../../../shared/utils/weibull";
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";

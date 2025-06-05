@@ -5,17 +5,17 @@ import { v4 as randomUUID } from "uuid";
 
 import { ScoreObjectWithVirtuals, Scores } from "@api/db/scores";
 import { getField, percentAggregationOp } from "@api/db/utils";
+import {
+  classForPercent,
+  ClassLetter,
+  percentForClass,
+} from "@shared/classification/brackets";
+import { ClassificationState } from "@shared/classification/state";
 
 import { scoresForMode } from "./matchScores";
 
+import { calculateUSPSAClassification } from "../../../shared/classification/engine";
 import { classificationDifficulty } from "../../../shared/constants/difficulty";
-import {
-  calculateUSPSAClassification,
-  classForPercent,
-  ClassificationsRecord,
-  ClassLetter,
-  rankForClass,
-} from "../../../shared/utils/classification";
 import {
   divIdToShort,
   hfuDivisionCompatabilityMap,
@@ -392,7 +392,7 @@ interface ReclassificationBreakdownResult {
   age1: number;
 }
 const reclassificationBreakdown = (
-  reclassificationInfo: ClassificationsRecord,
+  reclassificationInfo: ClassificationState,
   division: string,
 ): ReclassificationBreakdownResult => ({
   current: Number((reclassificationInfo?.[division]?.percent ?? 0).toFixed(4)),
@@ -409,7 +409,6 @@ const recalc = (scores, date: Date, division: string) =>
       scores,
       "recPercent",
       date,
-      "brutal",
       classificationDifficulty.window.min,
       classificationDifficulty.window.best,
       classificationDifficulty.window.recent,
@@ -457,7 +456,7 @@ export const reclassifyShooters = async shooters => {
                   memberNumber,
                   division,
                   memberNumberDivision: [memberNumber, division].join(":"),
-                  current: rankForClass(hqClass),
+                  current: percentForClass(hqClass),
                 },
               },
               upsert: true,
@@ -505,7 +504,7 @@ export const reclassifyShooters = async shooters => {
                 {
                   $set: {
                     hqClass,
-                    hqClassRank: rankForClass(hqClass),
+                    hqClassRank: percentForClass(hqClass),
                     class: hqClass,
                     memberId: psClassUpdates?.[memberNumber]?.memberId,
 
@@ -521,12 +520,12 @@ export const reclassifyShooters = async shooters => {
                     reclassificationsClassifiersCurrent: recalcClassifiers.current,
 
                     recUncappedClassCurrent: recalcDivRecUncapped.classCurrent,
-                    recUncappedClassCurrentRank: rankForClass(
+                    recUncappedClassCurrentRank: percentForClass(
                       recalcDivRecUncapped.classCurrent,
                     ),
 
                     recUncappedClassHigh: recalcDivRecUncapped.classHigh,
-                    recUncappedClassHighRank: rankForClass(
+                    recUncappedClassHighRank: percentForClass(
                       recalcDivRecUncapped.classHigh,
                     ),
                   },
@@ -541,6 +540,42 @@ export const reclassifyShooters = async shooters => {
     await Shooters.bulkWrite(updates.filter(Boolean));
   } catch (error) {
     console.log("reclassifyShooters error:");
+    console.log(error);
+  }
+};
+
+export const reEloShooters = async shooters => {
+  try {
+    const updates = shooters
+      .filter(
+        ({ memberNumber, division }) =>
+          memberNumber && uspsaDivShortNames.find(x => x === division),
+      )
+      .map(({ memberNumber, division }) => {
+        if (!memberNumber) {
+          return [];
+        }
+
+        return [
+          {
+            updateOne: {
+              filter: { memberNumber, division },
+              update: [
+                {
+                  $set: {
+                    elo: eloPointForShooter(division, memberNumber)?.rating,
+                  },
+                },
+              ],
+              upsert: true,
+            },
+          },
+        ];
+      })
+      .flat();
+    await Shooters.bulkWrite(updates.filter(Boolean));
+  } catch (error) {
+    console.log("reEloShooters error:");
     console.log(error);
   }
 };

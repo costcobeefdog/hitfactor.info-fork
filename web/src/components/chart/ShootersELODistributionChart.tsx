@@ -8,24 +8,20 @@ import {
   xLine,
   yLine,
   Scatter,
-  wbl1AnnotationColor,
   pointsGraph,
   closestYForX,
   linearAnnotationColor,
 } from "./common";
-import { useAsyncWeibull } from "./useAsyncWeibull";
-import { WeibullStatus } from "./WeibullStatus";
 
 import { eloPointForShooter } from "../../../../api/src/dataUtil/elo";
 import {
   classForELO,
   classForPercent,
   eloClasses,
-} from "../../../../shared/utils/classification";
+} from "../../../../shared/classification/engine";
 import {
   covariance,
   correlation,
-  weibulCDFFactory,
   linearRegression,
   linearFactory,
 } from "../../../../shared/utils/weibull";
@@ -67,7 +63,6 @@ interface RawDataPoint {
   name: string;
   rating: number;
   memberNumber: string;
-  ogMemberNumber: string;
 }
 
 const colorForELOOrPercent = (colorMode: string, dataPoint: RawDataPoint) => {
@@ -83,7 +78,6 @@ interface ShootersELODistributionChartProps {
   selectedMemberNumber?: string;
 }
 
-const EMPTY_ARRAY = [];
 export const ShootersELODistributionChart = ({
   division,
   selectedMemberNumber,
@@ -139,10 +133,6 @@ export const ShootersELODistributionChart = ({
     [curModeData],
   );
 
-  const curModeDataPoints = useMemo(() => curModeData.map(c => c.x), [curModeData]);
-
-  const weibull = useAsyncWeibull(isVersus ? EMPTY_ARRAY : curModeDataPoints);
-  const { k, lambda } = weibull;
   const correl = useMemo(
     () =>
       !isVersus || !curModeData?.length
@@ -167,7 +157,7 @@ export const ShootersELODistributionChart = ({
     () =>
       !isVersus || !curModeData?.length
         ? { slope: 0, intercept: 0 }
-        : linearRegression(curModeData),
+        : linearRegression(curModeData.filter(c => c.x >= 60)),
     [isVersus, curModeData],
   );
 
@@ -181,7 +171,7 @@ export const ShootersELODistributionChart = ({
 
   const selectedShooterDataPoint = !selectedMemberNumber
     ? undefined
-    : curModeData.find(c => c.ogMemberNumber === selectedMemberNumber);
+    : curModeData.find(c => c.memberNumber === selectedMemberNumber);
 
   const graph = (
     <Scatter
@@ -216,17 +206,10 @@ export const ShootersELODistributionChart = ({
             callbacks: {
               // @ts-expect-error returning null is legit, but label cb is typed incorrectly
               label: ({ raw }) => {
-                const {
-                  ogMemberNumber,
-                  memberNumber,
-                  name,
-                  rating,
-                  x,
-                  y,
-                  pointsGraphName,
-                } = raw as RawDataPoint;
+                const { memberNumber, name, rating, x, y, pointsGraphName } =
+                  raw as RawDataPoint;
                 if (isVersus) {
-                  return `${ogMemberNumber} ${name}; X ${x.toFixed(2)}; Y ${y.toFixed(2)}; ELO: ${rating?.toFixed(2) || "—"}`;
+                  return `${memberNumber} ${name}; X ${x.toFixed(2)}; Y ${y.toFixed(2)}; ELO: ${rating?.toFixed(2) || "—"}`;
                 }
                 if (pointsGraphName) {
                   return null;
@@ -270,7 +253,7 @@ export const ShootersELODistributionChart = ({
             ? []
             : [
                 {
-                  label: selectedShooterDataPoint.ogMemberNumber,
+                  label: selectedShooterDataPoint.memberNumber,
                   data: [selectedShooterDataPoint] as RawDataPoint[],
                   pointRadius: 4,
                   pointBorderColor: "white",
@@ -297,22 +280,7 @@ export const ShootersELODistributionChart = ({
                   pointBackgroundColor: linearAnnotationColor(0.44),
                 },
               ]
-            : [
-                {
-                  label: "Weibull",
-                  data: pointsGraph({
-                    yFn: weibulCDFFactory(k, lambda),
-                    minX: 0,
-                    maxX: 1.05 * curModeData[0].x,
-                    step: 0.1,
-                    name: "Weibull",
-                  }),
-                  pointRadius: 1,
-                  pointBorderColor: "black",
-                  pointBorderWidth: 0,
-                  pointBackgroundColor: wbl1AnnotationColor(0.66),
-                },
-              ]),
+            : []),
           {
             label: isVersus ? "Comparison" : "ELO / Percentile",
             data: curModeData as RawDataPoint[],
@@ -375,9 +343,7 @@ export const ShootersELODistributionChart = ({
             />
           </div>
         </div>
-        {!isVersus ? (
-          <WeibullStatus weibull={weibull} />
-        ) : (
+        {!isVersus ? null : (
           <div className="flex gap-4 text-sm">
             <div className="flex flex-column justify-content-center text-md text-500 font-bold">
               <div>Correlation = {correl.toFixed(6)}</div>

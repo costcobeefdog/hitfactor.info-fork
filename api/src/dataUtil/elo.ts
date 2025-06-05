@@ -1,6 +1,6 @@
 import coElo from "../../../data/elo/co.json";
-import ltdElo from "../../../data/elo/lim.json";
 import loElo from "../../../data/elo/lo.json";
+import ltdElo from "../../../data/elo/ltd.json";
 import opnElo from "../../../data/elo/open.json";
 import pccElo from "../../../data/elo/pcc.json";
 import prodElo from "../../../data/elo/prod.json";
@@ -9,7 +9,15 @@ import ssElo from "../../../data/elo/ss.json";
 
 const divEloByMemberNumber = divElo =>
   divElo.reduce((acc, c, index, all) => {
-    acc[c.memberNumber] = { ...c, elo: c.rating, eloRank: (100 * index) / all.length };
+    const { memberNumber, rating, name, knownMemberNumbers } = c;
+    const dataPoint = {
+      name,
+      elo: rating,
+      rating,
+      eloRank: (100 * index) / all.length,
+    };
+    acc[memberNumber] = dataPoint;
+    knownMemberNumbers?.forEach(known => (acc[known] = dataPoint));
     return acc;
   }, {});
 
@@ -27,7 +35,6 @@ const eloByDivisionByMemberNumber = {
 
 interface ELOPoint {
   memberNumber: string;
-  ogMemberNumber: string;
   name: string;
   rating: number;
 }
@@ -40,17 +47,14 @@ export const eloPointForShooter = (
     return null;
   }
 
-  const ogMemberNumber = memberNumber;
-  const normalizedMemberNumber = memberNumber.replace(/^(A|TY|FY|FYF|F|TYF|CA)/gi, "");
-  const jsonInfo = eloByDivisionByMemberNumber[division]?.[normalizedMemberNumber];
+  const jsonInfo = eloByDivisionByMemberNumber[division]?.[memberNumber];
   if (!jsonInfo) {
     return null;
   }
 
   return {
     ...jsonInfo,
-    memberNumber: normalizedMemberNumber,
-    ogMemberNumber,
+    memberNumber,
     division,
   };
 };

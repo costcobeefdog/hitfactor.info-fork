@@ -10,22 +10,18 @@
     "========================= Dev Scripts ====================": "",
     "start": "concurrently -c \"auto\" --names \"API,WEB\" \"npm run start-api\" \"npm run start-web\"",
     "test": "tsx --test",
-
     "====================== Production / Build Scripts ================": "",
     "prod": "cd api && npm run prod",
     "postinstall": "(cd api && npm install); (cd web && npm install && npm run build);",
-
     "========================== Upload Scripts (Render.com Worker/CRON) ========================": "",
     "uploadMatches": "NODE_OPTIONS='--max-old-space-size=512' node --import=tsx scripts/upload/matchesLoop.ts",
     "uploadScores": "NODE_OPTIONS='--max-old-space-size=512' node --import=tsx scripts/upload/scoresLoop.ts",
     "uploadMeta": "NODE_OPTIONS='--max-old-space-size=2048' node --import=tsx scripts/upload/statsMetaLoop.ts",
     "uploadMembers": "node --import=tsx scripts/upload/activeMembers.ts",
-
     "========================= DB Admin Scripts ============================": "",
     "hydrate": "node --import=tsx scripts/migrations/rehydrateForCC.ts",
     "uspsa": "NODE_OPTIONS='--max-old-space-size=16384' node --import=tsx scripts/experiments/hydrateFromUSPSAJSON.ts",
     "dump": "mongodump $MONGO_URL",
-
     "===================== Internal (Don't Run Directly) ======================": "",
     "start-api": "cd api && npm start",
     "start-web": "cd web && npm start"
@@ -38,6 +34,7 @@
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "bson": "^6.10.3",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "eslint-config-airbnb": "^19.0.4",
@@ -56,6 +53,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.637.0",
+    "lodash.sorteduniqby": "^4.7.0",
     "lodash.throttle": "^4.1.1",
     "lodash.uniqby": "^4.7.0",
     "piscina": "^5.0.0-alpha.0",

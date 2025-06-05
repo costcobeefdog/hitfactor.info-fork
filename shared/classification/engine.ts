@@ -1,0 +1,184 @@
+import { v4 as randomUUID } from "uuid";
+
+import orderedUniqBy from "@shared/utils/orderedUniqBy";
+
+import { classForPercent } from "./brackets";
+import {
+  addToCurWindow,
+  ClassificationState,
+  ClassifierScore,
+  getDivisionState,
+} from "./state";
+
+import { dateSort, numSort } from "../utils/sort";
+
+const windowSizeForScore = (
+  windowSize: number,
+  minWindowSize: number = 4,
+  bestWindowSize: number = 6,
+) => {
+  if (windowSize < minWindowSize) {
+    return 0;
+  } else if (windowSize === minWindowSize) {
+    return minWindowSize;
+  }
+
+  return bestWindowSize;
+};
+
+/** @returns difference between now and sd in months */
+const ageForDate = (now: Date, sd: Date | string): number =>
+  (now.getTime() - new Date(sd).getTime()) / (28 * 24 * 60 * 60 * 1000);
+
+export const percentAndAgesForDivWindow = (
+  div: string,
+  state: ClassificationState,
+  percentField: "percent" | "curPercent" | "recPercent" = "percent",
+  now = new Date(),
+  minWindowSize: number = 4,
+  bestWindowSize: number = 6,
+  percentCap: number = 100,
+) => {
+  // remove "older" different days duplicates
+  const dFlagsApplied = orderedUniqBy(
+    state[div].window.toSorted((a, b) => dateSort(a, b, "sd", -1)),
+    "classifier",
+  ).toSorted((a, b) => dateSort(a, b, "sd", 1));
+
+  // remove worst scores (aka select best N number of scores (N being bestWindowSize))
+  const fFlagsApplied = dFlagsApplied
+    .toSorted((a, b) => numSort(a, b, percentField, -1))
+    .slice(0, windowSizeForScore(dFlagsApplied.length, minWindowSize, bestWindowSize));
+
+  const percent =
+    fFlagsApplied.reduce((acc, cur) => acc + Math.min(percentCap, cur[percentField]), 0) /
+      fFlagsApplied.length || 0;
+
+  const age =
+    fFlagsApplied.reduce(
+      (acc, curValue) => acc + ageForDate(now, curValue.sd || now),
+      0,
+    ) / fFlagsApplied.length || 0;
+
+  const lastScore = fFlagsApplied.toSorted((a, b) => dateSort(a, b, "sd", -1))[0];
+  const age1 = ageForDate(now, lastScore?.sd || now);
+  return {
+    percent,
+    age,
+    age1,
+  };
+};
+
+export const calculateUSPSAClassification = (
+  classifiers: ClassifierScore[],
+  percentField: "percent" | "curPercent" | "recPercent",
+  now: Date = new Date(),
+  minWindowSize: number = 4, // used for initial, less than that - no classification
+  bestWindowSize: number = 6, // used for non-initial classifications, ideal window size when there are no dupes
+  recentWindowSize: number = 8, // number of most recent scores to consider
+  percentCap: number = 110,
+): ClassificationState => {
+  const state = {} as ClassificationState;
+  if (!classifiers?.length) {
+    return state;
+  }
+
+  const classifiersReadyToScore = classifiers
+    .toSorted((a, b) => {
+      const asDate = dateSort(a, b, "sd", 1);
+      if (!asDate) {
+        return numSort(a, b, percentField, 1);
+      }
+      return asDate;
+    })
+    .map(c => ({
+      ...c,
+      // Major Matches should always be eligible for reclassification
+      classifier: c.source === "Major Match" ? randomUUID() : c.classifier,
+      curPercent: c.source === "Major Match" ? c.percent : c.curPercent,
+    }))
+    .filter(c => c[percentField] >= 0);
+
+  const scoringFunction = (c: ClassifierScore) => {
+    if (!c?.division) {
+      return;
+    }
+
+    const { division } = c;
+    const curDivisionState = (state[c.division] = getDivisionState(state, c.division));
+    const curWindow = curDivisionState.window;
+    addToCurWindow(c, curWindow, recentWindowSize);
+
+    // age1 can be set even before we have enough classifiers
+    if (curWindow.length >= 1) {
+      const lastScore = curWindow.toSorted((a, b) => dateSort(a, b, "sd", -1))[0];
+      const age1 = ageForDate(now, lastScore?.sd || now);
+      state[division].age1 = age1;
+    }
+
+    // Calculate if have enough classifiers
+    if (curWindow.length >= minWindowSize) {
+      const oldHighPercent = state[division].highPercent;
+      const {
+        percent: newPercent,
+        age,
+        age1,
+      } = percentAndAgesForDivWindow(
+        division,
+        state,
+        percentField,
+        now,
+        minWindowSize,
+        bestWindowSize,
+        percentCap,
+      );
+
+      const newClass = classForPercent(newPercent);
+      if (newPercent > oldHighPercent) {
+        state[division].highPercent = newPercent;
+        state[division].highClass = newClass;
+      }
+      state[division].percent = newPercent;
+      state[division].class = newClass;
+      state[division].age = age;
+      state[division].age1 = age1;
+      state[c.division].percentWithDates.push({ p: newPercent, sd: new Date(c.sd) });
+    }
+  };
+
+  classifiersReadyToScore.forEach(scoringFunction);
+
+  /*
+  Object.keys(state).forEach(div => {
+    delete state[div].window;
+  });*/
+
+  return state;
+};
+
+export const dedupeGrandbagging = (scores: ClassifierScore[]) =>
+  Object.values(
+    scores.reduce(
+      (acc, cur) => {
+        cur.classifier = cur.classifier || randomUUID();
+        const date = new Date(cur.sd).toLocaleDateString();
+        const key = [date, cur.classifier].join(":");
+        acc[key] = acc[key] || [];
+        acc[key].push(cur);
+        return acc;
+      },
+      {} as Record<string, ClassifierScore[]>,
+    ),
+  ).map(dayScores => {
+    const scoresCount = dayScores.length;
+    if (scoresCount === 1) {
+      return dayScores[0];
+    }
+
+    return {
+      ...dayScores[0],
+      percent: dayScores.reduce((acc, c) => acc + c.percent, 0) / scoresCount,
+      curPercent: dayScores.reduce((acc, c) => acc + c.curPercent, 0) / scoresCount,
+      recPercent: dayScores.reduce((acc, c) => acc + c.recPercent, 0) / scoresCount,
+    };
+  });

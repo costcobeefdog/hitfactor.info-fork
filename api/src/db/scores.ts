@@ -533,3 +533,20 @@ export const scoreFromUSPSAScore = (uspsaScore: USPSAScore): Score => {
     currentClass: uspsaScore.current_class,
   };
 };
+
+export const binaryScoreFromUSPSAScore = (uspsaScore: USPSAScore) => {
+  const hf = Number(uspsaScore.hit_factor);
+
+  const division = uspsaDivIdToShort[uspsaScore.division_id];
+  const memberNumber = uspsaScore.member_number;
+  const classifier = uspsaScore.classfier_code;
+
+  return {
+    hf,
+    memberNumber,
+    classifier,
+    division,
+    sd: UTCDate(uspsaScore.match_date),
+    source: 1,
+  };
+};

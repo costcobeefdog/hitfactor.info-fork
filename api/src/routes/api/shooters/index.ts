@@ -4,7 +4,7 @@ import uniqBy from "lodash.uniqby";
 import { ScoresMode } from "@data/types/ScoresModes";
 
 import { classificationDifficulty } from "../../../../../shared/constants/difficulty";
-import { calculateUSPSAClassification } from "../../../../../shared/utils/classification";
+import { calculateUSPSAClassification } from "../../../../../shared/classification/engine";
 import { multisort, safeNumSort } from "../../../../../shared/utils/sort";
 import { basicInfoForClassifierCode } from "../../../dataUtil/classifiersData";
 import { scoresForMode } from "../../../db/matchScores";

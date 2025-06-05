@@ -1,8 +1,12 @@
 /* eslint-disable no-console */
 
-import { connect } from "../../api/src/db/index";
-import { Score, scoreFromUSPSAScore, Scores, USPSAScore } from "../../api/src/db/scores";
-import { Shooter, Shooters } from "../../api/src/db/shooters";
+import fs from "node:fs";
+
+import { BSON } from "bson";
+
+import { uspsaDivIdToShort } from "@shared/constants/divisions";
+import { UTCDate } from "@shared/utils/date";
+
 import uspsa1 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_1.json";
 import uspsa10 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_10.json";
 import uspsa11 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_11.json";
@@ -19,25 +23,45 @@ import uspsa7 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_7.json"
 import uspsa8 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_8.json";
 import uspsa9 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_9.json";
 
-const all: Score[] = (
-  [
-    uspsa1,
-    uspsa2,
-    uspsa3,
-    uspsa4,
-    uspsa5,
-    uspsa6,
-    uspsa7,
-    uspsa8,
-    uspsa9,
-    uspsa10,
-    uspsa11,
-    uspsa12,
-    uspsa13,
-    uspsa14,
-    uspsa15,
-  ].flat() as USPSAScore[]
-).map(scoreFromUSPSAScore);
+export const binaryScoreFromUSPSAScore = uspsaScore => {
+  const hf = Number(uspsaScore.hit_factor);
+
+  const division = uspsaDivIdToShort[uspsaScore.division_id];
+  const memberNumber = uspsaScore.member_number;
+  const classifier = uspsaScore.classfier_code;
+
+  return {
+    hf,
+    memberNumber,
+    classifier,
+    division,
+    sd: UTCDate(uspsaScore.match_date),
+    source: 1,
+  };
+};
+
+const all = [
+  uspsa1,
+  uspsa2,
+  uspsa3,
+  uspsa4,
+  uspsa5,
+  uspsa6,
+  uspsa7,
+  uspsa8,
+  uspsa9,
+  uspsa10,
+  uspsa11,
+  uspsa12,
+  uspsa13,
+  uspsa14,
+  uspsa15,
+]
+  .flat()
+  .map(binaryScoreFromUSPSAScore);
+
+fs.writeFileSync("uspsaData.bson", BSON.serialize({ all }));
+process.exit(0);
 
 const shooters = Object.values(
   all.reduce((acc, cur: Score) => {
