@@ -9,12 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "use-debounce";
 
-import { Percent, PositiveOrMinus1 } from "../../../../api/src/dataUtil/numbers";
-import { sportForDivision } from "../../../../shared/constants/divisions";
-import { classForELO, classForPercent } from "../../../../shared/classification/engine";
-import { correlation, weibulCDFFactory } from "../../../../shared/utils/weibull";
-import { useApi } from "../../utils/client";
-import { bgColorForClass } from "../../utils/color";
+import { classForELO, classForPercent } from "@shared/classification/brackets";
 
 import {
   point,
@@ -31,6 +26,12 @@ import { closestYForX } from "./common";
 import { GraphPoint } from "./common";
 import { useAsyncWeibull } from "./useAsyncWeibull";
 import { WeibullStatus } from "./WeibullStatus";
+
+import { Percent, PositiveOrMinus1 } from "../../../../api/src/dataUtil/numbers";
+import { sportForDivision } from "../../../../shared/constants/divisions";
+import { correlation, weibulCDFFactory } from "../../../../shared/utils/weibull";
+import { useApi } from "../../utils/client";
+import { bgColorForClass } from "../../utils/color";
 
 const versusModeMap = {
   HF: "hf",

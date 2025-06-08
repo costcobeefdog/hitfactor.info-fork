@@ -3,6 +3,12 @@ import { SelectButton } from "primereact/selectbutton";
 import { useMemo, useState } from "react";
 
 import {
+  classForELO,
+  classForPercent,
+  eloRatings,
+} from "@shared/classification/brackets";
+
+import {
   annotationColor,
   r5annotationColor,
   xLine,
@@ -14,11 +20,6 @@ import {
 } from "./common";
 
 import { eloPointForShooter } from "../../../../api/src/dataUtil/elo";
-import {
-  classForELO,
-  classForPercent,
-  eloClasses,
-} from "../../../../shared/classification/engine";
 import {
   covariance,
   correlation,
@@ -129,7 +130,7 @@ export const ShootersELODistributionChart = ({
   }, [division, data, xMode, yMode, isVersus]);
 
   const percentiles = useMemo(
-    () => eloClasses.map(c => closestYForX(c, curModeData)[0]),
+    () => eloRatings.map(c => closestYForX(c, curModeData)[0]),
     [curModeData],
   );
 
@@ -234,7 +235,7 @@ export const ShootersELODistributionChart = ({
                   ),
                   ...Object.assign(
                     {},
-                    ...eloClasses.map(eloRating =>
+                    ...eloRatings.map(eloRating =>
                       xLine(
                         `${eloRating} (${((100 * eloRating) / 1700).toFixed(2)}%)`,
                         eloRating,

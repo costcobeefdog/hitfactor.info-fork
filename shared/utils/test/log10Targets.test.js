@@ -1,14 +1,14 @@
 import assert from "assert";
 import test from "node:test";
 
+import runs from "./weibull.test.data.min.json";
+
 import {
   coTargetsFromKirt,
   coTargetsHFI,
   log10TargetsHHF,
   log10TargetsHHFWeibull,
 } from "../log10Targets";
-
-import runs from "./weibull.test.data.min.json";
 
 test("log10Targets", () => {
   assert.strictEqual(

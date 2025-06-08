@@ -10,6 +10,7 @@
     "========================= Dev Scripts ====================": "",
     "start": "concurrently -c \"auto\" --names \"API,WEB\" \"npm run start-api\" \"npm run start-web\"",
     "test": "tsx --test",
+    "lint": "eslint ./",
     "====================== Production / Build Scripts ================": "",
     "prod": "cd api && npm run prod",
     "postinstall": "(cd api && npm install); (cd web && npm install && npm run build);",

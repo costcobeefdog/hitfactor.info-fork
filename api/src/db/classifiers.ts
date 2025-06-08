@@ -62,6 +62,8 @@ interface ClassifierVirtuals {
   ccQuality: number;
 }
 
+export type ClassifierWithVirtuals = Classifier & ClassifierVirtuals & { _id: string };
+
 type ClassifierModel = Model<Classifier, object, ClassifierVirtuals>;
 
 export interface ClassifierDivision {
@@ -326,7 +328,8 @@ export const singleClassifierExtendedMetaDoc = async (
     return null;
   }
   const [recHHFQuery, hitFactorScoresRaw] = await Promise.all([
-    recHHFReady ?? RecHHFs.findOne({ division, classifier }).select("recHHF").lean(),
+    recHHFReady ??
+      RecHHFs.findOne<RecHHF>({ division, classifier }).select("recHHF").lean(),
     Scores.find({
       division: { $in: divisionsForScoresAdapter(division) },
       classifier,
@@ -338,7 +341,11 @@ export const singleClassifierExtendedMetaDoc = async (
       .limit(0),
   ]);
   const scores = hitFactorScoresRaw
-    .map(curScore => curScore.toObject({ virtuals: true }) as ScoreObjectWithVirtuals)
+    .map(curScore =>
+      curScore.toObject<ScoreObjectWithVirtuals>({
+        virtuals: true,
+      }),
+    )
     .map(curScore => ({
       ...curScore,
       elo: curScore.Shooters?.[0]?.elo,
@@ -417,8 +424,8 @@ export const allDivisionClassifiersQuality = async () => {
     Classifiers.find({ division: "pcc" }).populate("recHHFs"),
   ]);
 
-  const co: (Classifier & ClassifierVirtuals)[] = coDB.map(c =>
-    c.toObject({ virtuals: true }),
+  const co = coDB.map(c =>
+    c.toObject<Classifier & ClassifierVirtuals>({ virtuals: true }),
   );
   const opn = opnDB
     .map(c => c.toObject({ virtuals: true }))
@@ -458,9 +465,7 @@ export const allScsaDivisionClassifiersQuality = async () => {
     Classifiers.find({ division: "scsa_rfpo" }),
   ]);
 
-  const co: (Classifier & ClassifierVirtuals)[] = coDB.map(c =>
-    c.toObject({ virtuals: true }),
-  );
+  const co = coDB.map(c => c.toObject<ClassifierWithVirtuals>({ virtuals: true }));
   const opn = opnDB
     .map(c => c.toObject({ virtuals: true }))
     .reduce((acc, cur) => {

@@ -2,9 +2,9 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { useState } from "react";
 
-import { postApi } from "../../utils/client";
-
 import UploadResults from "./UploadResults";
+
+import { postApi } from "../../utils/client";
 
 const USPSAUpload = () => {
   const [result, setResult] = useState(null);

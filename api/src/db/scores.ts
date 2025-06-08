@@ -5,6 +5,7 @@ import { curHHFForDivisionClassifier } from "@api/dataUtil/hhf";
 import { N, Percent, PositiveOrMinus1 } from "@api/dataUtil/numbers";
 import { processImportAsyncSeq } from "@api/utils";
 import { RecHHF } from "@data/types/RecHHF";
+import { Shooter } from "@data/types/Shooter";
 import {
   divIdToShort,
   divisionsForScoresAdapter,
@@ -65,7 +66,7 @@ export interface Score {
 }
 
 export interface ScoreVirtuals {
-  Shooters: Record<string, any>[];
+  Shooters: Record<string, Shooter>[];
   HHFs: RecHHF[];
   curHHF: number;
   recHHF: number;

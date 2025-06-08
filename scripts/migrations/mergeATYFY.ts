@@ -22,7 +22,7 @@ const fixUp = async () => {
     .limit(0);
   console.error(`total ${shooters.length}`);
 
-  const shootersByTrimmedNumbers = shooters.reduce(
+  const shootersByTrimmedNumbers: Record<string, string[]> = shooters.reduce(
     (acc, cur) => {
       const numberOnly = cur.memberNumber.replace(regexForPrefix, "");
       const curArray = (acc[numberOnly] ??= []);

@@ -1,10 +1,10 @@
 import assert from "assert";
 import test from "node:test";
 
-import { solveWeibull } from "../weibull";
-
 import oldResults from "./weibull.oldResults.test.data.min.full.json";
 import runs from "./weibull.test.data.min.json";
+
+import { solveWeibull } from "../weibull";
 
 test("new optimization algo", () => {
   assert.equal(true, true);

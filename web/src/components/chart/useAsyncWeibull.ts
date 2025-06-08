@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-import { emptyWeibull, WeibullResult } from "../../../../shared/utils/weibull";
-
 import WeibullWorker from "./useAsyncWeibullWorker?worker";
+
+import { emptyWeibull, WeibullResult } from "../../../../shared/utils/weibull";
 
 export interface AsyncWeibullResult extends WeibullResult {
   loading: boolean;

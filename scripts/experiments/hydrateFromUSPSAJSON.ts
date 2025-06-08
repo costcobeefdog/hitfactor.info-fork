@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 
-import fs from "node:fs";
-
-import { BSON } from "bson";
-
+import { connect } from "@api/db";
+import { Score, Scores } from "@api/db/scores";
+import { Shooter, Shooters } from "@api/db/shooters";
 import { uspsaDivIdToShort } from "@shared/constants/divisions";
 import { UTCDate } from "@shared/utils/date";
 
@@ -23,20 +22,31 @@ import uspsa7 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_7.json"
 import uspsa8 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_8.json";
 import uspsa9 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_9.json";
 
-export const binaryScoreFromUSPSAScore = uspsaScore => {
+export const binaryScoreFromUSPSAScore = (uspsaScore): Score => {
   const hf = Number(uspsaScore.hit_factor);
 
   const division = uspsaDivIdToShort[uspsaScore.division_id];
   const memberNumber = uspsaScore.member_number;
   const classifier = uspsaScore.classfier_code;
+  const sd = UTCDate(uspsaScore.match_date);
 
   return {
     hf,
     memberNumber,
     classifier,
     division,
-    sd: UTCDate(uspsaScore.match_date),
-    source: 1,
+    memberNumberDivision: [memberNumber, division].join(":"),
+    classifierDivision: [classifier, division].join(":"),
+    sd,
+    modified: sd,
+    source: "Stage Score", // TODO: distinguish majors and classifiers on USPSA import
+
+    percent: uspsaScore.classification_pct,
+    code: uspsaScore.classifier_flag,
+
+    templateName: "USPSA",
+    type: "USPSA",
+    subType: "USPSA",
   };
 };
 
@@ -59,9 +69,6 @@ const all = [
 ]
   .flat()
   .map(binaryScoreFromUSPSAScore);
-
-fs.writeFileSync("uspsaData.bson", BSON.serialize({ all }));
-process.exit(0);
 
 const shooters = Object.values(
   all.reduce((acc, cur: Score) => {

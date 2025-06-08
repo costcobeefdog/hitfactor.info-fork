@@ -5,6 +5,7 @@ import { v4 as randomUUID } from "uuid";
 
 import { ScoreObjectWithVirtuals, Scores } from "@api/db/scores";
 import { getField, percentAggregationOp } from "@api/db/utils";
+import { Shooter } from "@data/types/Shooter";
 import {
   classForPercent,
   ClassLetter,
@@ -25,37 +26,7 @@ import {
 import { eloPointForShooter } from "../dataUtil/elo";
 import { psClassUpdatesByMemberNumber } from "../dataUtil/uspsa";
 
-// TODO: finish up the interfaces as schema
-export interface Shooter {
-  division: string;
-  memberNumber: string;
-  memberNumberDivision: string;
-  name: string;
-  memberId: string;
-  current: number;
-  hqClass: string;
-  hqClassRank: number;
-  class: string;
-
-  elo?: number;
-
-  // current
-  reclassificationsRecPercentUncappedCurrent: number;
-  recUncappedClassCurrent: string;
-  recUncappedClassCurrentRank: number;
-
-  // high
-  reclassificationsRecPercentUncappedHigh: number;
-  recUncappedClassHigh: string;
-  recUncappedClassHighRank: number;
-
-  // majors vs classifiers
-  reclassificationsMajorsCurrent: number;
-  reclassificationsClassifiersCurrent: number;
-
-  age: number;
-  age1: number;
-}
+export { type Shooter } from "@data/types/Shooter";
 
 type ShooterModel = Model<Shooter, object>;
 const ShooterSchema = new Schema<Shooter, ShooterModel>({}, { strict: false });

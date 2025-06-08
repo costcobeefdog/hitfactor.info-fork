@@ -230,6 +230,7 @@ export const scsaHhfEquivalentForDivision = (division: SCSADivision): HHFJSON[] 
       // SC-104 Outer Limits, at idx 3, has 3 scoring strings instead of 4;
       const numberOfScoringStringsForClassifier = idx === 3 ? 3 : 4;
       return {
+        updated: "",
         classifier: `SC-${100 + idx + 1}`,
         id: `SC-${100 + idx + 1}`,
         // Numerator

@@ -16,7 +16,8 @@
 
     "lib": [
       "es2023",
-      "dom"
+      "dom",
+      "DOM.Iterable"
     ],
 
     "baseUrl": ".",

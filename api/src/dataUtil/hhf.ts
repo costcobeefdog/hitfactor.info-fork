@@ -1,6 +1,3 @@
-import { HHFJSON, USPSAHHFJSON, USPSAHHFJSONDivision } from "../../../data/types/USPSA";
-import { loadJSON } from "../utils";
-
 import {
   classifiers,
   SCSADivision,
@@ -8,6 +5,9 @@ import {
 } from "./classifiersData";
 import { divIdToShort, hfuDivisionMapForHHF } from "./divisions";
 import { HF } from "./numbers";
+
+import { HHFJSON, USPSAHHFJSON, USPSAHHFJSONDivision } from "../../../data/types/USPSA";
+import { loadJSON } from "../utils";
 
 export const divShortToHHFs: Record<USPSAHHFJSONDivision, USPSAHHFJSON[]> = loadJSON(
   "../../data/hhf.json",

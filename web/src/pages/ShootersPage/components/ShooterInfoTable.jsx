@@ -4,7 +4,6 @@ import { Divider } from "primereact/divider";
 
 import {
   hfuDivisionsShortNames,
-  nameForDivision,
   sportForDivision,
   uspsaDivShortNames,
 } from "../../../../../api/src/dataUtil/divisions";

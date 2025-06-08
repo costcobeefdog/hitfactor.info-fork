@@ -3,6 +3,8 @@
 // legacy, unsupported, extracted from uploads.ts and kept in case someone
 // wants to take over SCSA in HFI fork
 
+import { EmptySingleMatchResultFactory, fetchPS } from "./uploadsCommon";
+
 import { UTCDate } from "../../../shared/utils/date";
 import {
   scsaDivisionWithPrefix,
@@ -10,8 +12,6 @@ import {
   ScsaPeakTimesMap,
 } from "../dataUtil/classifiersData";
 import { HF, N, Percent } from "../dataUtil/numbers";
-
-import { EmptySingleMatchResultFactory, fetchPS } from "./uploadsCommon";
 
 export const scsaMatchInfo = async matchInfo => {
   const { uuid } = matchInfo;
