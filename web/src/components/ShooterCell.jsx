@@ -1,6 +1,7 @@
 import { Tag } from "primereact/tag";
 
-import { classForPercent } from "../../../shared/utils/classification";
+import { classForPercent } from "@shared/classification/brackets";
+
 import { bgColorForClass, fgColorForClass } from "../utils/color";
 
 const tagStyle = (value, color) => ({
