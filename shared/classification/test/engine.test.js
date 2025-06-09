@@ -10,7 +10,11 @@ import testData, {
 } from "./data";
 import { makeClassifier } from "./utils";
 
-import { calculateUSPSAClassification, percentAndAgesForDivWindow } from "../engine";
+import {
+  calculateUSPSAClassification,
+  dedupeGrandbagging,
+  percentAndAgesForDivWindow,
+} from "../engine";
 import { initialClassificationStateForDivision } from "../state";
 
 describe("classification engine", () => {
@@ -284,14 +288,14 @@ describe("classification engine", () => {
       assert.strictEqual(Number(result.ltd.percent.toFixed(2)), 65.52);
       assert.strictEqual(Number(result.ltd.highPercent.toFixed(2)), 84.93);
 
-      assert.strictEqual(Number(result.prod.percent.toFixed(2)), 84.49);
+      assert.strictEqual(Number(result.prod.percent.toFixed(2)), 84.86);
       assert.strictEqual(Number(result.prod.highPercent.toFixed(2)), 88.57);
 
       assert.strictEqual(Number(result.co.percent.toFixed(2)), 96.56);
       assert.strictEqual(Number(result.co.highPercent.toFixed(2)), 98.28);
 
-      assert.strictEqual(Number(result.lo.percent.toFixed(2)), 95.85);
-      assert.strictEqual(Number(result.lo.highPercent.toFixed(2)), 95.85);
+      assert.strictEqual(Number(result.lo.percent.toFixed(2)), 92.86);
+      assert.strictEqual(Number(result.lo.highPercent.toFixed(2)), 93.09);
     });
 
     it("calculates classification ages in months", () => {
@@ -318,20 +322,18 @@ describe("classification engine", () => {
       assert.strictEqual(Number(result.prod.age1.toFixed(2)), 2);
       assert.strictEqual(Number(result.co.age.toFixed(2)), 9.05);
       assert.strictEqual(Number(result.co.age1.toFixed(2)), 7.79);
-      assert.strictEqual(Number(result.lo.age.toFixed(2)), 3.28);
-      assert.strictEqual(Number(result.lo.age1.toFixed(2)), 2);
+      assert.strictEqual(Number(result.lo.age.toFixed(2)), 3.86);
+      assert.strictEqual(Number(result.lo.age1.toFixed(2)), 2.14);
     });
 
     it("calculates historical classifications", () => {
       const result = calculateUSPSAClassification(testData, "curPercent");
       assert.notDeepEqual([{ foo: "bar" }], [{ foo: "baz" }]);
-      assert.equal(result.co.percentWithDates.length, 64);
-      assert.equal(
-        JSON.stringify(result.co.percentWithDates),
-        JSON.stringify([
-          { p: 0, sd: "2022-03-26T06:00:00.000Z" },
+      assert.equal(result.co.percentWithDates.length, 61);
+      assert.deepEqual(
+        result.co.percentWithDates.map(c => ({ ...c, sd: c.sd.toISOString() })),
+        [
           { p: 58.93750000000001, sd: "2022-03-26T06:00:00.000Z" },
-          { p: 64.376, sd: "2022-03-26T06:00:00.000Z" },
           { p: 64.376, sd: "2022-03-26T06:00:00.000Z" },
           { p: 68.70666666666668, sd: "2022-03-26T06:00:00.000Z" },
           { p: 79.39333333333333, sd: "2022-04-02T06:00:00.000Z" },
@@ -349,14 +351,13 @@ describe("classification engine", () => {
           { p: 88.10833333333335, sd: "2022-07-23T06:00:00.000Z" },
           { p: 90.57166666666667, sd: "2022-08-06T06:00:00.000Z" },
           { p: 90.57166666666667, sd: "2022-08-16T06:00:00.000Z" },
-          { p: 90.57166666666667, sd: "2022-08-16T06:00:00.000Z" },
           { p: 91.03333333333335, sd: "2022-08-20T06:00:00.000Z" },
-          { p: 83.36333333333334, sd: "2022-08-27T06:00:00.000Z" },
-          { p: 83.27080000000001, sd: "2022-09-02T06:00:00.000Z" },
+          { p: 87.32916666666667, sd: "2022-08-27T06:00:00.000Z" },
+          { p: 87.23663333333333, sd: "2022-09-02T06:00:00.000Z" },
           { p: 91.69065, sd: "2022-09-07T06:00:00.000Z" },
           { p: 89.87398333333333, sd: "2022-09-20T06:00:00.000Z" },
           { p: 90.85731666666668, sd: "2022-09-24T06:00:00.000Z" },
-          { p: 91.80731666666668, sd: "2022-10-15T06:00:00.000Z" },
+          { p: 86.54731666666665, sd: "2022-10-15T06:00:00.000Z" },
           { p: 91.58565, sd: "2022-10-18T06:00:00.000Z" },
           { p: 92.45565, sd: "2022-10-22T06:00:00.000Z" },
           { p: 92.45565, sd: "2022-11-15T07:00:00.000Z" },
@@ -393,7 +394,7 @@ describe("classification engine", () => {
           { p: 94.59746666666666, sd: "2023-08-26T06:00:00.000Z" },
           { p: 94.39666666666666, sd: "2023-09-02T06:00:00.000Z" },
           { p: 96.56333333333333, sd: "2023-09-15T06:00:00.000Z" },
-        ]),
+        ],
       );
     });
 
@@ -403,7 +404,7 @@ describe("classification engine", () => {
           noCurPercentButExpected,
           "curPercent",
         );
-        assert.strictEqual(Number(result.co.percent.toFixed(2)), 65.81);
+        assert.strictEqual(Number(result.co.percent.toFixed(2)), 71.54);
       });
 
       it("has CO classification for CS", () => {
@@ -428,6 +429,86 @@ describe("classification engine", () => {
         );
         assert.strictEqual(Number(uncappedResult.opn.percent.toFixed(2)), 100.74);
       });
+    });
+  });
+
+  describe("dedupeGrandbagging", () => {
+    it("reduces total number of scores for classification", () => {
+      assert.equal(testData.length, 252);
+      const deduped = dedupeGrandbagging(testData);
+      assert.equal(deduped.length, 243);
+    });
+
+    it("keeps unique scores or different day dupes as-is", () => {
+      const filler = {
+        source: "Stage Score",
+        recPercent: 0,
+        curPercent: 0,
+        division: "ltd",
+      };
+      const scores = [
+        {
+          classifier: "99-11",
+          sd: "3/15/22",
+          percent: 53.7336,
+          ...filler,
+        },
+        {
+          classifier: "99-22",
+          sd: "3/15/22",
+          percent: 43.7336,
+          ...filler,
+        },
+        {
+          classifier: "99-33",
+          sd: "3/16/22",
+          percent: 23.7336,
+          ...filler,
+        },
+      ];
+      const deduped = dedupeGrandbagging(scores);
+      assert.equal(deduped.length, 3);
+      assert.equal(scores.length, deduped.length);
+      assert.deepEqual(scores, deduped);
+    });
+
+    it("averages out same day dupes", () => {
+      const filler = {
+        source: "Stage Score",
+        recPercent: 0,
+        curPercent: 0,
+        division: "ltd",
+      };
+      const scores = [
+        {
+          classifier: "99-11",
+          sd: "3/15/22",
+          percent: 53.7336,
+          ...filler,
+        },
+        {
+          classifier: "99-11",
+          sd: "3/15/22",
+          percent: 43.7336,
+          ...filler,
+        },
+        {
+          classifier: "99-33",
+          sd: "3/16/22",
+          percent: 23.7336,
+          ...filler,
+        },
+      ];
+      const deduped = dedupeGrandbagging(scores);
+      assert.equal(deduped.length, 2);
+      assert.notEqual(scores.length, deduped.length);
+      assert.deepEqual(deduped, [
+        {
+          ...scores[0],
+          percent: 48.7336,
+        },
+        scores[2],
+      ]);
     });
   });
 });

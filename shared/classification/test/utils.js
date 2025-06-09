@@ -1,3 +1,4 @@
+/*
 interface MakeClassifierOptions {
   classifier?: string;
   division?: string;
@@ -6,6 +7,7 @@ interface MakeClassifierOptions {
   recPercent?: number;
   sd?: string;
 }
+  */
 
 export const makeClassifier = ({
   classifier,
@@ -14,7 +16,7 @@ export const makeClassifier = ({
   sd,
   curPercent,
   recPercent,
-}: MakeClassifierOptions = {}) => ({
+} /*: MakeClassifierOptions*/ = {}) => ({
   classifier: classifier ?? "99-11",
   sd: sd ?? "1/01/23",
   percent: percent ?? 74.999,
