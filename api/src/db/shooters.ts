@@ -508,7 +508,7 @@ export const reclassifyShooters = async shooters => {
         ];
       })
       .flat();
-    await Shooters.bulkWrite(updates.filter(Boolean));
+    return Shooters.bulkWrite(updates.filter(Boolean));
   } catch (error) {
     console.log("reclassifyShooters error:");
     console.log(error);

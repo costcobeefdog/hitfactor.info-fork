@@ -1,5 +1,5 @@
-import assert from "assert";
-import test from "node:test";
+import assert, { match } from "assert";
+import test, { describe, it } from "node:test";
 
 import { arrayCombination, classifiersAndShootersFromScores } from "../uploads";
 
@@ -32,33 +32,50 @@ test("arrayCombination", () => {
   );
 });
 
-test("classifiersAndShootersFromScores", () => {
-  const scores = [
-    scoreFactory("09-01", "co", "A123"),
-    scoreFactory("09-02", "co", "A123"),
-    scoreFactory("09-03", "opn", "A123"),
-    scoreFactory("09-03", "opn", "A256"),
-  ];
+describe("classifiersAndShootersFromScores", () => {
+  it("extracts classifiers and shooters from classifier scores", () => {
+    const scores = [
+      scoreFactory("09-01", "co", "A123"),
+      scoreFactory("09-02", "co", "A123"),
+      scoreFactory("09-03", "opn", "A123"),
+      scoreFactory("09-03", "opn", "A256"),
+    ];
 
-  assert.deepEqual(
-    classifiersAndShootersFromScores(scores).classifiers.map(c => c.classifierDivision),
-    ["09-01:co", "09-02:co", "09-03:opn"],
-  );
-  assert.deepEqual(
-    classifiersAndShootersFromScores(scores).shooters.map(c => c.memberNumberDivision),
-    ["A123:co", "A123:opn", "A256:opn"],
-  );
+    assert.deepEqual(
+      classifiersAndShootersFromScores(scores).classifiers.map(c => c.classifierDivision),
+      ["09-01:co", "09-02:co", "09-03:opn"],
+    );
+    assert.deepEqual(
+      classifiersAndShootersFromScores(scores).shooters.map(c => c.memberNumberDivision),
+      ["A123:co", "A123:opn", "A256:opn"],
+    );
+  });
 
-  assert.deepEqual(
-    classifiersAndShootersFromScores(scores, {}, true).classifiers.map(
-      c => c.classifierDivision,
-    ),
-    ["09-01:co", "09-01:opt", "09-02:co", "09-02:opt", "09-03:opn", "09-03:comp"],
-  );
-  assert.deepEqual(
-    classifiersAndShootersFromScores(scores, {}, true).shooters.map(
-      c => c.memberNumberDivision,
-    ),
-    ["A123:co", "A123:opt", "A123:opn", "A123:comp", "A256:opn", "A256:comp"],
-  );
+  it("combines shooters from classifiers and match scores", () => {
+    const scores = [
+      scoreFactory("09-01", "co", "A123"),
+      scoreFactory("09-02", "co", "A123"),
+      scoreFactory("09-03", "opn", "A123"),
+      scoreFactory("09-03", "opn", "A256"),
+    ];
+
+    const matchScores = [
+      {
+        memberNumberDivision: "A999123:co",
+      },
+    ];
+
+    assert.deepEqual(
+      classifiersAndShootersFromScores(scores, matchScores).classifiers.map(
+        c => c.classifierDivision,
+      ),
+      ["09-01:co", "09-02:co", "09-03:opn"],
+    );
+    assert.deepEqual(
+      classifiersAndShootersFromScores(scores, matchScores).shooters.map(
+        c => c.memberNumberDivision,
+      ),
+      ["A123:co", "A123:opn", "A256:opn", "A999123:co"],
+    );
+  });
 });

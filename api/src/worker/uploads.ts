@@ -20,7 +20,6 @@ import { uuidsFromUrlString } from "../../../shared/utils/uuid";
 import { normalizeClassifierCode } from "../dataUtil/classifiersData";
 import {
   arrayWithExplodedDivisions,
-  hfuDivisionCompatabilityMap,
   hfuDivisionsShortNames,
   pairToDivision,
 } from "../dataUtil/divisions";
@@ -56,17 +55,17 @@ export const arrayCombination = (arr1, arr2, cb) => {
 };
 
 export const classifiersAndShootersFromScores = (
-  scores,
+  scores: Score[],
+  matchScores: MatchScore[] = [],
   memberNumberToNameMap = {},
-  includeHFUDivisions = false,
 ): { shooters: AfterUploadShooter[]; classifiers: AfterUploadClassifier[] } => {
-  const divisionExplosionMap = includeHFUDivisions ? hfuDivisionCompatabilityMap : {};
+  const divisionExplosionMap = {};
   const uniqueClassifierDivisionPairs = uniqByTruthyMap(
     scores,
     s => s.classifierDivision,
   );
   const uniqueMemberNumberDivisionPairs = uniqByTruthyMap(
-    scores,
+    ([] as (Score | MatchScore)[]).concat(scores, matchScores),
     s => s.memberNumberDivision,
   );
   const stageNameMap = scores.reduce((acc, s) => {
@@ -554,49 +553,52 @@ export const processUploadResults = async ({ uploadResults }) => {
     await saveMatchBumps(matchBumpsForMatchResults(backfilledMatchScores));
     console.timeEnd("matchBumps");
 
-    if (!scores.length) {
-      return { classifiers: [], shooters: [], matches: [], matchResults };
-    }
-    console.time("scoreWrite");
-    await Scores.bulkWrite(
-      scores.map(s => ({
-        updateOne: {
-          filter: {
-            memberNumberDivision: s.memberNumberDivision,
-            classifierDivision: s.classifierDivision,
-            hf: s.hf,
-            sd: s.sd,
+    if (scores.length) {
+      console.time("scoreWrite");
+      await Scores.bulkWrite(
+        scores.map(s => ({
+          updateOne: {
+            filter: {
+              memberNumberDivision: s.memberNumberDivision,
+              classifierDivision: s.classifierDivision,
+              hf: s.hf,
+              sd: s.sd,
+            },
+            update: { $setOnInsert: s },
+            upsert: true,
           },
-          update: { $setOnInsert: s },
-          upsert: true,
-        },
-      })),
-    );
-    console.timeEnd("scoreWrite");
+        })),
+      );
+      console.timeEnd("scoreWrite");
+    }
 
     const { classifiers, shooters } = classifiersAndShootersFromScores(
       scores,
+      matchResults,
       shooterNameMap,
-      true,
     );
-    await AfterUploadShooters.bulkWrite(
-      shooters.map(s => ({
-        updateOne: {
-          filter: { memberNumberDivision: s.memberNumberDivision },
-          update: { $set: s },
-          upsert: true,
-        },
-      })),
-    );
-    await AfterUploadClassifiers.bulkWrite(
-      classifiers.map(c => ({
-        updateOne: {
-          filter: { classifierDivision: c.classifierDivision },
-          update: { $set: c },
-          upsert: true,
-        },
-      })),
-    );
+    if (shooters.length) {
+      await AfterUploadShooters.bulkWrite(
+        shooters.map(s => ({
+          updateOne: {
+            filter: { memberNumberDivision: s.memberNumberDivision },
+            update: { $set: s },
+            upsert: true,
+          },
+        })),
+      );
+    }
+    if (classifiers.length) {
+      await AfterUploadClassifiers.bulkWrite(
+        classifiers.map(c => ({
+          updateOne: {
+            filter: { classifierDivision: c.classifierDivision },
+            update: { $set: c },
+            upsert: true,
+          },
+        })),
+      );
+    }
 
     const publicShooters = features.hfu
       ? shooters

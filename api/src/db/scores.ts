@@ -22,6 +22,7 @@ import { matchScoresFor, matchScoreToScoreAdapter, ScoreMini } from "./matchScor
 export interface Score {
   upload?: string;
   classifier: string;
+  classifierName?: string;
   sd: Date;
   clubid?: string;
   club_name?: string;
