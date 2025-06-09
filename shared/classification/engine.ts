@@ -69,6 +69,33 @@ export const percentAndAgesForDivWindow = (
   };
 };
 
+export const dedupeGrandbagging = (scores: ClassifierScore[]) =>
+  Object.values(
+    scores.reduce(
+      (acc, cur) => {
+        cur.classifier = cur.classifier || randomUUID();
+        const date = new Date(cur.sd).toLocaleDateString();
+        const key = [date, cur.classifier].join(":");
+        acc[key] = acc[key] || [];
+        acc[key].push(cur);
+        return acc;
+      },
+      {} as Record<string, ClassifierScore[]>,
+    ),
+  ).map(dayScores => {
+    const scoresCount = dayScores.length;
+    if (scoresCount === 1) {
+      return dayScores[0];
+    }
+
+    return {
+      ...dayScores[0],
+      percent: dayScores.reduce((acc, c) => acc + c.percent, 0) / scoresCount,
+      curPercent: dayScores.reduce((acc, c) => acc + c.curPercent, 0) / scoresCount,
+      recPercent: dayScores.reduce((acc, c) => acc + c.recPercent, 0) / scoresCount,
+    };
+  });
+
 export const calculateUSPSAClassification = (
   classifiers: ClassifierScore[],
   percentField: "percent" | "curPercent" | "recPercent",
@@ -83,7 +110,7 @@ export const calculateUSPSAClassification = (
     return state;
   }
 
-  const classifiersReadyToScore = classifiers
+  const classifiersReadyToScore = dedupeGrandbagging(classifiers)
     .toSorted((a, b) => {
       const asDate = dateSort(a, b, "sd", 1);
       if (!asDate) {
@@ -155,30 +182,3 @@ export const calculateUSPSAClassification = (
 
   return state;
 };
-
-export const dedupeGrandbagging = (scores: ClassifierScore[]) =>
-  Object.values(
-    scores.reduce(
-      (acc, cur) => {
-        cur.classifier = cur.classifier || randomUUID();
-        const date = new Date(cur.sd).toLocaleDateString();
-        const key = [date, cur.classifier].join(":");
-        acc[key] = acc[key] || [];
-        acc[key].push(cur);
-        return acc;
-      },
-      {} as Record<string, ClassifierScore[]>,
-    ),
-  ).map(dayScores => {
-    const scoresCount = dayScores.length;
-    if (scoresCount === 1) {
-      return dayScores[0];
-    }
-
-    return {
-      ...dayScores[0],
-      percent: dayScores.reduce((acc, c) => acc + c.percent, 0) / scoresCount,
-      curPercent: dayScores.reduce((acc, c) => acc + c.curPercent, 0) / scoresCount,
-      recPercent: dayScores.reduce((acc, c) => acc + c.recPercent, 0) / scoresCount,
-    };
-  });
