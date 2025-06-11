@@ -5,7 +5,7 @@ import { scoresForRecommendedClassification } from "../api/src/db/shooters";
 const go = async () => {
   await connect();
 
-  const scores = await scoresForRecommendedClassification(["TY93975"]);
+  const scores = await scoresForRecommendedClassification({ memberNumbers: ["TY93975"] });
 
   // eslint-disable-next-line
   console.log(JSON.stringify(scores, null, 2));

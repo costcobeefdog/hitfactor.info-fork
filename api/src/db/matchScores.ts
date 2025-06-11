@@ -130,7 +130,7 @@ export const scoresForMode = async ({
   until,
 }: ScoresForModeArgs) => {
   const getClassifiers = async () =>
-    scoresForRecommendedClassification(memberNumbers, division, until);
+    scoresForRecommendedClassification({ memberNumbers, division, until });
   const getMatchScores = async () =>
     matchScoresForClassification({ memberNumber: memberNumbers, division, until });
 
@@ -307,5 +307,5 @@ export const matchScoresForClassification = async ({
     .map(ms => new Array(matchWeightForLevel(ms.level)).fill(ms))
     .flat();
 
-  return explodedMatchScores.map(matchScoreToScoreAdapter);
+  return explodedMatchScores.map(matchScoreToScoreAdapter).filter(c => c.percent > 0);
 };

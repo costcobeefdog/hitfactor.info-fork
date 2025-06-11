@@ -170,12 +170,7 @@ const _addHFUDivisions = () => [
   },
 ];
 
-/**
- * Replaces same day dupes with a single average run, same as
- * scoresForRecommendedClassification(), but in memory.
- *
- * Used for What If Recommended Classification calculation
- */
+/** Replaces same day dupes with a single average run in memory */
 export const dedupeGrandbagging = (scores: ScoreObjectWithVirtuals[]) =>
   Object.values(
     scores.reduce(
@@ -202,10 +197,19 @@ export const dedupeGrandbagging = (scores: ScoreObjectWithVirtuals[]) =>
     return { ...oneDayScores[0], hf: avgHf, recPercent: avgRecPercent };
   });
 
+interface ScoresFilter {
+  memberNumbers: string[];
+  division?: string;
+  until?: Date;
+}
+
+interface ScoresOptions {
+  includeZeros?: boolean;
+}
+
 export const scoresForRecommendedClassification = (
-  memberNumbers: string[],
-  division?: string,
-  until?: Date,
+  { memberNumbers, division, until }: ScoresFilter,
+  opts?: ScoresOptions,
 ) =>
   Scores.aggregate([
     {
@@ -213,7 +217,7 @@ export const scoresForRecommendedClassification = (
         bad: { $ne: true },
         source: { $ne: "Major Match" }, // majors only come from MatchScores now
         memberNumber: { $in: memberNumbers },
-        $or: [{ hf: { $gt: 0 } }, { percent: { $gt: 0 } }],
+        ...(opts?.includeZeros ? {} : { hf: { $gt: 0 } }),
 
         // optional filtering
         ...(!division ? {} : { division }),
