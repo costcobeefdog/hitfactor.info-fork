@@ -115,7 +115,8 @@ export const ClassifierInfoTable = ({
           totalScores={info.totalScores}
           division={division}
           classifier={classifier}
-          hhf={hhf}
+          hhf={curHHF}
+          oldHHF={oldHHF}
           recHHF={recHHF}
         />
       </div>

@@ -21,6 +21,7 @@ import {
   wbl15AnnotationColor,
   r5annotationColor,
   pointsGraph,
+  r1annotationColor,
 } from "./common";
 import { closestYForX } from "./common";
 import { GraphPoint } from "./common";
@@ -81,6 +82,7 @@ const colorForELOOrPercent = (colorMode: string, dataPoint: AdvancedScorePoint) 
 
 const colorForPrefix = (prefix, alpha) =>
   ({
+    old: wbl15AnnotationColor,
     hq: annotationColor,
     "": annotationColor,
     r: r5annotationColor,
@@ -92,15 +94,16 @@ const colorForPrefix = (prefix, alpha) =>
     wbl15: wbl15AnnotationColor,
   })[prefix](alpha);
 export const extraLabelOffsets = {
-  hq: 0,
+  old: 10,
+  hq: 20,
   "": 0,
-  r: 5,
-  r1: 5,
-  r5: 15,
-  r15: 20,
-  wbl1: 10,
-  wbl5: 20,
-  wbl15: 30,
+  r: 0,
+  r1: 0,
+  r5: 0,
+  r15: 0,
+  wbl1: 0,
+  wbl5: 0,
+  wbl15: 0,
 };
 
 const closestPercentileForHF = (hf: number, data: AdvancedScorePoint[]) =>
@@ -109,53 +112,63 @@ const closestPercentileForHF = (hf: number, data: AdvancedScorePoint[]) =>
     data.map(c => ({ ...c, x: c.hf })),
   )[0];
 
-const xLinesForHHF = (prefix: string, hhf: number) =>
+const xLinesForHHF = (prefix: string, hhf: number, onlyHHF: boolean = false) =>
   hhf <= 0
     ? {}
-    : {
-        ...xLine(
-          `${prefix}HHF = ${hhf?.toFixed(4)}`,
-          hhf,
-          colorForPrefix(prefix, 1),
-          prefix.startsWith("hq") ? 20 : 0, // extraLabelOffsets[prefix],
-          true,
-        ),
-        ...xLine(
-          `${prefix}GM`,
-          0.95 * hhf,
-          colorForPrefix(prefix, 0.8),
-          prefix.startsWith("hq") ? 20 : 0, // extraLabelOffsets[prefix],
-          true,
-        ),
-        ...xLine(
-          `${prefix}M`,
-          0.85 * hhf,
-          colorForPrefix(prefix, 0.6),
-          prefix.startsWith("hq") ? 20 : 0, // extraLabelOffsets[prefix],
-          true,
-        ),
-        ...xLine(
-          `${prefix}A`,
-          0.75 * hhf,
-          colorForPrefix(prefix, 0.5),
-          prefix.startsWith("hq") ? 20 : 0, // extraLabelOffsets[prefix],
-          true,
-        ),
-        ...xLine(
-          `${prefix}B`,
-          0.6 * hhf,
-          colorForPrefix(prefix, 0.4),
-          prefix.startsWith("hq") ? 20 : 0, // extraLabelOffsets[prefix],
-          true,
-        ),
-        ...xLine(
-          `${prefix}C`,
-          0.4 * hhf,
-          colorForPrefix(prefix, 0.3),
-          prefix.startsWith("hq") ? 20 : 0, // extraLabelOffsets[prefix],
-          true,
-        ),
-      };
+    : onlyHHF
+      ? {
+          ...xLine(
+            `${prefix}HHF = ${hhf?.toFixed(4)}`,
+            hhf,
+            colorForPrefix(prefix, 1),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+        }
+      : {
+          ...xLine(
+            `${prefix}HHF = ${hhf?.toFixed(4)}`,
+            hhf,
+            colorForPrefix(prefix, 1),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+          ...xLine(
+            `${prefix}GM`,
+            0.95 * hhf,
+            colorForPrefix(prefix, 0.8),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+          ...xLine(
+            `${prefix}M`,
+            0.85 * hhf,
+            colorForPrefix(prefix, 0.6),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+          ...xLine(
+            `${prefix}A`,
+            0.75 * hhf,
+            colorForPrefix(prefix, 0.5),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+          ...xLine(
+            `${prefix}B`,
+            0.6 * hhf,
+            colorForPrefix(prefix, 0.4),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+          ...xLine(
+            `${prefix}C`,
+            0.4 * hhf,
+            colorForPrefix(prefix, 0.3),
+            extraLabelOffsets[prefix],
+            true,
+          ),
+        };
 
 const SCORES_STEP = 50;
 
@@ -219,6 +232,7 @@ export const ScoresChart = ({
   division,
   classifier,
   hhf,
+  oldHHF,
   recHHF: recHHFProp,
   totalScores,
   urlFactory = urlWithParams,
@@ -418,7 +432,8 @@ export const ScoresChart = ({
                   )),
 
               // ...(sport === "uspsa" || sport === "scsa" ? xLinesForHHF("", hhf) : []),
-              ...(xMode !== "HF" ? {} : xLinesForHHF("hq", hhf)),
+              ...(xMode !== "HF" ? {} : xLinesForHHF("hq", hhf, true)),
+              ...(xMode !== "HF" ? {} : xLinesForHHF("old", oldHHF, true)),
               ...(xMode !== "HF" ? {} : xLinesForHHF("r", recHHF)),
             },
           },
