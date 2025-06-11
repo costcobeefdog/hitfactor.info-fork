@@ -245,10 +245,6 @@ export const scoresForRecommendedClassification = (
         },
       },
     },
-    ..._addHFUDivisions(),
-    {
-      $set: { classifierDivision: { $concat: ["$classifier", ":", "$division"] } },
-    },
     // calculate recPercent before sorting/deduping, so we can use it as secondary sort
     {
       $lookup: {
@@ -286,53 +282,6 @@ export const scoresForRecommendedClassification = (
             else: percentAggregationOp("$hf", "$curHHF", 4),
           },
         },
-      },
-    },
-    // limit up to 10 div/memberNumber unique scores before applying daily dupe.avg
-    { $sort: { sd: -1, recPercent: -1 } },
-    {
-      $group: {
-        _id: ["$classifier", "$division", "$memberNumber", "$sd"],
-        docs: { $push: "$$ROOT" },
-        sd: { $first: "$sd" },
-        classifier: { $first: "$classifier" },
-        division: { $first: "$division" },
-        memberNumber: { $first: "$memberNumber" },
-      },
-    },
-    {
-      $group: {
-        _id: ["$division", "$memberNumber"],
-        divMemberScores: { $push: "$$ROOT" },
-        sd: { $first: "$sd" },
-      },
-    },
-    {
-      $project: {
-        divMemberScores: {
-          $sortArray: { input: "$divMemberScores", sortBy: { sd: -1 } },
-        },
-      },
-    },
-    { $unwind: { path: "$divMemberScores" } },
-    { $replaceRoot: { newRoot: "$divMemberScores" } },
-    { $unwind: { path: "$docs" } },
-    { $replaceRoot: { newRoot: "$docs" } },
-
-    // use avg score for dupes within the day and count them as one classifier in best 6 out of 10
-    {
-      $group: {
-        _id: ["$classifier", "$division", "$memberNumber", "$sd"],
-        hf: { $avg: "$hf" },
-        sd: { $first: "$sd" },
-        memberNumber: { $first: "$memberNumber" },
-        division: { $first: "$division" },
-        classifier: { $first: "$classifier" },
-        classifierDivision: { $first: "$classifierDivision" },
-        percent: { $avg: "$percent" },
-        curPercent: { $avg: "$curPercent" },
-        recPercent: { $avg: "$recPercent" },
-        source: { $first: "$source" },
       },
     },
     {

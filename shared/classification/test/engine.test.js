@@ -288,14 +288,14 @@ describe("classification engine", () => {
       assert.strictEqual(Number(result.ltd.percent.toFixed(2)), 65.52);
       assert.strictEqual(Number(result.ltd.highPercent.toFixed(2)), 84.93);
 
-      assert.strictEqual(Number(result.prod.percent.toFixed(2)), 84.86);
+      assert.strictEqual(Number(result.prod.percent.toFixed(2)), 84.49);
       assert.strictEqual(Number(result.prod.highPercent.toFixed(2)), 88.57);
 
       assert.strictEqual(Number(result.co.percent.toFixed(2)), 96.56);
       assert.strictEqual(Number(result.co.highPercent.toFixed(2)), 98.28);
 
-      assert.strictEqual(Number(result.lo.percent.toFixed(2)), 92.86);
-      assert.strictEqual(Number(result.lo.highPercent.toFixed(2)), 93.09);
+      assert.strictEqual(Number(result.lo.percent.toFixed(2)), 95.85);
+      assert.strictEqual(Number(result.lo.highPercent.toFixed(2)), 95.85);
     });
 
     it("calculates classification ages in months", () => {
@@ -322,8 +322,8 @@ describe("classification engine", () => {
       assert.strictEqual(Number(result.prod.age1.toFixed(2)), 2);
       assert.strictEqual(Number(result.co.age.toFixed(2)), 9.05);
       assert.strictEqual(Number(result.co.age1.toFixed(2)), 7.79);
-      assert.strictEqual(Number(result.lo.age.toFixed(2)), 3.86);
-      assert.strictEqual(Number(result.lo.age1.toFixed(2)), 2.14);
+      assert.strictEqual(Number(result.lo.age.toFixed(2)), 3.28);
+      assert.strictEqual(Number(result.lo.age1.toFixed(2)), 2);
     });
 
     it("calculates historical classifications", () => {
@@ -398,13 +398,45 @@ describe("classification engine", () => {
       );
     });
 
+    it("uses most recent non-same-day duplicate", () => {
+      const filler = {
+        recPercent: 0,
+        curPercent: 0,
+        source: "Stage Score",
+        memberNumber: "TY123",
+        division: "co",
+      };
+      const scores = [
+        { classifier: "18-04", sd: "2021-03-06", percent: 86.15, ...filler },
+        { classifier: "03-08", sd: "2021-03-11", percent: 90.36, ...filler },
+        { classifier: "03-11", sd: "2021-04-08", percent: 48.97, ...filler },
+        { classifier: "99-23", sd: "2021-05-01", percent: 71.49, ...filler },
+        { classifier: "99-23", sd: "2021-07-15", percent: 76.03, ...filler },
+      ];
+      const result = calculateUSPSAClassification(scores, "percent");
+      assert.strictEqual(result.co.percent, (86.15 + 90.36 + 48.97 + 76.03) / 4);
+
+      const scores2 = [
+        { classifier: "18-04", sd: "2021-03-06", percent: 86.15, ...filler },
+        { classifier: "03-08", sd: "2021-03-11", percent: 90.36, ...filler },
+        { classifier: "03-11", sd: "2021-04-08", percent: 48.97, ...filler },
+        { classifier: "99-23", sd: "2021-05-15", percent: 76.03, ...filler },
+        { classifier: "99-23", sd: "2021-05-17", percent: 71.49, ...filler },
+      ];
+      const result2 = calculateUSPSAClassification(scores2, "percent");
+      assert.strictEqual(
+        result2.co.percent.toFixed(4),
+        ((86.15 + 90.36 + 48.97 + 71.49) / 4).toFixed(4),
+      );
+    });
+
     describe("special cases & bugs", () => {
       it("has CO classification for A111317", () => {
         const result = calculateUSPSAClassification(
           noCurPercentButExpected,
           "curPercent",
         );
-        assert.strictEqual(Number(result.co.percent.toFixed(2)), 71.54);
+        assert.strictEqual(Number(result.co.percent.toFixed(2)), 74.8);
       });
 
       it("has CO classification for CS", () => {
@@ -436,7 +468,7 @@ describe("classification engine", () => {
     it("reduces total number of scores for classification", () => {
       assert.equal(testData.length, 252);
       const deduped = dedupeGrandbagging(testData);
-      assert.equal(deduped.length, 243);
+      assert.equal(deduped.length, 248);
     });
 
     it("keeps unique scores or different day dupes as-is", () => {
@@ -508,6 +540,70 @@ describe("classification engine", () => {
           percent: 48.7336,
         },
         scores[2],
+      ]);
+    });
+
+    it("dedupes real-life data properly", () => {
+      const filler = {
+        recPercent: 0,
+        curPercent: 0,
+        source: "Stage Score",
+        memberNumber: "TY123",
+        division: "co",
+      };
+      const scores = [
+        { classifier: "18-04", sd: "2021-03-06", percent: 86.15, ...filler },
+        { classifier: "03-08", sd: "2021-03-11", percent: 90.36, ...filler },
+        { classifier: "03-11", sd: "2021-04-08", percent: 48.97, ...filler },
+        { classifier: "99-23", sd: "2021-05-01", percent: 71.49, ...filler },
+        { classifier: "99-23", sd: "2021-07-15", percent: 76.03, ...filler },
+        { classifier: "99-08", sd: "2021-11-06", percent: 90.54, ...filler },
+        { classifier: "18-07", sd: "2021-11-13", percent: 81.82, ...filler },
+        { classifier: "99-13", sd: "2021-12-04", percent: 66.66, ...filler },
+        { classifier: "19-01", sd: "2022-01-02", percent: 83.23, ...filler },
+        { classifier: "21-01", sd: "2022-01-02", percent: 77.66, ...filler },
+        { classifier: "18-08", sd: "2022-01-02", percent: 83.43, ...filler },
+        { classifier: "19-03", sd: "2022-01-02", percent: 63.33, ...filler },
+        { classifier: "03-09", sd: "2022-01-02", percent: 48.72, ...filler },
+        { classifier: "20-01", sd: "2022-01-15", percent: 96.21, ...filler },
+        { classifier: "09-14", sd: "2022-02-05", percent: 83.27, ...filler },
+        { classifier: "09-13", sd: "2022-02-12", percent: 54.31, ...filler },
+        { classifier: "03-18", sd: "2022-03-05", percent: 88.94, ...filler },
+        { classifier: "18-03", sd: "2022-05-07", percent: 90.22, ...filler },
+        { classifier: "03-04", sd: "2022-07-23", percent: 23.03, ...filler },
+        { classifier: "09-13", sd: "2022-08-26", percent: 96.89, ...filler },
+        { classifier: "99-23", sd: "2022-10-01", percent: 78.69, ...filler },
+        { classifier: "99-23", sd: "2022-10-01", percent: 73.37, ...filler },
+        { classifier: "99-24", sd: "2023-05-06", percent: 99.99, ...filler },
+        { classifier: "06-10", sd: "2023-05-13", percent: 99.99, ...filler },
+        { classifier: "06-10", sd: "2023-05-13", percent: 83.57, ...filler },
+        { classifier: "09-13", sd: "2023-08-26", percent: 91.35, ...filler },
+      ];
+      assert.deepEqual(dedupeGrandbagging(scores), [
+        { classifier: "18-04", sd: "2021-03-06", percent: 86.15, ...filler },
+        { classifier: "03-08", sd: "2021-03-11", percent: 90.36, ...filler },
+        { classifier: "03-11", sd: "2021-04-08", percent: 48.97, ...filler },
+        { classifier: "99-23", sd: "2021-05-01", percent: 71.49, ...filler },
+        { classifier: "99-23", sd: "2021-07-15", percent: 76.03, ...filler },
+        { classifier: "99-08", sd: "2021-11-06", percent: 90.54, ...filler },
+        { classifier: "18-07", sd: "2021-11-13", percent: 81.82, ...filler },
+        { classifier: "99-13", sd: "2021-12-04", percent: 66.66, ...filler },
+        { classifier: "19-01", sd: "2022-01-02", percent: 83.23, ...filler },
+        { classifier: "21-01", sd: "2022-01-02", percent: 77.66, ...filler },
+        { classifier: "18-08", sd: "2022-01-02", percent: 83.43, ...filler },
+        { classifier: "19-03", sd: "2022-01-02", percent: 63.33, ...filler },
+        { classifier: "03-09", sd: "2022-01-02", percent: 48.72, ...filler },
+        { classifier: "20-01", sd: "2022-01-15", percent: 96.21, ...filler },
+        { classifier: "09-14", sd: "2022-02-05", percent: 83.27, ...filler },
+        { classifier: "09-13", sd: "2022-02-12", percent: 54.31, ...filler },
+        { classifier: "03-18", sd: "2022-03-05", percent: 88.94, ...filler },
+        { classifier: "18-03", sd: "2022-05-07", percent: 90.22, ...filler },
+        { classifier: "03-04", sd: "2022-07-23", percent: 23.03, ...filler },
+        { classifier: "09-13", sd: "2022-08-26", percent: 96.89, ...filler },
+        { classifier: "99-23", sd: "2022-10-01", percent: 76.03, ...filler },
+        { classifier: "99-24", sd: "2023-05-06", percent: 99.99, ...filler },
+        { classifier: "06-10", sd: "2023-05-13", percent: 91.78, ...filler },
+        { classifier: "09-13", sd: "2023-08-26", percent: 91.35, ...filler },
       ]);
     });
   });

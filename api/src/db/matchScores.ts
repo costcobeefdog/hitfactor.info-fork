@@ -10,6 +10,7 @@ import { ScoresMode, ScoreSource } from "@data/types/ScoresModes";
 import { calculateUSPSAClassification } from "@shared/classification/engine";
 import { classificationDifficulty } from "@shared/constants/difficulty";
 import { UTCDate } from "@shared/utils/date";
+import { dateSort } from "@shared/utils/sort";
 
 export interface MatchScoreVirtuals {
   shooter: Shooter;
@@ -135,7 +136,9 @@ export const scoresForMode = async ({
 
   switch (mode) {
     case "combined":
-      return (await getClassifiers()).concat(await getMatchScores());
+      return (await getClassifiers())
+        .concat(await getMatchScores())
+        .toSorted((a, b) => dateSort(a, b, "sd", 1));
     case "classifiers":
       return getClassifiers();
     case "majors":

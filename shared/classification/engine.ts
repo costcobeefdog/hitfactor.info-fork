@@ -75,7 +75,7 @@ export const dedupeGrandbagging = (scores: ClassifierScore[]) =>
       (acc, cur) => {
         cur.classifier = cur.classifier || randomUUID();
         const date = new Date(cur.sd).toLocaleDateString();
-        const key = [date, cur.classifier].join(":");
+        const key = [date, cur.classifier, cur.division].join(":");
         acc[key] = acc[key] || [];
         acc[key].push(cur);
         return acc;
