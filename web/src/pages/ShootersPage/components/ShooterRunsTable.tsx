@@ -52,7 +52,7 @@ const HFEdit = ({ value: valueProp, updateWhatIfs, id }) => {
 };
 
 interface ShooterRunsTableProps {
-  classifiers: Record<string, any>[];
+  classifiers: Record<string, string | number | boolean | Date>[];
   onClassifierSelection: (classifier: string) => void;
   loading: boolean;
   updateWhatIfs: (
@@ -89,7 +89,7 @@ const ShooterRunsTable = ({
           });
     return filtered.map(c => ({
       ...c,
-      sdUnix: new Date(c.sd).getTime(),
+      sdUnix: new Date(c.sd as string | Date).getTime(),
       curPercent: c.source === "Major Match" ? -1 : c.curPercent,
       oldPercent: c.source === "Major Match" ? -1 : c.oldPercent,
     }));

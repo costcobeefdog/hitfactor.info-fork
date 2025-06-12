@@ -4,7 +4,7 @@ import mongoose, { Model, Schema } from "mongoose";
 import { v4 as randomUUID } from "uuid";
 
 import { ScoreObjectWithVirtuals, Scores } from "@api/db/scores";
-import { getField, percentAggregationOp } from "@api/db/utils";
+import { percentAggregationOp } from "@api/db/utils";
 import { Shooter } from "@data/types/Shooter";
 import {
   classForPercent,
@@ -17,12 +17,7 @@ import { scoresForMode } from "./matchScores";
 
 import { calculateUSPSAClassification } from "../../../shared/classification/engine";
 import { classificationDifficulty } from "../../../shared/constants/difficulty";
-import {
-  divIdToShort,
-  hfuDivisionCompatabilityMap,
-  hfuDivisionsShortNamesThatNeedMinorHF,
-  uspsaDivShortNames,
-} from "../dataUtil/divisions";
+import { divIdToShort, uspsaDivShortNames } from "../dataUtil/divisions";
 import { eloPointForShooter } from "../dataUtil/elo";
 import { psClassUpdatesByMemberNumber } from "../dataUtil/uspsa";
 
@@ -127,6 +122,7 @@ export const allDivisionsScoresByMemberNumber = async memberNumbers => {
   }, {});
 };
 
+/*
 const _divisionExplosion = () => [
   {
     $set: {
@@ -169,6 +165,7 @@ const _addHFUDivisions = () => [
     },
   },
 ];
+*/
 
 /** Replaces same day dupes with a single average run in memory */
 export const dedupeGrandbagging = (scores: ScoreObjectWithVirtuals[]) =>

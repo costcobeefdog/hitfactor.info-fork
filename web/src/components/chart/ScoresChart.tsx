@@ -21,7 +21,6 @@ import {
   wbl15AnnotationColor,
   r5annotationColor,
   pointsGraph,
-  r1annotationColor,
 } from "./common";
 import { closestYForX } from "./common";
 import { GraphPoint } from "./common";

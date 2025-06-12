@@ -1,10 +1,14 @@
 import { Percent } from "../../../dataUtil/numbers";
 import { uspsaDivisionsPopularity } from "../../../db/scores";
 
+const useStaticDivisionStats = true;
+
 const _divisionsPopularityCached = {};
 const statsRoutes = async fastify => {
   fastify.get("/divisions", async req => {
-    return { disabled: 1 };
+    if (useStaticDivisionStats) {
+      return { disabled: 1 };
+    }
     const year = Number(req.query.year) || 0;
     let data = _divisionsPopularityCached[year];
     if (!data) {

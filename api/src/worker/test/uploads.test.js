@@ -1,4 +1,4 @@
-import assert, { match } from "assert";
+import assert from "assert";
 import test, { describe, it } from "node:test";
 
 import { arrayCombination, classifiersAndShootersFromScores } from "../uploads";
