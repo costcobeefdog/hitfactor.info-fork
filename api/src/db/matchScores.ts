@@ -128,7 +128,7 @@ export const scoresForMode = async ({
   memberNumbers,
   division,
   until,
-}: ScoresForModeArgs) => {
+}: ScoresForModeArgs): Promise<ScoreMini[]> => {
   const getClassifiers = async () =>
     scoresForRecommendedClassification({ memberNumbers, division, until });
   const getMatchScores = async () =>
@@ -160,19 +160,21 @@ export const backfillComboClassifications = async (
     memberNumbers,
     until: matchDate,
   });
-  const scoresByMemberNumber = scores.reduce((acc, s) => {
-    acc[s.memberNumber] ??= [];
-    acc[s.memberNumber].push(s);
-    return acc;
-  }, {});
+  const scoresByMemberNumber = scores.reduce(
+    (acc, s) => {
+      acc[s.memberNumber] ??= [];
+      acc[s.memberNumber].push(s);
+      return acc;
+    },
+    {} as Record<string, ScoreMini[]>,
+  );
 
   return matchScores.map(c => {
     const date = matchDate ?? (c.date || new Date());
     const reclass = calculateUSPSAClassification(
-      scoresByMemberNumber[c.memberNumber]?.filter(
-        score => score.sd.getTime() < date.getTime(),
-      ),
-      "recPercent",
+      scoresByMemberNumber[c.memberNumber]
+        ?.filter(score => score.sd.getTime() < date.getTime())
+        .map(cur => ({ ...cur, percent: cur.recPercent })),
       date,
       classificationDifficulty.window.min,
       classificationDifficulty.window.best,

@@ -33,7 +33,6 @@ const ageForDate = (now: Date, sd: Date | string): number =>
 export const percentAndAgesForDivWindow = (
   div: string,
   state: ClassificationState,
-  percentField: "percent" | "curPercent" | "recPercent" = "percent",
   now = new Date(),
   minWindowSize: number = 4,
   bestWindowSize: number = 6,
@@ -47,11 +46,11 @@ export const percentAndAgesForDivWindow = (
 
   // remove worst scores (aka select best N number of scores (N being bestWindowSize))
   const fFlagsApplied = dFlagsApplied
-    .toSorted((a, b) => numSort(a, b, percentField, -1))
+    .toSorted((a, b) => numSort(a, b, "percent", -1))
     .slice(0, windowSizeForScore(dFlagsApplied.length, minWindowSize, bestWindowSize));
 
   const percent =
-    fFlagsApplied.reduce((acc, cur) => acc + Math.min(percentCap, cur[percentField]), 0) /
+    fFlagsApplied.reduce((acc, cur) => acc + Math.min(percentCap, cur.percent), 0) /
       fFlagsApplied.length || 0;
 
   const age =
@@ -91,14 +90,11 @@ export const dedupeGrandbagging = (scores: ClassifierScore[]) =>
     return {
       ...dayScores[0],
       percent: dayScores.reduce((acc, c) => acc + c.percent, 0) / scoresCount,
-      curPercent: dayScores.reduce((acc, c) => acc + c.curPercent, 0) / scoresCount,
-      recPercent: dayScores.reduce((acc, c) => acc + c.recPercent, 0) / scoresCount,
     };
   });
 
 export const calculateUSPSAClassification = (
   classifiers: ClassifierScore[],
-  percentField: "percent" | "curPercent" | "recPercent",
   now: Date = new Date(),
   minWindowSize: number = 4, // used for initial, less than that - no classification
   bestWindowSize: number = 6, // used for non-initial classifications, ideal window size when there are no dupes
@@ -114,7 +110,7 @@ export const calculateUSPSAClassification = (
     .toSorted((a, b) => {
       const asDate = dateSort(a, b, "sd", 1);
       if (!asDate) {
-        return numSort(a, b, percentField, 1);
+        return numSort(a, b, "percent", 1);
       }
       return asDate;
     })
@@ -122,9 +118,8 @@ export const calculateUSPSAClassification = (
       ...c,
       // Major Matches should always be eligible for reclassification
       classifier: c.source === "Major Match" ? randomUUID() : c.classifier,
-      curPercent: c.source === "Major Match" ? c.percent : c.curPercent,
     }))
-    .filter(c => c[percentField] >= 0);
+    .filter(c => c.percent >= 0);
 
   const scoringFunction = (c: ClassifierScore) => {
     if (!c?.division) {
@@ -153,7 +148,6 @@ export const calculateUSPSAClassification = (
       } = percentAndAgesForDivWindow(
         division,
         state,
-        percentField,
         now,
         minWindowSize,
         bestWindowSize,

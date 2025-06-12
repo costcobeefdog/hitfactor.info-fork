@@ -32,10 +32,7 @@ export interface ClassifierScore {
   division: string;
   sd: Date | string;
 
-  // TODO: consolidate into 1 number field
   percent: number;
-  curPercent: number;
-  recPercent: number;
 }
 
 export const initialClassificationStateForDivision = (): DivisionClassification => ({

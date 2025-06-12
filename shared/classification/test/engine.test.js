@@ -22,21 +22,21 @@ describe("classification engine", () => {
     it("defaults to zero when there are not enough unique classifiers", () => {
       // default to zero
       const state = { ss: initialClassificationStateForDivision() };
-      assert.strictEqual(percentAndAgesForDivWindow("ss", state, "percent").percent, 0);
+      assert.strictEqual(percentAndAgesForDivWindow("ss", state).percent, 0);
 
       // single classifier
       state.ss.window.push(makeClassifier({ percent: 50 }));
-      assert.strictEqual(percentAndAgesForDivWindow("ss", state, "percent").percent, 0);
+      assert.strictEqual(percentAndAgesForDivWindow("ss", state).percent, 0);
 
       // best of same single classifier duplicates
       state.ss.window = [];
       state.ss.window.push(makeClassifier({ percent: 75 }));
-      assert.strictEqual(percentAndAgesForDivWindow("ss", state, "percent").percent, 0);
+      assert.strictEqual(percentAndAgesForDivWindow("ss", state).percent, 0);
       state.ss.window.push(makeClassifier({ percent: 85 }));
       state.ss.window.push(makeClassifier({ percent: 95 }));
       state.ss.window.push(makeClassifier({ percent: 97 }));
       state.ss.window.push(makeClassifier({ percent: 97 }));
-      assert.strictEqual(percentAndAgesForDivWindow("ss", state, "percent").percent, 0);
+      assert.strictEqual(percentAndAgesForDivWindow("ss", state).percent, 0);
     });
 
     it("calculates average with enough scores", () => {
@@ -48,7 +48,7 @@ describe("classification engine", () => {
       state.ss.window.push(makeClassifier({ classifier: "01-03", percent: 45 }));
       //  (97+75+65+45)/4 = 70.5
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent,
+        percentAndAgesForDivWindow("ss", state).percent,
         (97 + 75 + 65 + 45) / 4,
       );
 
@@ -56,17 +56,14 @@ describe("classification engine", () => {
       state.ss.window.push(
         makeClassifier({ classifier: "01-04", percent: 95, sd: "2/01/2023" }),
       );
-      assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent,
-        75.4,
-      );
+      assert.strictEqual(percentAndAgesForDivWindow("ss", state).percent, 75.4);
 
       // best 4 out of 6
       state.ss.window.push(
         makeClassifier({ classifier: "01-05", percent: 90, sd: "2/01/2023" }),
       );
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent.toFixed(2),
+        percentAndAgesForDivWindow("ss", state).percent.toFixed(2),
         "77.83",
       );
 
@@ -75,7 +72,7 @@ describe("classification engine", () => {
         makeClassifier({ classifier: "01-06", percent: 30, sd: "2/01/2023" }),
       );
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent,
+        percentAndAgesForDivWindow("ss", state).percent,
         (97 + 95 + 90 + 75 + 65 + 45) / 6,
       );
 
@@ -84,7 +81,7 @@ describe("classification engine", () => {
         makeClassifier({ classifier: "01-07", percent: 114, sd: "2/01/2023" }),
       );
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent,
+        percentAndAgesForDivWindow("ss", state).percent,
         (100 + 97 + 95 + 90 + 75 + 65) / 6,
       );
 
@@ -93,79 +90,65 @@ describe("classification engine", () => {
         makeClassifier({ classifier: "01-07", percent: 99, sd: "2/01/2023" }),
       );
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent,
+        percentAndAgesForDivWindow("ss", state).percent,
         (100 + 97 + 95 + 90 + 75 + 65) / 6,
       );
 
       // uncapped vs capped
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent", new Date(), 4, 6, 120).percent,
+        percentAndAgesForDivWindow("ss", state, new Date(), 4, 6, 120).percent,
         (114 + 97 + 95 + 90 + 75 + 65) / 6,
       );
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", state, "percent").percent,
+        percentAndAgesForDivWindow("ss", state).percent,
         (100 + 97 + 95 + 90 + 75 + 65) / 6,
       );
 
       const anotherState = { ss: initialClassificationStateForDivision() };
       anotherState.ss.window = [
-        makeClassifier({ classifier: "22-05", recPercent: 80 }),
-        makeClassifier({ classifier: "20-01", recPercent: 95 }),
-        makeClassifier({ classifier: "99-24", recPercent: 110 }),
-        makeClassifier({ classifier: "99-62", recPercent: 120 }),
-        makeClassifier({ classifier: "06-10", recPercent: 120 }),
+        makeClassifier({ classifier: "22-05", percent: 80 }),
+        makeClassifier({ classifier: "20-01", percent: 95 }),
+        makeClassifier({ classifier: "99-24", percent: 110 }),
+        makeClassifier({ classifier: "99-62", percent: 120 }),
+        makeClassifier({ classifier: "06-10", percent: 120 }),
       ];
 
       assert.strictEqual(
-        percentAndAgesForDivWindow("ss", anotherState, "recPercent", new Date()).percent,
+        percentAndAgesForDivWindow("ss", anotherState, new Date()).percent,
         95,
       );
       assert.strictEqual(
-        percentAndAgesForDivWindow(
-          "ss",
-          anotherState,
-          "recPercent",
-          new Date(),
-          4,
-          6,
-          120,
-        ).percent,
+        percentAndAgesForDivWindow("ss", anotherState, new Date(), 4, 6, 120).percent,
         105,
       );
     });
 
     const lastState = { ss: initialClassificationStateForDivision() };
-    lastState.ss.window.push(makeClassifier({ recPercent: 75, sd: "12/01/01" }));
-    lastState.ss.window.push(makeClassifier({ recPercent: 85, sd: "11/01/01" }));
-    lastState.ss.window.push(makeClassifier({ recPercent: 95, sd: "10/01/01" }));
-    lastState.ss.window.push(makeClassifier({ recPercent: 97, sd: "09/01/01" }));
-    lastState.ss.window.push(makeClassifier({ recPercent: 97, sd: "09/01/01" }));
+    lastState.ss.window.push(makeClassifier({ percent: 75, sd: "12/01/01" }));
+    lastState.ss.window.push(makeClassifier({ percent: 85, sd: "11/01/01" }));
+    lastState.ss.window.push(makeClassifier({ percent: 95, sd: "10/01/01" }));
+    lastState.ss.window.push(makeClassifier({ percent: 97, sd: "09/01/01" }));
+    lastState.ss.window.push(makeClassifier({ percent: 97, sd: "09/01/01" }));
     lastState.ss.window.push(
-      makeClassifier({ classifier: "01-01", recPercent: 75, sd: "09/01/01" }),
+      makeClassifier({ classifier: "01-01", percent: 75, sd: "09/01/01" }),
     );
     lastState.ss.window.push(
-      makeClassifier({ classifier: "01-02", recPercent: 75, sd: "09/01/01" }),
+      makeClassifier({ classifier: "01-02", percent: 75, sd: "09/01/01" }),
     );
     lastState.ss.window.push(
-      makeClassifier({ classifier: "01-03", recPercent: 75, sd: "09/01/01" }),
+      makeClassifier({ classifier: "01-03", percent: 75, sd: "09/01/01" }),
     );
     lastState.ss.window.push(
-      makeClassifier({ classifier: "01-04", recPercent: 75, sd: "09/01/01" }),
+      makeClassifier({ classifier: "01-04", percent: 75, sd: "09/01/01" }),
     );
     lastState.ss.window.push(
-      makeClassifier({ classifier: "01-05", recPercent: 75, sd: "09/01/01" }),
+      makeClassifier({ classifier: "01-05", percent: 75, sd: "09/01/01" }),
     );
     lastState.ss.window.sort((a, b) => dateSort(a, b, "sd", -1));
-    assert.strictEqual(
-      percentAndAgesForDivWindow("ss", lastState, "recPercent").percent,
-      75,
-    );
-    lastState.ss.window.push(makeClassifier({ recPercent: 45, sd: "12/12/12" }));
+    assert.strictEqual(percentAndAgesForDivWindow("ss", lastState).percent, 75);
+    lastState.ss.window.push(makeClassifier({ percent: 45, sd: "12/12/12" }));
     lastState.ss.window.sort((a, b) => dateSort(a, b, "sd", -1));
-    assert.strictEqual(
-      percentAndAgesForDivWindow("ss", lastState, "recPercent").percent,
-      70,
-    );
+    assert.strictEqual(percentAndAgesForDivWindow("ss", lastState).percent, 70);
   });
 
   it("goes above 100 percent in uncapped mode", () => {
@@ -182,11 +165,11 @@ describe("classification engine", () => {
     ];
 
     assert.strictEqual(
-      percentAndAgesForDivWindow("ss", state, "percent", new Date(), 4, 6, 120).percent,
+      percentAndAgesForDivWindow("ss", state, new Date(), 4, 6, 120).percent,
       (114 + 97 + 95 + 90 + 75 + 65) / 6,
     );
     assert.strictEqual(
-      percentAndAgesForDivWindow("ss", state, "percent").percent,
+      percentAndAgesForDivWindow("ss", state).percent,
       (100 + 97 + 95 + 90 + 75 + 65) / 6,
     );
   });
@@ -207,7 +190,7 @@ describe("classification engine", () => {
     ];
 
     assert.strictEqual(
-      percentAndAgesForDivWindow("ss", state, "percent").percent,
+      percentAndAgesForDivWindow("ss", state).percent,
       (55 + 45 + 25 + 75 + 90 + 30) / 6,
     );
   });
@@ -260,7 +243,6 @@ describe("classification engine", () => {
             ...filler,
           },
         ],
-        "percent",
         new Date(),
         4,
         6,
@@ -278,8 +260,10 @@ describe("classification engine", () => {
 
     it("works with real-life test data", () => {
       const result = calculateUSPSAClassification(
-        testData,
-        "curPercent",
+        testData.map(cur => ({
+          ...cur,
+          percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+        })),
         new Date(),
         4,
         6,
@@ -300,16 +284,20 @@ describe("classification engine", () => {
 
     it("calculates classification ages in months", () => {
       const result = calculateUSPSAClassification(
-        testData,
-        "curPercent",
+        testData.map(cur => ({
+          ...cur,
+          percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+        })),
         new Date("4/20/2024"),
         4,
         6,
         8,
       );
       const longResult = calculateUSPSAClassification(
-        testData,
-        "curPercent",
+        testData.map(cur => ({
+          ...cur,
+          percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+        })),
         new Date("4/20/2028"),
         4,
         6,
@@ -327,9 +315,15 @@ describe("classification engine", () => {
     });
 
     it("calculates historical classifications", () => {
-      const result = calculateUSPSAClassification(testData, "curPercent");
+      const result = calculateUSPSAClassification(
+        testData.map(cur => ({
+          ...cur,
+          percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+        })),
+      );
       assert.notDeepEqual([{ foo: "bar" }], [{ foo: "baz" }]);
       assert.equal(result.co.percentWithDates.length, 61);
+
       assert.deepEqual(
         result.co.percentWithDates.map(c => ({ ...c, sd: c.sd.toISOString() })),
         [
@@ -384,7 +378,7 @@ describe("classification engine", () => {
           { p: 91.8634, sd: "2023-05-20T06:00:00.000Z" },
           { p: 95.31506666666667, sd: "2023-05-27T06:00:00.000Z" },
           { p: 95.7034, sd: "2023-06-03T06:00:00.000Z" },
-          { p: 94.88753333333334, sd: "2023-06-21T06:00:00.000Z" },
+          { p: 94.61173333333333, sd: "2023-06-21T06:00:00.000Z" },
           { p: 94.88753333333334, sd: "2023-06-21T06:00:00.000Z" },
           { p: 97.15253333333332, sd: "2023-07-15T06:00:00.000Z" },
           { p: 98.28246666666666, sd: "2023-07-18T06:00:00.000Z" },
@@ -392,7 +386,7 @@ describe("classification engine", () => {
           { p: 98.06746666666668, sd: "2023-08-05T06:00:00.000Z" },
           { p: 94.9858, sd: "2023-08-15T06:00:00.000Z" },
           { p: 94.59746666666666, sd: "2023-08-26T06:00:00.000Z" },
-          { p: 94.39666666666666, sd: "2023-09-02T06:00:00.000Z" },
+          { p: 94.59746666666666, sd: "2023-09-02T06:00:00.000Z" },
           { p: 96.56333333333333, sd: "2023-09-15T06:00:00.000Z" },
         ],
       );
@@ -413,7 +407,7 @@ describe("classification engine", () => {
         { classifier: "99-23", sd: "2021-05-01", percent: 71.49, ...filler },
         { classifier: "99-23", sd: "2021-07-15", percent: 76.03, ...filler },
       ];
-      const result = calculateUSPSAClassification(scores, "percent");
+      const result = calculateUSPSAClassification(scores);
       assert.strictEqual(result.co.percent, (86.15 + 90.36 + 48.97 + 76.03) / 4);
 
       const scores2 = [
@@ -423,7 +417,7 @@ describe("classification engine", () => {
         { classifier: "99-23", sd: "2021-05-15", percent: 76.03, ...filler },
         { classifier: "99-23", sd: "2021-05-17", percent: 71.49, ...filler },
       ];
-      const result2 = calculateUSPSAClassification(scores2, "percent");
+      const result2 = calculateUSPSAClassification(scores2);
       assert.strictEqual(
         result2.co.percent.toFixed(4),
         ((86.15 + 90.36 + 48.97 + 71.49) / 4).toFixed(4),
@@ -433,21 +427,27 @@ describe("classification engine", () => {
     describe("special cases & bugs", () => {
       it("has CO classification for A111317", () => {
         const result = calculateUSPSAClassification(
-          noCurPercentButExpected,
-          "curPercent",
+          noCurPercentButExpected.map(cur => ({ ...cur, percent: cur.curPercent })),
         );
         assert.strictEqual(Number(result.co.percent.toFixed(2)), 74.8);
       });
 
       it("has CO classification for CS", () => {
-        const result = calculateUSPSAClassification(csClassifiers, "curPercent");
+        const result = calculateUSPSAClassification(
+          csClassifiers.map(cur => ({
+            ...cur,
+            percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+          })),
+        );
         assert.strictEqual(Number(result.co.percent.toFixed(2)), 97.68);
       });
 
       it("has higher uncapped curPercent for CS in Open ", () => {
         const result = calculateUSPSAClassification(
-          csOpenClassifiers,
-          "curPercent",
+          csOpenClassifiers.map(cur => ({
+            ...cur,
+            percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+          })),
           new Date(),
           4,
           6,
@@ -456,8 +456,10 @@ describe("classification engine", () => {
         );
         assert.strictEqual(Number(result.opn.percent.toFixed(2)), 99.83);
         const uncappedResult = calculateUSPSAClassification(
-          csOpenClassifiers,
-          "curPercent",
+          csOpenClassifiers.map(cur => ({
+            ...cur,
+            percent: cur.source === "Stage Score" ? cur.curPercent : cur.percent,
+          })),
         );
         assert.strictEqual(Number(uncappedResult.opn.percent.toFixed(2)), 100.74);
       });

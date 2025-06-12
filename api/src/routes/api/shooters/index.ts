@@ -95,8 +95,7 @@ const reclassificationForProgressMode = async (
   const now = new Date();
   const scores = await scoresForMode({ mode, memberNumbers: [memberNumber], division });
   return calculateUSPSAClassification(
-    scores,
-    "recPercent",
+    scores.map(cur => ({ ...cur, percent: cur.recPercent })),
     now,
     classificationDifficulty.window.min,
     classificationDifficulty.window.best,
@@ -287,8 +286,7 @@ const shootersRoutes = async fastify => {
     });
     const recScores = dedupeGrandbagging(hydratedScores);
     const recPercentClassification = calculateUSPSAClassification(
-      recScores,
-      "recPercent",
+      recScores.map(cur => ({ ...cur, percent: cur.recPercent })),
       now,
       classificationDifficulty.window.min,
       classificationDifficulty.window.best,

@@ -330,8 +330,7 @@ const reclassificationBreakdown = (
 const recalc = (scores, date: Date, division: string) =>
   reclassificationBreakdown(
     calculateUSPSAClassification(
-      scores,
-      "recPercent",
+      scores.map(cur => ({ ...cur, percent: cur.recPercent })),
       date,
       classificationDifficulty.window.min,
       classificationDifficulty.window.best,
