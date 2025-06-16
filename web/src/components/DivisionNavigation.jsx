@@ -165,6 +165,7 @@ export const DivisionNavigation = ({ onSelect, uspsaOnly, forcedDivision }) => {
           setActiveIndex(index);
         }}
       >
+        {null}
         {/*
         <SportSelectorTabPanel
           sportCode={sportCode}

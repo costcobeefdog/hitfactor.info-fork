@@ -2,6 +2,9 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { SelectButton } from "primereact/selectbutton";
 import { useMemo, useState } from "react";
 
+import { classForPercent } from "@shared/classification/brackets";
+import { weibulCDFFactory } from "@shared/utils/weibull";
+
 import {
   annotationColor,
   r5annotationColor,
@@ -15,8 +18,6 @@ import {
 import { useAsyncWeibull } from "./useAsyncWeibull";
 import { WeibullStatus } from "./WeibullStatus";
 
-import { classForPercent } from "../../../../shared/utils/classification";
-import { weibulCDFFactory } from "../../../../shared/utils/weibull";
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";
 import { useIsHFU } from "../../utils/useIsHFU";

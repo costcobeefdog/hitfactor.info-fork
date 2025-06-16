@@ -24,7 +24,7 @@ export const percentForClass = (letter: ClassLetter): number =>
 
 export const classLetterIndex = classification => classLetters.indexOf(classification);
 
-export const eloRatings = [0, 700, 998, 1245, 1434, 1625] as const;
+export const eloRatings = [0, 1, 700, 998, 1245, 1434, 1625] as const;
 export const classForELO = (eloRating: number) => {
   const index = eloRatings.findLastIndex(elo => eloRating >= elo);
   if (index < 0) {
