@@ -1,6 +1,7 @@
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Divider } from "primereact/divider";
+import { Message } from "primereact/message";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
@@ -199,6 +200,9 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
           {[memberNumber, name, nameForDivision(division)].filter(Boolean).join(" - ")}
         </h3>
       </div>
+      {info?.note && (
+        <Message severity="warn" className="mb-3 w-full" text={info?.note} />
+      )}
       {!isSCSA ? (
         <ShooterInfoTable
           info={info}
@@ -256,7 +260,6 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
           )}
         </div>
       </div>
-
       <ShooterRunsTable
         {...tableData}
         scoresMode={scoresMode}

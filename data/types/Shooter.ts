@@ -10,6 +10,8 @@ export interface Shooter {
   hqClassRank: number;
   class: string;
 
+  note?: string; // warning displayed on shooter's profile
+
   elo?: number;
 
   // current
