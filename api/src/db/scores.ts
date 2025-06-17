@@ -34,6 +34,7 @@ export interface Score {
   source: string;
   shooterFullName?: string;
   memberNumber: string;
+  originalMemberNumber?: string;
   division: string;
   matchName?: string;
 
@@ -95,6 +96,7 @@ const ScoreSchema = new mongoose.Schema<Score, ScoreModel, ScoreVirtuals>(
     source: String,
     shooterFullName: String,
     memberNumber: String,
+    originalMemberNumber: String, // set if was deduped
     division: String,
     matchName: String,
 

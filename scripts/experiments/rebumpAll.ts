@@ -23,7 +23,7 @@ const recalculateBumpForMatch = async (uuid: string) => {
 
 /**
  * Recalculates MatchScores and MatchBumps for all potentially eligible matches.
- * Uses >= 30 datapoints filter on MatchBumps only.
+ * Uses >= 40 datapoints filter on MatchBumps only.
  *
  * DOES NOT SAVE SHOOTER'S CLASSIFICATION.
  */
@@ -31,7 +31,7 @@ const rebumpAll = async () => {
   await connect();
 
   const maybeEligibleMatches = await MatchBumps.find({
-    dataPoints: { $gte: matchBumpThresholds.filteredDataPointsMaybe },
+    dataPoints: { $gte: matchBumpThresholds.filteredDataPoints },
   })
     .sort({ date: 1 })
     .limit(0)

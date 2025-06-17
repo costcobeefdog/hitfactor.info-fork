@@ -43,6 +43,7 @@ const MatchScoreSchema = new mongoose.Schema<
     uploadDivision: String,
 
     memberNumber: String,
+    originalMemberNumber: String,
     memberNumberDivision: String,
     shooterFullName: String,
     date: Date,

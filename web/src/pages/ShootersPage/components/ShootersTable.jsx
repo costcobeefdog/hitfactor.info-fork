@@ -16,6 +16,7 @@ import {
   renderPercent,
   renderHFOrNA,
   renderPercentAllowNegative,
+  renderPercentNoZero,
 } from "../../../components/Table";
 import { useApi } from "../../../utils/client";
 import { useIsHFU } from "../../../utils/useIsHFU";
@@ -169,6 +170,14 @@ const ShootersTable = ({
           headerTooltipOptions={headerTooltipOptions}
           sortable
           body={renderPercent}
+        />
+        <Column
+          field="reclassificationsMajorsCurrent"
+          header="Majors"
+          headerTooltip="Majors-Matches-Only Classification"
+          headerTooltipOptions={headerTooltipOptions}
+          sortable
+          body={renderPercentNoZero}
         />
         <Column
           hidden

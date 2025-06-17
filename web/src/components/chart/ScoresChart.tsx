@@ -432,7 +432,7 @@ export const ScoresChart = ({
 
               // ...(sport === "uspsa" || sport === "scsa" ? xLinesForHHF("", hhf) : []),
               ...(xMode !== "HF" ? {} : xLinesForHHF("hq", hhf, true)),
-              ...(xMode !== "HF" ? {} : xLinesForHHF("old", oldHHF, true)),
+              ...(xMode !== "HF" || !oldHHF ? {} : xLinesForHHF("old", oldHHF, true)),
               ...(xMode !== "HF" ? {} : xLinesForHHF("r", recHHF)),
             },
           },

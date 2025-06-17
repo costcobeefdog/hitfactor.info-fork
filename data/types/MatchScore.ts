@@ -3,6 +3,7 @@ export interface MatchScore {
   division: string;
   uploadDivision: string;
   memberNumber: string;
+  originalMemberNumber?: string;
   memberNumberDivision: string;
   shooterFullName?: string;
   date: Date;
