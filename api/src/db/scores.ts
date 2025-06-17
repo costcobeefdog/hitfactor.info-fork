@@ -201,37 +201,6 @@ const badScoresMap = {
 
 const isMajor = source => source === "Major Match";
 
-/**
- * Picks runs for division. As-is for USPSA, or switches hf to minorHF for
- * HFU's comp and irn division (since they have major PF scores from USPSA divisions)
- *
- * If minorHF is needed, but not avilale - the run is dropped.
- * WARNING: mutates runs' hf to set it to minorHF
- */
-export const minorHFScoresAdapter = (runs, division) => {
-  if (!hfuDivisionsShortNamesThatNeedMinorHF.includes(division)) {
-    if (division === "l10") {
-      return runs.filter(c => {
-        if (!c.sd) {
-          console.error("no sd for score:");
-          console.error(JSON.stringify(c, null, 2));
-          return false;
-        }
-        return c.sd.getTime() >= L10_OPTICS_EFFECTIVE_TS;
-      });
-    }
-    return runs;
-  }
-
-  return runs
-    .filter(r => r.minorHF > 0)
-    .map(r => {
-      r.originalHF = r.hf;
-      r.hf = r.minorHF;
-      return r;
-    });
-};
-
 export const scoresFromClassifierFile = fileObj => {
   const memberNumber = fileObj?.value?.member_data?.member_number;
   const memberId = fileObj?.value?.member_data?.member_id;
@@ -346,10 +315,8 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
     .limit(0)
     .sort({ sd: -1 });
 
-  const classifiers = minorHFScoresAdapter(
-    scores.map(s => s.toObject({ virtuals: true })),
-    division,
-  )
+  const classifiers = scores
+    .map(s => s.toObject<ScoreObjectWithVirtuals>({ virtuals: true }))
     .map(run => ({
       x: run.sd,
       recPercent: run.recPercent,

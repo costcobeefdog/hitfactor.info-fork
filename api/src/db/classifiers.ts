@@ -24,7 +24,7 @@ import { stringSort } from "@shared/utils/sort";
 import { correlation } from "@shared/utils/weibull";
 
 import { RecHHFs } from "./recHHF";
-import { minorHFScoresAdapter, ScoreObjectWithVirtuals, Scores, Score } from "./scores";
+import { ScoreObjectWithVirtuals, Scores, Score } from "./scores";
 
 export interface Classifier {
   classifier: string;
@@ -348,9 +348,9 @@ export const singleClassifierExtendedMetaDoc = async (
     )
     .map(curScore => ({
       ...curScore,
-      elo: curScore.Shooters?.[0]?.elo,
-      recPercentUncapped:
-        curScore.Shooters?.[0]?.reclassificationsRecPercentUncappedCurrent,
+      elo: curScore.Shooters?.[0]?.elo as unknown as number,
+      recPercentUncapped: curScore.Shooters?.[0]
+        ?.reclassificationsRecPercentUncappedCurrent as unknown as number,
     }));
 
   // best scores correlate better than most recent on 20-01:co
@@ -379,8 +379,7 @@ export const singleClassifierExtendedMetaDoc = async (
         )
       : 0;
 
-  const hitFactorScores: Score[] = minorHFScoresAdapter(scores, division);
-
+  const hitFactorScores: Score[] = scores;
   const recHHF = recHHFQuery?.recHHF ?? 0;
   const inverseRecPercentileStats = xPercent => ({
     [`inverse${xPercent}RecPercentPercentile`]: Percent(

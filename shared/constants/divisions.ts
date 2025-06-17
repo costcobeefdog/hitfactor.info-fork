@@ -294,12 +294,7 @@ export const divisionsForRecHHFAdapter = division => {
   return [division];
 };
 
-export const allDivShortNames = [
-  ...uspsaDivShortNames,
-  ...hfuDivisionsShortNames,
-  // TODO: pcsl
-  // TODO: scsa
-];
+export const allDivShortNames = [...uspsaDivShortNames];
 export const mapAllDivisions = mapper =>
   Object.fromEntries(allDivShortNames.map(div => [div, mapper(div)]));
 

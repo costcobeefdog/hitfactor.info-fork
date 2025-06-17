@@ -8,7 +8,8 @@ const __dirname = dirname(__filename);
 
 import Piscina from "piscina";
 
-import { uspsaClassifiers } from "../../api/src/dataUtil/classifiersData";
+import { uspsaClassifiers2025 } from "@shared/constants/classifiers";
+
 import { rehydrateClassifiers } from "../../api/src/db/classifiers";
 import { connect } from "../../api/src/db/index";
 import { rehydrateRecHHF } from "../../api/src/db/recHHF";
@@ -67,7 +68,7 @@ const rehydrateShooters = async (divisions: string[]) => {
 const go = async () => {
   await connect();
 
-  const classifiers = uspsaClassifiers;
+  const classifiers = uspsaClassifiers2025;
   const divisions = uspsaDivShortNames;
   const classifierDivisions = divisions
     .map(division => classifiers.map(classifier => ({ classifier, division })))

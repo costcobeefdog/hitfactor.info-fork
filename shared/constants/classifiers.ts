@@ -66,3 +66,37 @@ export const uspsaClassifiers2025 = [
   "24-08",
   "24-09",
 ];
+
+export const classifiersThatUseMoreThan10RoundsBetweenReloads = [
+  "99-10",
+  "99-56", // retired in 2025
+  "03-03",
+  "03-12", // retired in 2025
+  "06-01", // retired in 2025
+  "06-02", // retired in 2025
+  "09-08", // retired in 2025
+  "09-10",
+  "19-01",
+  "19-02",
+  "19-03", // retired in 2025
+  "19-04",
+  "20-01",
+  "20-02",
+  "20-03",
+  "21-01",
+  "22-01",
+  "22-02",
+  "23-01",
+  "23-02",
+  "24-02",
+  "24-06",
+  "24-08",
+  "24-09",
+];
+
+/*[ "99-10", "03-03", "09-10", "19-01", "19-02", "19-04", "20-01", "20-02", "20-03",
+  "21-01", "22-01", "22-02", "23-01", "23-02", "24-02", "24-06", "24-08", "24-09" ]*/
+export const uspsaClassifiers2025ThatUseMoreThan10RoundsBetweenReloads =
+  classifiersThatUseMoreThan10RoundsBetweenReloads.filter(c =>
+    uspsaClassifiers2025.includes(c),
+  );

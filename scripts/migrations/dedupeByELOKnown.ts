@@ -7,16 +7,6 @@ import { MatchScores } from "../../api/src/db/matchScores";
 import { Scores } from "../../api/src/db/scores";
 import { Shooters } from "../../api/src/db/shooters";
 
-/*
-import loElo from "../../data/elo/lo.json";
-import ltdElo from "../../data/elo/ltd.json";
-import opnElo from "../../data/elo/open.json";
-import pccElo from "../../data/elo/pcc.json";
-import prodElo from "../../data/elo/prod.json";
-import revElo from "../../data/elo/revo.json";
-import ssElo from "../../data/elo/ss.json";
-*/
-
 const selectMemberNumberFields = elos =>
   elos
     .map(c => ({

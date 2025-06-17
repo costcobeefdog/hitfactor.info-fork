@@ -1,83 +1,33 @@
+import uniqBy from "lodash.uniqby";
 import mongoose from "mongoose";
 
-import { uspsaClassifiers } from "@api/dataUtil/classifiersData";
 import {
   allDivShortNames,
-  classifierDivisionArrayForHFURecHHFs,
   divisionsForRecHHFAdapter,
-  hfuDivisionCompatabilityMap,
   PROD_15_EFFECTIVE_TS,
 } from "@api/dataUtil/divisions";
 import {
   curHHFForDivisionClassifier,
   oldHHFForDivisionClassifier,
 } from "@api/dataUtil/hhf";
-import { Percent, PositiveOrMinus1 } from "@api/dataUtil/numbers";
-import { minorHFScoresAdapter, Score, Scores } from "@api/db/scores";
+import { Score, Scores } from "@api/db/scores";
 import { RecHHF } from "@data/types/RecHHF";
+import {
+  classifiersThatUseMoreThan10RoundsBetweenReloads,
+  uspsaClassifiers2025,
+} from "@shared/constants/classifiers";
 import { solveWeibull } from "@shared/utils/weibull";
 
-interface ScoreWithPercentile extends Score {
-  percentile: number;
-}
-
-const runsForRecs = async ({ division, number }): Promise<ScoreWithPercentile[]> =>
-  (
-    await Scores.find({
-      classifier: number,
-      division: { $in: divisionsForRecHHFAdapter(division) },
-      hf: { $gt: 0 },
-      bad: { $ne: true },
-    })
-      .sort({ hf: -1 })
-      .limit(0)
-      .lean()
-  ).map((run, index, allRuns) => ({
-    ...run,
-    percentile: PositiveOrMinus1(Percent(index, allRuns.length)),
-  }));
-
-const runsForRecsMultiByClassifierDivision = async classifiers => {
-  const runs = await Scores.find({
-    bad: { $ne: true },
-    classifierDivision: {
-      $in: classifierDivisionArrayForHFURecHHFs(classifiers),
-    },
+const runsForRecs = async ({ division, number }): Promise<Score[]> =>
+  Scores.find({
+    classifier: number,
+    division: { $in: divisionsForRecHHFAdapter(division) },
     hf: { $gt: 0 },
+    bad: { $ne: true },
   })
-    .select({ hf: 1, minorHF: 1, _id: 0, classifierDivision: 1, sd: 1 })
     .sort({ hf: -1 })
     .limit(0)
     .lean();
-
-  const byCD = runs.reduce((acc, cur) => {
-    const curBucket = acc[cur.classifierDivision] ?? [];
-    curBucket.push(cur);
-    acc[cur.classifierDivision] = curBucket;
-
-    // same as above but for single HFU division, if there is any for cur.division
-    const [classifier, division] = cur.classifierDivision.split(":");
-    const extraCompatibleDivision = hfuDivisionCompatabilityMap[division];
-    if (extraCompatibleDivision) {
-      const extraClassifierDivision = [classifier, extraCompatibleDivision].join(":");
-      const extraBucket = acc[extraClassifierDivision] ?? [];
-      // must be a copy, or percentile calc will mess things up
-      extraBucket.push({ ...cur });
-      acc[extraClassifierDivision] = extraBucket;
-    }
-
-    return acc;
-  }, {});
-
-  // mutate runs grouped by classifierDivision to add percentile
-  Object.keys(byCD).forEach(CD => {
-    byCD[CD].forEach((run, runIndex, allRunsInCD) => {
-      run.percentile = PositiveOrMinus1(Percent(runIndex, allRunsInCD.length));
-    });
-  });
-
-  return byCD;
-};
 
 const RecHHFSchema = new mongoose.Schema<RecHHF>({
   classifier: String,
@@ -118,38 +68,7 @@ RecHHFSchema.index({ classifierDivision: 1 }, { unique: true });
 
 export const RecHHFs = mongoose.models.RecHHFs || mongoose.model("RecHHFs", RecHHFSchema);
 
-const classifiersThatUseMoreThan10RoundsBetweenReloads = [
-  "99-10",
-  "99-56",
-  "03-03",
-  "03-12",
-  "06-01",
-  "06-02",
-  "09-08",
-  "09-10",
-  "19-01",
-  "19-02",
-  "19-03",
-  "19-04",
-  "20-01",
-  "20-02",
-  "20-03",
-  "21-01",
-  "22-01",
-  "22-02",
-  "23-01",
-  "23-02",
-  "24-02",
-  "24-06",
-  "24-08",
-  "24-09",
-];
-
-const extraHHFsForProd = (
-  allScoresRecHHF: number,
-  runs: ScoreWithPercentile[],
-  classifier: string,
-) => {
+const extraHHFsForProd = (allScoresRecHHF: number, runs: Score[], classifier: string) => {
   const prod10Runs = runs
     .filter(c => new Date(c.sd).getTime() < PROD_15_EFFECTIVE_TS)
     .map(c => c.hf);
@@ -170,7 +89,7 @@ const extraHHFsForProd = (
   };
 };
 
-const extraHHFsForLO = (locoHHF: number, locoRuns: ScoreWithPercentile[]) => {
+const extraHHFsForLO = (locoHHF: number, locoRuns: Score[]) => {
   const loHFs = locoRuns.filter(c => c.division === "lo").map(c => c.hf);
   const coHFs = locoRuns.filter(c => c.division === "co").map(c => c.hf);
   const { hhf: loHHF } = solveWeibull(loHFs);
@@ -184,11 +103,7 @@ const extraHHFsForLO = (locoHHF: number, locoRuns: ScoreWithPercentile[]) => {
   };
 };
 
-const recHHFUpdate = (
-  runsRaw: ScoreWithPercentile[],
-  division: string,
-  classifier: string,
-) => {
+const recHHFUpdate = (runsRaw: Score[], division: string, classifier: string) => {
   if (!runsRaw) {
     return null;
   }
@@ -260,40 +175,10 @@ export const hydrateSingleRecHFF = async (division, classifier) => {
   return null;
 };
 
-export const hydrateRecHHFsForClassifiers = async classifiers => {
-  const runsByClassifierDivision =
-    await runsForRecsMultiByClassifierDivision(classifiers);
-  const updates = classifiers
-    .map(c =>
-      recHHFUpdate(
-        runsByClassifierDivision[[c.classifier, c.division].join(":")],
-        c.division,
-        c.classifier,
-      ),
-    )
-    .filter(Boolean);
-
-  return RecHHFs.bulkWrite(
-    updates.map(update => {
-      const { division, classifier, classifierDivision, ...setUpdate } = update;
-      return {
-        updateOne: {
-          filter: { division, classifier },
-          update: {
-            $setOnInsert: { division, classifier, classifierDivision },
-            $set: setUpdate,
-          },
-          upsert: true,
-        },
-      };
-    }),
-  );
-};
-
 /* eslint-disable no-console */
 export const rehydrateRecHHF = async (
   divisions = allDivShortNames,
-  classifiers = uspsaClassifiers,
+  classifiers = uspsaClassifiers2025,
 ) => {
   console.log("hydrating recommended HHFs");
   console.time("recHHFs");
@@ -312,3 +197,18 @@ export const rehydrateRecHHF = async (
   console.timeEnd("recHHFs");
 };
 /* eslint-enable no-console */
+
+export const hydrateRecHHFsForClassifiers = async (
+  classifiers: Array<{ classifier: string; division: string }>,
+) => {
+  const divisions = uniqBy(
+    classifiers.map(c => c.division),
+    c => c,
+  );
+  const classifierNumbers = uniqBy(
+    classifiers.map(c => c.classifier),
+    c => c,
+  );
+
+  await rehydrateRecHHF(divisions, classifierNumbers);
+};
