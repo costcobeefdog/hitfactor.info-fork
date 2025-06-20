@@ -80,12 +80,19 @@ const fixUp = async () => {
 
   const shooterRenameMap = ([] as ELOKnown[])
     .concat(ss, revo, prod, ltd, pcc, opn, lo, co)
-    .reduce((acc, cur) => {
-      cur.knownMemberNumbers.forEach(known => {
-        acc[known] = cur.memberNumber;
-      });
-      return acc;
-    }, {});
+    .reduce(
+      (acc, cur) => {
+        cur.knownMemberNumbers.forEach(known => {
+          acc[known] = cur.memberNumber;
+        });
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+  // manual extras
+  shooterRenameMap.Ty54824 = "TY54824";
+  shooterRenameMap.TU54824 = "TY54824"; // Craig Bellamy, sus classifier matches
 
   // rename scores
   await renameScoresAndShooters(shooterRenameMap);
