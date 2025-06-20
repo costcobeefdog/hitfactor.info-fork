@@ -17,6 +17,63 @@ import { letterRatingForPercent, renderPercent } from "../../../components/Table
 import useTableSort from "../../../components/Table/useTableSort";
 import { useApi } from "../../../utils/client";
 
+const terrenceHHFs = {
+  "03-03": 7.737387682336051,
+  "03-05": 9.127328556057847,
+  "03-07": 5.895675003097409,
+  "03-08": 9.441188592807563,
+  "03-09": 10.175645375018576,
+  "03-18": 7.085471045303263,
+  "06-03": 13.750081900967633,
+  "06-04": 12.739296786529358,
+  "06-05": 12.452320917435916,
+  "06-10": 7.157990521028712,
+  "08-02": 7.3035087408710675,
+  "08-03": 9.689311186035136,
+  "09-10": 12.750627181101425,
+  "13-02": 10.224277448686237,
+  "13-04": 13.018052952040602,
+  "13-05": 10.657281396868513,
+  "13-06": 9.168842417675645,
+  "18-03": 8.254878678829968,
+  "18-05": 9.551509978680873,
+  "18-07": 8.87780131469004,
+  "18-08": 5.894640653108801,
+  "18-09": 10.10064335893033,
+  "19-01": 9.797805579762219,
+  "19-02": 9.194399586548691,
+  "19-04": 10.667339093307058,
+  "20-01": 8.251584873617846,
+  "20-02": 11.730650968421472,
+  "20-03": 10.042110556977905,
+  "21-01": 16.763898272869337,
+  "22-01": 9.986230653557044,
+  "22-02": 7.952777575449467,
+  "22-04": 10.637785401631835,
+  "22-06": 12.334631235560211,
+  "22-07": 9.492792731437447,
+  "23-01": 9.933527689593841,
+  "23-02": 10.601615970084257,
+  "24-01": 10.561469952602302,
+  "24-02": 9.208373214014298,
+  "24-04": 9.102663644523464,
+  "24-06": 10.371388152676857,
+  "24-08": 13.780745950559382,
+  "24-09": 10.3865286590716,
+  "99-08": 9.418750055096854,
+  "99-10": 9.432315892602155,
+  "99-11": 11.48998230140733,
+  "99-12": 9.54215535939288,
+  "99-13": 9.133142260402332,
+  "99-19": 6.093110891849627,
+  "99-28": 9.791682922699303,
+  "99-42": 9.482514672384209,
+  "99-46": 9.163099488850904,
+  "99-53": 6.747960459217257,
+  "99-57": 5.86204677106482,
+  "99-62": 10.332721686314459,
+};
+
 //isSCSA ? 2 : 4
 //isSCSA ? 's' : 0
 const numFieldsDiff =
@@ -79,6 +136,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
   });
   const [filter, setFilter] = useState("");
   const [nerdMode, setNerdMode] = useState(false);
+  const [schizoMode, setSchizoMode] = useState(false);
   const [prod1015Mode, setProd1015Mode] = useState(false);
   const [locoMode, setLOCOMode] = useState(false);
   const sortState = sortProps;
@@ -86,6 +144,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
   useEffect(() => {
     setProd1015Mode(false);
     setLOCOMode(false);
+    setSchizoMode(false);
   }, [division]);
 
   const { json: dataRaw, loading } = useApi(`/classifiers/${division ?? ""}`);
@@ -97,6 +156,9 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
       recHHFChangePercent: 100 * (d.hhf / d.recHHF - 1),
       oldHHFChange: d.oldHHF - d.recHHF,
       oldHHFChangePercent: 100 * (d.oldHHF / d.recHHF - 1),
+      terrenceHHF: terrenceHHFs[d.code],
+      terrenceHHFSchizoDiff: d.schizoHHF - terrenceHHFs[d.code],
+      terrenceHHFSchizoDiffPercent: 100 * (d.schizoHHF / terrenceHHFs[d.code] - 1),
     }))
     .sort((a, b) => {
       switch (sortState.sortField) {
@@ -160,6 +222,16 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
                     <Checkbox onChange={e => setLOCOMode(e.checked)} checked={locoMode} />
                   </>
                 )}
+                {division === "l10" && (
+                  <>
+                    <div className="ml-8" />
+                    Schizo Mode
+                    <Checkbox
+                      onChange={e => setSchizoMode(e.checked)}
+                      checked={schizoMode}
+                    />
+                  </>
+                )}
               </div>
             </div>
             <div className="md:flex-grow-1" />
@@ -188,7 +260,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         body={c => <ClassifierCell info={c} showScoring />}
       />
       <Column
-        hidden={isSCSA}
+        hidden={isSCSA || schizoMode}
         field="ccQuality"
         header="Quality"
         headerTooltip="New Quality for Classifier Committee, using correlations and SMSE"
@@ -214,7 +286,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         )}
       />
       <Column
-        hidden={isSCSA}
+        hidden={isSCSA || schizoMode}
         field="allDivQuality"
         header="OA Qual."
         headerTooltip="New All Division Quality for Classifier Committee, using correlations and SMSE"
@@ -271,12 +343,80 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         body={c => (isSCSA ? `${c.recHHF.toFixed(2)}s` : c.recHHF.toFixed(4))}
       />
       <Column
+        hidden={!schizoMode}
+        field="opnHHF"
+        header="Open HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => c.opnHHF.toFixed(4)}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="coHHF"
+        header="CO HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => c.coHHF.toFixed(4)}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="ltdHHF"
+        header="LTD HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => c.ltdHHF.toFixed(4)}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="prod10HHF"
+        header="P10 HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => (c.prod10HHF ? c.prod10HHF.toFixed(4) : "—")}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="schizoHHF"
+        header="Schizo HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => (
+          <span
+            className={
+              c.schizoHHF > c.prod10HHF &&
+              c.schizoHHF >= c.ltdHHF &&
+              c.schizoHHF <= c.opnHHF
+                ? "text-green-400"
+                : "text-yellow-400"
+            }
+          >
+            {c.schizoHHF ? c.schizoHHF.toFixed(4) : "—"}
+          </span>
+        )}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="terrenceHHF"
+        header="Terrence HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => terrenceHHFs[c.code].toFixed(4)}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="terrenceHHFSchizoDiffPercent"
+        header="Schizo Diff"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={numFieldsDiff("schizoHHF", "terrenceHHF", 4, " HF")}
+      />
+      <Column
         hidden={!prod1015Mode}
         field="prod10HHF"
         header="Prod10 RHHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => (c.prod10HHF ? c.prod10HHF.toFixed(4) : "N/A")}
+        body={c => (c.prod10HHF ? c.prod10HHF.toFixed(4) : "—")}
       />
       <Column
         hidden={!prod1015Mode}
@@ -284,7 +424,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header="Prod15 RHHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => (c.prod15HHF ? c.prod15HHF.toFixed(4) : "N/A")}
+        body={c => (c.prod15HHF ? c.prod15HHF.toFixed(4) : "—")}
       />
       <Column
         hidden={!locoMode}
@@ -292,7 +432,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header="LO RHHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => (c.loHHF ? c.loHHF.toFixed(4) : "N/A")}
+        body={c => (c.loHHF ? c.loHHF.toFixed(4) : "—")}
       />
       <Column
         hidden={!locoMode}
@@ -300,9 +440,10 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header="CO RHHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => (c.coHHF ? c.coHHF.toFixed(4) : "N/A")}
+        body={c => (c.coHHF ? c.coHHF.toFixed(4) : "—")}
       />
       <Column
+        hidden={division === "l10"}
         field="curHHF"
         header={isSCSA ? "HQ Peak Time" : "HQ HHF"}
         sortable
@@ -330,6 +471,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         body={numFieldsDiff("recHHF", "curHHF", isSCSA ? 2 : 4, isSCSA ? "s" : " HF")}
       />
       <Column
+        hidden={division === "l10"}
         field="oldHHF"
         header="Old HHF"
         headerTooltip="HQ HHF before March 2025 Update"

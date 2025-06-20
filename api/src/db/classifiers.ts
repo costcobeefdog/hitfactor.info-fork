@@ -280,6 +280,10 @@ ClassifierSchema.virtual("recHHFs", {
   "locoHHF",
   "loHHF",
   "coHHF",
+  "ltdHHF",
+  "opnHHF",
+  "prodHHF",
+  "schizoHHF",
 ].map(fieldName =>
   ClassifierSchema.virtual(fieldName).get(function () {
     return this.recHHFs?.[fieldName];

@@ -117,6 +117,19 @@ export const solveWeibull = (
       : undefined,
   );
 
+  return forcedWeibull(dataPoints, k, lambda, loss);
+};
+
+export const forcedWeibull = (
+  dataPoints: number[],
+  k: number,
+  lambda: number,
+  loss: number,
+): WeibullResult => {
+  if (!dataPoints.length || !k || !lambda) {
+    return emptyWeibull;
+  }
+
   // const cdf = x => 100 - 100 * (1 - Math.exp(-Math.pow(x / lambda, k)));
   const reverseCDF = y => lambda * Math.pow(Math.log(100 / y), 1 / k);
   const hhf =

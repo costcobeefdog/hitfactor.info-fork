@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import {
   allDivShortNames,
   divisionsForRecHHFAdapter,
+  L10_OPTICS_EFFECTIVE_TS,
   PROD_15_EFFECTIVE_TS,
 } from "@api/dataUtil/divisions";
 import {
@@ -16,7 +17,7 @@ import {
   classifiersThatUseMoreThan10RoundsBetweenReloads,
   uspsaClassifiers2025,
 } from "@shared/constants/classifiers";
-import { solveWeibull } from "@shared/utils/weibull";
+import { forcedWeibull, solveWeibull } from "@shared/utils/weibull";
 
 const runsForRecs = async ({ division, number }): Promise<Score[]> =>
   Scores.find({
@@ -53,14 +54,15 @@ const RecHHFSchema = new mongoose.Schema<RecHHF>({
   superMeanAbsoluteError: Number,
   maxError: Number,
 
-  // Prod 10 vs 15 extras
+  // Division Extras for comparison
   prod10HHF: Number,
   prod15HHF: Number,
-
-  // LO: LOCO vs LO vs CO extras
   loHHF: Number,
   locoHHF: Number,
   coHHF: Number,
+  opnHHF: Number,
+  ltdHHF: Number,
+  schizoHHF: Number,
 });
 
 RecHHFSchema.index({ classifier: 1, division: 1 }, { unique: true });
@@ -103,12 +105,55 @@ const extraHHFsForLO = (locoHHF: number, locoRuns: Score[]) => {
   };
 };
 
-const recHHFUpdate = (runsRaw: Score[], division: string, classifier: string) => {
-  if (!runsRaw) {
+const extraHHFsForL10 = (mixedRuns: Score[]) => {
+  const ltdHFs = mixedRuns.filter(c => c.division === "ltd").map(c => c.hf);
+  const coHFs = mixedRuns.filter(c => c.division === "co").map(c => c.hf);
+  const prod10HFs = mixedRuns
+    .filter(c => c.division === "prod")
+    .filter(c => new Date(c.sd).getTime() < PROD_15_EFFECTIVE_TS)
+    .map(c => c.hf);
+  const l10HFs = mixedRuns
+    .filter(
+      c => c.division === "l10" && new Date(c.sd).getTime() >= L10_OPTICS_EFFECTIVE_TS,
+    )
+    .map(c => c.hf);
+  const openHFs = mixedRuns.filter(c => c.division === "opn").map(c => c.hf);
+  const { k: ltdK, lambda: ltdLambda, hhf: ltdHHF } = solveWeibull(ltdHFs);
+  const { k: coK, lambda: coLambda, hhf: coHHF } = solveWeibull(coHFs);
+  const { k: prodK, lambda: prodLambda, hhf: prod10HHF } = solveWeibull(prod10HFs);
+  const { hhf: opnHHF } = solveWeibull(openHFs);
+  const { hhf: recHHF } = solveWeibull(l10HFs);
+
+  const k = coK - prodK + ltdK;
+  const lambda = coLambda - prodLambda + ltdLambda;
+
+  const classifier = mixedRuns[0].classifier;
+  const noDataForSchizo = classifier.startsWith("23-") || classifier.startsWith("24-");
+
+  const { hhf: schizoHHF } = forcedWeibull(
+    l10HFs,
+    noDataForSchizo ? 0 : k,
+    noDataForSchizo ? 0 : lambda,
+    0,
+  );
+
+  return {
+    schizoHHF,
+    recHHF,
+    k,
+    lambda,
+    ltdHHF,
+    coHHF,
+    opnHHF,
+    prod10HHF,
+  };
+};
+
+const recHHFUpdate = (runs: Score[], division: string, classifier: string) => {
+  if (!runs) {
     return null;
   }
 
-  const runs = minorHFScoresAdapter(runsRaw, division);
   const curHHF = curHHFForDivisionClassifier({ division, number: classifier }) || -1;
   const oldHHF = oldHHFForDivisionClassifier({ division, number: classifier }) || -1;
 
@@ -138,6 +183,7 @@ const recHHFUpdate = (runsRaw: Score[], division: string, classifier: string) =>
     recHHF: wblHHF,
     ...(division === "prod" ? extraHHFsForProd(wbl3HHF, runs, classifier) : {}),
     ...(division === "lo" ? extraHHFsForLO(wbl3HHF, runs) : {}),
+    ...(division === "l10" ? extraHHFsForL10(runs) : {}),
 
     k,
     lambda,

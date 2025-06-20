@@ -22,12 +22,13 @@ export interface RecHHF {
   superMeanAbsoluteError: number;
   maxError: number;
 
-  // Prod 10 vs 15 extras
+  // Extra division HHFs for comparison
   prod10HHF?: number;
   prod15HHF?: number;
-
-  // LO: LOCO vs LO vs CO extras
   loHHF?: number;
   locoHHF?: number;
   coHHF?: number;
+  opnHHF?: number;
+  ltdHHF?: number;
+  schizoHHF?: number;
 }

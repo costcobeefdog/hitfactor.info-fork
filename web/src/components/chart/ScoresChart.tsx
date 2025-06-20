@@ -305,7 +305,6 @@ export const ScoresChart = ({
           ),
     [data, showCorrelation],
   );
-  const maxX = useMemo(() => data.toSorted((a, b) => b.x - a.x)[0]?.x || 0, [data]);
 
   useEffect(
     () => setNumberOfScores(SCORES_STEP * Math.ceil(totalScores / SCORES_STEP)),
@@ -340,6 +339,10 @@ export const ScoresChart = ({
 
   const { k, lambda, hhf3 } = weibull;
   const recHHF = recHHFProp || hhf3;
+  const maxX = useMemo(() => {
+    const lastX = data.toSorted((a, b) => b.x - a.x)[0]?.x || 0;
+    return xMode !== "HF" ? lastX : Math.max(lastX, recHHF);
+  }, [data, recHHF, xMode]);
   const percentiles = useMemo(
     () => [
       closestPercentileForHF(recHHF * 0.95, data),
