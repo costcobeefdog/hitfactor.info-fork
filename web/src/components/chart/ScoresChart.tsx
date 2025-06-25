@@ -180,6 +180,8 @@ interface AdvancedScorePoint extends GraphPoint {
   date: number;
   elo: number;
   hf: number;
+
+  pointsGraphName: string;
 }
 
 interface URLFactoryParams {
@@ -233,6 +235,8 @@ export const ScoresChart = ({
   hhf,
   oldHHF,
   recHHF: recHHFProp,
+  k: kProp, // from recHHFs collection
+  lambda: lambdaProp, // from recHHFs collection
   totalScores,
   urlFactory = urlWithParams,
   dataTransform = asIs => asIs,
@@ -446,6 +450,23 @@ export const ScoresChart = ({
           ...((!full && !showWeibullProp) || !showWeibull
             ? []
             : [
+                ...(!kProp || !lambdaProp
+                  ? []
+                  : [
+                      {
+                        label: "Schizo Weibull",
+                        data: pointsGraph({
+                          yFn: weibulCDFFactory(kProp, lambdaProp),
+                          minX: 0,
+                          maxX,
+                          name: "Schizo Weibull",
+                        }),
+                        pointRadius: 1,
+                        pointBorderColor: "black",
+                        pointBorderWidth: 0,
+                        pointBackgroundColor: wbl1AnnotationColor(0.33),
+                      },
+                    ]),
                 {
                   label: "Weibull",
                   data: pointsGraph({

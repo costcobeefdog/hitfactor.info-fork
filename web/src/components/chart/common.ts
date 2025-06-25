@@ -112,7 +112,7 @@ export const closestYForX = (
 /** Generates a dataset of points, with X within [minX, maxX] and y
  * determined by the yFn(x).
  */
-export const pointsGraph = ({ yFn, minX, maxX, name, step: stepParam }) => {
+export const pointsGraph = ({ yFn, minX, maxX, name, step: stepParam = 0.005 }) => {
   if (!yFn || minX === maxX) {
     return [];
   }

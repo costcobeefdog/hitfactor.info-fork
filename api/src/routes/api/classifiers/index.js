@@ -208,7 +208,7 @@ const classifiersRoutes = async fastify => {
     const [extended, recHHFInfo, totalScores] = await Promise.all([
       Classifiers.findOne({ division, classifier: number }).lean(),
       RecHHFs.findOne({ classifier: number, division })
-        .select(["recHHF", "curHHF", "oldHHF"])
+        .select(["recHHF", "curHHF", "oldHHF", "k", "lambda"])
         .lean(),
       Scores.aggregate([
         _matchScoresForClassifierDivision(number, division),
@@ -223,6 +223,8 @@ const classifiersRoutes = async fastify => {
         oldHHF: recHHFInfo?.oldHHF || 0,
         curHHF: recHHFInfo?.curHHF || 0,
         recHHF: recHHFInfo?.recHHF || 0,
+        k: recHHFInfo?.k || 0,
+        lambda: recHHFInfo?.lambda || 0,
         totalScores: totalScores?.[0]?.totalScores || -1,
       },
     };

@@ -12,6 +12,8 @@ export const ClassifierInfoTable = ({
   recHHF,
   curHHF,
   oldHHF,
+  k,
+  lambda,
   ...info
 }) => (
   <div className="flex flex-wrap md:flex-nowrap gap-2 justify-content-around">
@@ -118,6 +120,8 @@ export const ClassifierInfoTable = ({
           hhf={curHHF}
           oldHHF={oldHHF}
           recHHF={recHHF}
+          k={division === "l10" ? k : undefined}
+          lambda={division === "l10" ? lambda : undefined}
         />
       </div>
     </div>
