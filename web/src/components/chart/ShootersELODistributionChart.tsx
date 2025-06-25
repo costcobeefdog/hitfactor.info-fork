@@ -130,7 +130,11 @@ export const ShootersELODistributionChart = ({
   }, [division, data, xMode, yMode, isVersus]);
 
   const percentiles = useMemo(
-    () => eloRatings.map(c => closestYForX(c, curModeData)[0]),
+    () =>
+      eloRatings
+        .toReversed()
+        .map(c => closestYForX(c, curModeData)[0])
+        .filter(c => c >= 0),
     [curModeData],
   );
 
@@ -235,14 +239,17 @@ export const ShootersELODistributionChart = ({
                   ),
                   ...Object.assign(
                     {},
-                    ...eloRatings.map(eloRating =>
-                      xLine(
-                        `${eloRating} (${((100 * eloRating) / 1700).toFixed(2)}%)`,
-                        eloRating,
-                        r5annotationColor(0.5),
-                        2.5,
+                    ...eloRatings
+                      .toReversed()
+                      .filter(c => c > 1)
+                      .map(eloRating =>
+                        xLine(
+                          `${eloRating} (${((100 * eloRating) / 1700).toFixed(2)}%)`,
+                          eloRating,
+                          r5annotationColor(0.5),
+                          2.5,
+                        ),
                       ),
-                    ),
                   ),
                 },
           },
