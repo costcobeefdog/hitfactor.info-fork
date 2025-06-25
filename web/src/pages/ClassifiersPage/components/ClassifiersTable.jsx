@@ -400,7 +400,19 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header="Terrence HHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => terrenceHHFs[c.code].toFixed(4)}
+        body={c => (
+          <span
+            className={
+              terrenceHHFs[c.code] > c.prod10HHF &&
+              terrenceHHFs[c.code] >= c.ltdHHF &&
+              terrenceHHFs[c.code] <= c.opnHHF
+                ? "text-green-400"
+                : "text-yellow-400"
+            }
+          >
+            {terrenceHHFs[c.code].toFixed(4)}
+          </span>
+        )}
       />
       <Column
         hidden={!schizoMode}
