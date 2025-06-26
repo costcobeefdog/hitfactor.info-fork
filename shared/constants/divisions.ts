@@ -293,7 +293,7 @@ export const divisionsForRecHHFAdapter = division => {
 
   if (division === "l10") {
     // needs a lot to compare to and calculate schizoHHF from
-    return ["l10", "co", "prod", "ltd", "opn"];
+    return ["l10", "co", "prod", "ltd", "opn", "ss", "lo"];
   }
 
   return [division];

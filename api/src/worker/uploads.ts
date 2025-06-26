@@ -15,7 +15,7 @@ import {
 import { MatchScore } from "../../../data/types/MatchScore";
 import features from "../../../shared/features";
 import { UTCDate } from "../../../shared/utils/date";
-import { minorHF } from "../../../shared/utils/hitfactor";
+import { recalcHFs } from "../../../shared/utils/hitfactor";
 import { uuidsFromUrlString } from "../../../shared/utils/uuid";
 import { normalizeClassifierCode } from "../dataUtil/classifiersData";
 import {
@@ -367,7 +367,7 @@ export const hitFactorLikeMatchInfo = (
 
         return {
           ...curScore,
-          minorHF: minorHF(curScore),
+          ...recalcHFs(curScore),
         };
       });
     })

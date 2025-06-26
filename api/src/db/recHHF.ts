@@ -15,8 +15,10 @@ import { Score, Scores } from "@api/db/scores";
 import { RecHHF } from "@data/types/RecHHF";
 import {
   classifiersThatUseMoreThan10RoundsBetweenReloads,
+  classifiersThatUseMoreThan10RoundsBetweenReloadsButItShouldntMatterForL10,
   uspsaClassifiers2025,
 } from "@shared/constants/classifiers";
+import terrenceHHFs from "@shared/constants/terrenceHHF";
 import { forcedWeibull, solveWeibull } from "@shared/utils/weibull";
 
 const runsForRecs = async ({ division, number }): Promise<Score[]> =>
@@ -56,13 +58,16 @@ const RecHHFSchema = new mongoose.Schema<RecHHF>({
 
   // Division Extras for comparison
   prod10HHF: Number,
+  prod10MajorHHF: Number,
   prod15HHF: Number,
   loHHF: Number,
   locoHHF: Number,
+  locoMajorHHF: Number,
   coHHF: Number,
   opnHHF: Number,
   ltdHHF: Number,
   schizoHHF: Number,
+  prophecyHHF: Number,
 });
 
 RecHHFSchema.index({ classifier: 1, division: 1 }, { unique: true });
@@ -106,46 +111,87 @@ const extraHHFsForLO = (locoHHF: number, locoRuns: Score[]) => {
 };
 
 const extraHHFsForL10 = (mixedRuns: Score[]) => {
-  const ltdHFs = mixedRuns.filter(c => c.division === "ltd").map(c => c.hf);
-  const coHFs = mixedRuns.filter(c => c.division === "co").map(c => c.hf);
-  const prod10HFs = mixedRuns
+  const ssHFs = mixedRuns
+    .filter(c => c.division === "ss")
+    .map(c => c.hf)
+    .filter(c => c > 0);
+  const ltdHFs = mixedRuns
+    .filter(c => c.division === "ltd")
+    .map(c => c.hf)
+    .filter(c => c > 0);
+  const locoMajorHFs = mixedRuns
+    .filter(c => ["co", "lo"].includes(c.division))
+    .map(c => c.majorHF ?? 0)
+    .filter(c => c > 0);
+  const coHFs = mixedRuns
+    .filter(c => c.division === "co")
+    .map(c => c.hf)
+    .filter(c => c > 0);
+  const prod10 = mixedRuns
     .filter(c => c.division === "prod")
     .filter(c => new Date(c.sd).getTime() < PROD_15_EFFECTIVE_TS)
-    .map(c => c.hf);
+    .filter(c => c.hf > 0);
+  const prod10HFs = prod10.map(c => c.hf);
+  const prod10MajorHFs = prod10.map(c => c.majorHF ?? 0).filter(hf => hf > 0);
   const l10HFs = mixedRuns
     .filter(
       c => c.division === "l10" && new Date(c.sd).getTime() >= L10_OPTICS_EFFECTIVE_TS,
     )
-    .map(c => c.hf);
-  const openHFs = mixedRuns.filter(c => c.division === "opn").map(c => c.hf);
+    .map(c => c.hf)
+    .filter(c => c > 0);
+  const openHFs = mixedRuns
+    .filter(c => c.division === "opn")
+    .map(c => c.hf)
+    .filter(c => c > 0);
+
   const { k: ltdK, lambda: ltdLambda, hhf: ltdHHF } = solveWeibull(ltdHFs);
   const { k: coK, lambda: coLambda, hhf: coHHF } = solveWeibull(coHFs);
   const { k: prodK, lambda: prodLambda, hhf: prod10HHF } = solveWeibull(prod10HFs);
+  const { hhf: prod10MajorHHF } = solveWeibull(prod10MajorHFs);
+  const { hhf: locoMajorHHF } = solveWeibull(locoMajorHFs);
   const { hhf: opnHHF } = solveWeibull(openHFs);
-  const { hhf: recHHF } = solveWeibull(l10HFs);
+  const { hhf3: wbl3HHF } = solveWeibull(l10HFs);
+  const { hhf: ssHHF } = solveWeibull(ssHFs);
+
+  const classifier = mixedRuns[0].classifier;
+  const noProd10data = classifier.startsWith("23-") || classifier.startsWith("24-");
 
   const k = coK - prodK + ltdK;
   const lambda = coLambda - prodLambda + ltdLambda;
-
-  const classifier = mixedRuns[0].classifier;
-  const noDataForSchizo = classifier.startsWith("23-") || classifier.startsWith("24-");
-
   const { hhf: schizoHHF } = forcedWeibull(
     l10HFs,
-    noDataForSchizo ? 0 : k,
-    noDataForSchizo ? 0 : lambda,
+    noProd10data ? 0 : k,
+    noProd10data ? 0 : lambda,
     0,
   );
 
+  const actuallyNeedsMoreThan10 =
+    classifiersThatUseMoreThan10RoundsBetweenReloads.includes(classifier) &&
+    !classifiersThatUseMoreThan10RoundsBetweenReloadsButItShouldntMatterForL10.includes(
+      classifier,
+    );
+  const terrenceHHF = terrenceHHFs[classifier];
+  const prophecyHHF = !actuallyNeedsMoreThan10
+    ? Math.max(...[locoMajorHHF, prod10MajorHHF, ssHHF].filter(hhf => hhf < opnHHF))
+    : Math.max(
+        ...[noProd10data ? terrenceHHF : prod10MajorHHF, ssHHF].filter(
+          hhf => hhf < opnHHF,
+        ),
+      );
+
   return {
+    wbl3HHF, // storing original weibull 3/90 here for display
     schizoHHF,
-    recHHF,
+    recHHF: prophecyHHF,
     k,
     lambda,
     ltdHHF,
     coHHF,
     opnHHF,
     prod10HHF,
+    prod10MajorHHF,
+    locoMajorHHF,
+    prophecyHHF: prophecyHHF > 0 ? prophecyHHF : opnHHF,
   };
 };
 
@@ -181,10 +227,6 @@ const recHHFUpdate = (runs: Score[], division: string, classifier: string) => {
     oldHHF,
     curHHF,
     recHHF: wblHHF,
-    ...(division === "prod" ? extraHHFsForProd(wbl3HHF, runs, classifier) : {}),
-    ...(division === "lo" ? extraHHFsForLO(wbl3HHF, runs) : {}),
-    ...(division === "l10" ? extraHHFsForL10(runs) : {}),
-
     k,
     lambda,
     wbl1HHF,
@@ -198,6 +240,9 @@ const recHHFUpdate = (runs: Score[], division: string, classifier: string) => {
     superMeanSquaredError,
     superMeanAbsoluteError,
     maxError,
+    ...(division === "prod" ? extraHHFsForProd(wbl3HHF, runs, classifier) : {}),
+    ...(division === "lo" ? extraHHFsForLO(wbl3HHF, runs) : {}),
+    ...(division === "l10" ? extraHHFsForL10(runs) : {}),
   };
 };
 

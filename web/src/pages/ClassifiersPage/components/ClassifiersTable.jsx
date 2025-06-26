@@ -5,6 +5,8 @@ import { DataTable } from "primereact/datatable";
 import { InputText } from "primereact/inputtext";
 import { useEffect, useState } from "react";
 
+import terrenceHHFs from "@shared/constants/terrenceHHF";
+
 import { deprecatedUSPSAClassifiers } from "../../../../../api/src/dataUtil/classifiersData";
 import {
   classifierCodeSort,
@@ -16,63 +18,6 @@ import ClassifierCell from "../../../components/ClassifierCell";
 import { letterRatingForPercent, renderPercent } from "../../../components/Table";
 import useTableSort from "../../../components/Table/useTableSort";
 import { useApi } from "../../../utils/client";
-
-const terrenceHHFs = {
-  "03-03": 7.737387682336051,
-  "03-05": 9.127328556057847,
-  "03-07": 5.895675003097409,
-  "03-08": 9.441188592807563,
-  "03-09": 10.175645375018576,
-  "03-18": 7.085471045303263,
-  "06-03": 13.750081900967633,
-  "06-04": 12.739296786529358,
-  "06-05": 12.452320917435916,
-  "06-10": 7.157990521028712,
-  "08-02": 7.3035087408710675,
-  "08-03": 9.689311186035136,
-  "09-10": 12.750627181101425,
-  "13-02": 10.224277448686237,
-  "13-04": 13.018052952040602,
-  "13-05": 10.657281396868513,
-  "13-06": 9.168842417675645,
-  "18-03": 8.254878678829968,
-  "18-05": 9.551509978680873,
-  "18-07": 8.87780131469004,
-  "18-08": 5.894640653108801,
-  "18-09": 10.10064335893033,
-  "19-01": 9.797805579762219,
-  "19-02": 9.194399586548691,
-  "19-04": 10.667339093307058,
-  "20-01": 8.251584873617846,
-  "20-02": 11.730650968421472,
-  "20-03": 10.042110556977905,
-  "21-01": 16.763898272869337,
-  "22-01": 9.986230653557044,
-  "22-02": 7.952777575449467,
-  "22-04": 10.637785401631835,
-  "22-06": 12.334631235560211,
-  "22-07": 9.492792731437447,
-  "23-01": 9.933527689593841,
-  "23-02": 10.601615970084257,
-  "24-01": 10.561469952602302,
-  "24-02": 9.208373214014298,
-  "24-04": 9.102663644523464,
-  "24-06": 10.371388152676857,
-  "24-08": 13.780745950559382,
-  "24-09": 10.3865286590716,
-  "99-08": 9.418750055096854,
-  "99-10": 9.432315892602155,
-  "99-11": 11.48998230140733,
-  "99-12": 9.54215535939288,
-  "99-13": 9.133142260402332,
-  "99-19": 6.093110891849627,
-  "99-28": 9.791682922699303,
-  "99-42": 9.482514672384209,
-  "99-46": 9.163099488850904,
-  "99-53": 6.747960459217257,
-  "99-57": 5.86204677106482,
-  "99-62": 10.332721686314459,
-};
 
 //isSCSA ? 2 : 4
 //isSCSA ? 's' : 0
@@ -222,7 +167,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
                     <Checkbox onChange={e => setLOCOMode(e.checked)} checked={locoMode} />
                   </>
                 )}
-                {division === "l10" && (
+                {division === "l10_DISABLED" && (
                   <>
                     <div className="ml-8" />
                     Schizo Mode
@@ -336,11 +281,34 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         bodyStyle={{ textAlign: "center" }}
       />
       <Column
+        hidden={schizoMode}
         field="recHHF"
-        header={isSCSA ? "Rec. Peak Time" : "Rec. HHF"}
+        header={division === "l10" ? "Rec. HHF (Prophecy)" : "Rec. HHF"}
+        sortable
+        style={{ width: "8em", textAlign: "right" }}
+        body={c => c.recHHF.toFixed(4)}
+      />
+      <Column
+        hidden={division !== "l10"}
+        field="hhf3"
+        header="Weibull HHF"
+        sortable
+        style={{ width: "8em", textAlign: "right" }}
+        body={c => c.wbl3HHF.toFixed(4)}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="prophecyHHF"
+        header="Prophecy HHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => (isSCSA ? `${c.recHHF.toFixed(2)}s` : c.recHHF.toFixed(4))}
+        body={c => (
+          <span
+            className={c.prophecyHHF < c.opnHHF ? "text-green-400" : "text-yellow-400"}
+          >
+            {c.prophecyHHF ? c.prophecyHHF.toFixed(4) : "—"}
+          </span>
+        )}
       />
       <Column
         hidden={!schizoMode}
@@ -352,14 +320,14 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
       />
       <Column
         hidden={!schizoMode}
-        field="coHHF"
-        header="CO HHF"
+        field="locoMajorHHF"
+        header="LOCO Maj HHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => c.coHHF.toFixed(4)}
+        body={c => c.locoMajorHHF.toFixed(4)}
       />
       <Column
-        hidden={!schizoMode}
+        hidden={true || !schizoMode}
         field="ltdHHF"
         header="LTD HHF"
         sortable
@@ -367,12 +335,28 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         body={c => c.ltdHHF.toFixed(4)}
       />
       <Column
-        hidden={!schizoMode}
+        hidden={true || !schizoMode}
         field="prod10HHF"
         header="P10 HHF"
         sortable
         style={{ width: "100px", textAlign: "right" }}
         body={c => (c.prod10HHF ? c.prod10HHF.toFixed(4) : "—")}
+      />
+      <Column
+        hidden={!schizoMode}
+        field="prod10MajorHHF"
+        header="P10Maj HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => (
+          <span
+            className={
+              c.prod10MajorHHF <= c.opnHHF ? "text-green-400" : "text-yellow-400"
+            }
+          >
+            {c.prod10MajorHHF ? c.prod10MajorHHF.toFixed(4) : "—"}
+          </span>
+        )}
       />
       <Column
         hidden={!schizoMode}
@@ -455,7 +439,6 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         body={c => (c.coHHF ? c.coHHF.toFixed(4) : "—")}
       />
       <Column
-        hidden={division === "l10"}
         field="curHHF"
         header={isSCSA ? "HQ Peak Time" : "HQ HHF"}
         sortable
@@ -483,7 +466,6 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         body={numFieldsDiff("recHHF", "curHHF", isSCSA ? 2 : 4, isSCSA ? "s" : " HF")}
       />
       <Column
-        hidden={division === "l10"}
         field="oldHHF"
         header="Old HHF"
         headerTooltip="HQ HHF before March 2025 Update"

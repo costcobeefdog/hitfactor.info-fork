@@ -82,10 +82,10 @@ export const targetHitsToLetters = n => {
 // 0.01 is very fuzzy, 0.0001 is ideal, TODO: pick 0.0001 unless 0.01 produces legit more eligible scores
 export const fuzzyEqual = (a, b, epsilon = 0.0001) => Math.abs(a - b) <= epsilon;
 
-/** Calculates HF based off time/hits from the Score.
+/** Calculates Minor/Major HFs based off time/hits from the Score.
  * Returns -1 if existing HF doesnt match time/hits in Major or Minor
  */
-export const minorHF = score => {
+export const recalcHFs = score => {
   try {
     const {
       hf,
@@ -100,12 +100,12 @@ export const minorHF = score => {
 
     if (Number.isNaN(Number(hf))) {
       // console.log("no hf" + score._id);
-      return -1;
+      return { minorHF: -1, majorHF: -1 };
     }
 
     if (!Array.isArray(targetHits) || !Array.isArray(strings)) {
       // console.log("bad hits/strings " + score._id);
-      return -1;
+      return { minorHF: -1, majorHF: -1 };
     }
 
     let totalTime = Number(strings.reduce((acc, cur) => acc + cur));
@@ -115,7 +115,7 @@ export const minorHF = score => {
 
     if (!totalTime) {
       // console.log("bad strings " + score._id);
-      return -1;
+      return { minorHF: -1, majorHF: -1 };
     }
 
     const steelPoints =
@@ -124,11 +124,11 @@ export const minorHF = score => {
       (steelNS ?? 0) * pointsNoShoot;
     if (Number.isNaN(steelPoints)) {
       // console.log("bad steel hits " + score._id);
-      return -1;
+      return { minorHF: -1, majorHF: -1 };
     }
 
     if (hf === 0) {
-      return 0;
+      return { minorHF: 0, majorHF: 0 };
     }
 
     const allHitsLetters = targetHits.map(h => targetHitsToLetters(h)).flat();
@@ -152,14 +152,17 @@ export const minorHF = score => {
 
     if (!fuzzyEqual(majorHF, hf) && !fuzzyEqual(calcedMinorHF, hf)) {
       // console.log("bad math " + score._id);
-      return -1;
+      return { minorHF: -1, majorHF: -1 };
     }
 
-    return calcedMinorHF;
+    return { minorHF: calcedMinorHF, majorHF };
   } catch (e) {
     console.error(e);
   }
   // console.log("something else " + score._id);
 
-  return -1;
+  return { minorHF: -1, majorHF: -1 };
 };
+
+export const minorHF = score => recalcHFs(score).minorHF;
+export const majorHF = score => recalcHFs(score).majorHF;

@@ -264,6 +264,7 @@ ClassifierSchema.virtual("recHHFs", {
   "curHHF",
   "recHHF",
   "wbl1HHF",
+  "wbl3HHF",
   "wbl5HHF",
   "wbl15HHF",
   "k",
@@ -276,14 +277,17 @@ ClassifierSchema.virtual("recHHFs", {
   "superMeanAbsoluteError",
   "maxError",
   "prod10HHF",
+  "prod10MajorHHF",
   "prod15HHF",
   "locoHHF",
+  "locoMajorHHF",
   "loHHF",
   "coHHF",
   "ltdHHF",
   "opnHHF",
   "prodHHF",
   "schizoHHF",
+  "prophecyHHF",
 ].map(fieldName =>
   ClassifierSchema.virtual(fieldName).get(function () {
     return this.recHHFs?.[fieldName];

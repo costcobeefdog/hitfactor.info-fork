@@ -24,11 +24,14 @@ export interface RecHHF {
 
   // Extra division HHFs for comparison
   prod10HHF?: number;
+  prod10MajorHHF: number;
   prod15HHF?: number;
   loHHF?: number;
   locoHHF?: number;
+  locoMajorHHF?: number;
   coHHF?: number;
   opnHHF?: number;
   ltdHHF?: number;
   schizoHHF?: number;
+  prophecyHHF?: number;
 }

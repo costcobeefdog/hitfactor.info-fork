@@ -9,8 +9,6 @@ import { Shooter } from "@data/types/Shooter";
 import {
   divIdToShort,
   divisionsForScoresAdapter,
-  hfuDivisionsShortNamesThatNeedMinorHF,
-  L10_OPTICS_EFFECTIVE_TS,
   minorDivisions,
   uspsaDivIdToShort,
   uspsaDivShortNames,
@@ -30,6 +28,7 @@ export interface Score {
   hf: number;
   hhf?: number;
   minorHF?: number;
+  majorHF?: number;
   code: string;
   source: string;
   shooterFullName?: string;
@@ -92,6 +91,7 @@ const ScoreSchema = new mongoose.Schema<Score, ScoreModel, ScoreVirtuals>(
     percent: Number,
     hf: Number,
     minorHF: Number,
+    majorHF: Number,
     code: { type: String, maxLength: 1 },
     source: String,
     shooterFullName: String,
