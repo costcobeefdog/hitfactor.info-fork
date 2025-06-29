@@ -103,7 +103,7 @@ export const saveMatchScores = async (
       matchResults.map(({ _id, ...matchScore }) => ({
         updateOne: {
           filter: {
-            memberNumberDivision: matchScore.memberNumberDivision,
+            memberNumber: matchScore.memberNumber, // memberNumber:matchUUID key to handle bumps to Open
             upload: matchScore.upload,
           },
           update: { $set: matchScore },
@@ -113,6 +113,30 @@ export const saveMatchScores = async (
     );
   } catch (e) {
     console.error("failed to save match scores");
+    console.error(e);
+  }
+};
+
+export const deleteDQMatchScores = async (
+  dqs: { memberNumber: string; upload: string }[],
+) => {
+  if (!dqs.length) {
+    return;
+  }
+
+  try {
+    await MatchScores.bulkWrite(
+      dqs.map(dq => ({
+        deleteOne: {
+          filter: {
+            memberNumber: dq.memberNumber, // memberNumber:matchUUID key to handle bumps to Open
+            upload: dq.upload,
+          },
+        },
+      })),
+    );
+  } catch (e) {
+    console.error("failed to delete dq match scores");
     console.error(e);
   }
 };

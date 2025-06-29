@@ -35,7 +35,11 @@ import { DQs } from "../db/dq";
 import { connect } from "../db/index";
 import { matchBumpsForMatchResults, saveMatchBumps } from "../db/matchBumps";
 import { MatchDef, Matches } from "../db/matches";
-import { backfillComboClassifications, saveMatchScores } from "../db/matchScores";
+import {
+  backfillComboClassifications,
+  deleteDQMatchScores,
+  saveMatchScores,
+} from "../db/matchScores";
 import { hydrateRecHHFsForClassifiers } from "../db/recHHF";
 import { Score, Scores } from "../db/scores";
 import { reclassifyShooters } from "../db/shooters";
@@ -483,7 +487,20 @@ export const uploadResultsForMatchUUIDs = async uuidsRaw => {
   return uploadResultsForMatches(matches);
 };
 
-export const processDQs = async matches => {
+interface DQDoc {
+  memberNumber: string;
+  lastName: string;
+  firstName: string;
+  division: string;
+  upload: string;
+  clubId: string;
+  clubName: string;
+  matchName: string;
+  sd: Date;
+  dq: string;
+}
+
+export const processDQs = async (matches): Promise<DQDoc[]> => {
   try {
     const dqDocs = matches.reduce((acc, match) => {
       match.match_shooters.forEach(shooter => {
@@ -523,10 +540,12 @@ export const processDQs = async matches => {
         },
       })),
     );
+    return dqDocs;
   } catch (e) {
     console.error("failed to save dqs");
     console.error(e);
   }
+  return [];
 };
 
 export const processUploadResults = async ({ uploadResults }) => {
@@ -542,10 +561,11 @@ export const processUploadResults = async ({ uploadResults }) => {
       {},
     );
 
-    await processDQs(matches);
+    const dqs = await processDQs(matches);
 
     console.time("matchScores");
     await saveMatchScores(matchResults);
+    await deleteDQMatchScores(dqs);
     console.timeEnd("matchScores");
 
     console.time("matchBumps");
