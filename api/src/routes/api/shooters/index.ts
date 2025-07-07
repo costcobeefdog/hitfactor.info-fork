@@ -70,6 +70,7 @@ const shootersQueryAggregation = (params, query) => {
     {
       $match: {
         division,
+        memberNumber: { $not: /^X+$/i },
         [placeByField]: { $gt: 0 },
       },
     },
