@@ -209,15 +209,14 @@ export const ShootersELODistributionChart = ({
           },
           tooltip: {
             callbacks: {
-              // @ts-expect-error returning null is legit, but label cb is typed incorrectly
               label: ({ raw }) => {
                 const { memberNumber, name, rating, x, y, pointsGraphName } =
                   raw as RawDataPoint;
+                if (pointsGraphName) {
+                  return "";
+                }
                 if (isVersus) {
                   return `${memberNumber} ${name}; X ${x.toFixed(2)}; Y ${y.toFixed(2)}; ELO: ${rating?.toFixed(2) || "—"}`;
-                }
-                if (pointsGraphName) {
-                  return null;
                 }
                 return `${memberNumber} ${name}; Top ${y.toFixed(2)}%, ELO: ${rating?.toFixed(2) || "—"} (${((100 * (rating || 0)) / 1700).toFixed(2)}%)`;
               },
