@@ -23,10 +23,10 @@ const placeByFieldForSort = sort => {
     sort &&
     [
       "current",
-      "reclassificationsCurPercentCurrent",
-      "reclassificationsRecHHFOnlyPercentCurrent",
-      "reclassificationsRecPercentCurrent",
-      "reclassificationsSoftPercentCurrent",
+      "reclassificationsRecPercentUncappedCurrent",
+      "reclassificationsRecPercentUncappedHigh",
+      "reclassificationsMajorsCurrent",
+      "elo",
     ].includes(sort)
   ) {
     return sort;
