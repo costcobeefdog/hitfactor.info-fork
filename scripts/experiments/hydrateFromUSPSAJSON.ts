@@ -3,24 +3,9 @@
 import { connect } from "@api/db";
 import { Score, Scores } from "@api/db/scores";
 import { Shooter, Shooters } from "@api/db/shooters";
+import { loadAllJSONFromDir } from "@api/utils";
 import { uspsaDivIdToShort } from "@shared/constants/divisions";
 import { UTCDate } from "@shared/utils/date";
-
-import uspsa1 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_1.json";
-import uspsa10 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_10.json";
-import uspsa11 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_11.json";
-import uspsa12 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_12.json";
-import uspsa13 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_13.json";
-import uspsa14 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_14.json";
-import uspsa15 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_15.json";
-import uspsa2 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_2.json";
-import uspsa3 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_3.json";
-import uspsa4 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_4.json";
-import uspsa5 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_5.json";
-import uspsa6 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_6.json";
-import uspsa7 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_7.json";
-import uspsa8 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_8.json";
-import uspsa9 from "../../data/uspsa/2025-03-03-11-07-36_classifier_data_9.json";
 
 export const binaryScoreFromUSPSAScore = (uspsaScore): Score => {
   const hf = Number(uspsaScore.hit_factor);
@@ -47,28 +32,12 @@ export const binaryScoreFromUSPSAScore = (uspsaScore): Score => {
     templateName: "USPSA",
     type: "USPSA",
     subType: "USPSA",
+
+    shooterFullName: `${uspsaScore.first_name} ${uspsaScore.last_name}`,
   };
 };
 
-const all = [
-  uspsa1,
-  uspsa2,
-  uspsa3,
-  uspsa4,
-  uspsa5,
-  uspsa6,
-  uspsa7,
-  uspsa8,
-  uspsa9,
-  uspsa10,
-  uspsa11,
-  uspsa12,
-  uspsa13,
-  uspsa14,
-  uspsa15,
-]
-  .flat()
-  .map(binaryScoreFromUSPSAScore);
+const all = loadAllJSONFromDir("../../data/uspsa").map(binaryScoreFromUSPSAScore);
 
 const shooters = Object.values(
   all.reduce((acc, cur: Score) => {
@@ -83,24 +52,9 @@ const shooters = Object.values(
   }, {}),
 );
 
-console.log(all.length);
-console.log(shooters.length);
-
-export const goodClassifiers = [
-  "24-08",
-  "21-01",
-  "20-01",
-  "19-02",
-  "18-09",
-  "19-04",
-  "20-03",
-  "18-03",
-  "99-28",
-  "03-05",
-  "22-01",
-  "22-07",
-  "13-05",
-];
+console.log("JSON Files Loaded");
+console.log(`${all.length} Scores`);
+console.log(`${shooters.length} Shooters`);
 
 const hydrateScores = async () => {
   console.error(`Total Scores to Hydrate: ${all.length}`);

@@ -11,6 +11,16 @@ export const dirPath = (...args: string[]) => path.join(__dirname, ...args);
 export const loadJSON = (filePath: string) =>
   JSON.parse(fs.readFileSync(dirPath(filePath), "utf8"));
 
+export const loadAllJSONFromDir = (dir: string) => {
+  const workDir = dirPath(dir);
+  const files = fs.readdirSync(workDir);
+  const jsons = files
+    .filter(f => f.endsWith(".json"))
+    .map(f => JSON.parse(fs.readFileSync(`${workDir}/${f}`, "utf8")));
+
+  return jsons.flat();
+};
+
 const filesToProcess = (dir: string, fileRegexp: RegExp) => {
   const files = fs.readdirSync(dirPath(dir)).filter(file => !!file.match(fileRegexp));
 
