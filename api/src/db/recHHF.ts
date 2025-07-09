@@ -15,8 +15,8 @@ import { Score, Scores } from "@api/db/scores";
 import { RecHHF } from "@data/types/RecHHF";
 import {
   classifiersThatUseMoreThan10RoundsBetweenReloads,
-  classifiersThatUseMoreThan10RoundsBetweenReloadsButItShouldntMatterForL10,
   uspsaClassifiers2025,
+  reloadMattersL10,
 } from "@shared/constants/classifiers";
 import terrenceHHFs from "@shared/constants/terrenceHHF";
 import { forcedWeibull, solveWeibull } from "@shared/utils/weibull";
@@ -165,11 +165,7 @@ const extraHHFsForL10 = (mixedRuns: Score[]) => {
     0,
   );
 
-  const actuallyNeedsMoreThan10 =
-    classifiersThatUseMoreThan10RoundsBetweenReloads.includes(classifier) &&
-    !classifiersThatUseMoreThan10RoundsBetweenReloadsButItShouldntMatterForL10.includes(
-      classifier,
-    );
+  const actuallyNeedsMoreThan10 = reloadMattersL10(classifier);
   const terrenceHHF = terrenceHHFs[classifier];
   const prophecyHHF = !actuallyNeedsMoreThan10
     ? Math.max(...[locoMajorHHF, prod10MajorHHF, ssHHF].filter(hhf => hhf < opnHHF))

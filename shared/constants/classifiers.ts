@@ -105,6 +105,12 @@ export const classifiersThatUseMoreThan10RoundsBetweenReloadsButItShouldntMatter
   "24-09",
 ];
 
+export const reloadMattersL10 = (classifier: string) =>
+  classifiersThatUseMoreThan10RoundsBetweenReloads.includes(classifier) &&
+  !classifiersThatUseMoreThan10RoundsBetweenReloadsButItShouldntMatterForL10.includes(
+    classifier,
+  );
+
 /*[ "99-10", "03-03", "09-10", "19-01", "19-02", "19-04", "20-01", "20-02", "20-03",
   "21-01", "22-01", "22-02", "23-01", "23-02", "24-02", "24-06", "24-08", "24-09" ]*/
 export const uspsaClassifiers2025ThatUseMoreThan10RoundsBetweenReloads =

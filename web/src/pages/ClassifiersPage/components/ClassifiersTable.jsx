@@ -5,6 +5,7 @@ import { DataTable } from "primereact/datatable";
 import { InputText } from "primereact/inputtext";
 import { useEffect, useState } from "react";
 
+import { reloadMattersL10 } from "@shared/constants/classifiers";
 import terrenceHHFs from "@shared/constants/terrenceHHF";
 
 import { deprecatedUSPSAClassifiers } from "../../../../../api/src/dataUtil/classifiersData";
@@ -286,10 +287,42 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header={division === "l10" ? "Rec. HHF (Prophecy)" : "Rec. HHF"}
         sortable
         style={{ width: "8em", textAlign: "right" }}
-        body={c => c.recHHF.toFixed(4)}
+        body={c => {
+          const displayHHF = c.recHHF.toFixed(4);
+          if (division !== "l10") {
+            return displayHHF;
+          }
+
+          const source =
+            c.recHHF === c.locoMajorHHF
+              ? "LOCO Major"
+              : c.recHHF === c.prod10MajorHHF
+                ? "Prod10 Major"
+                : c.recHHF === c.opnHHF
+                  ? "Open"
+                  : c.recHHF === terrenceHHFs[c.code]
+                    ? "Terrence"
+                    : "SS";
+          return (
+            <div>
+              <div>{displayHHF}</div>
+              <div className="text-xs text-400">({source})</div>
+            </div>
+          );
+        }}
       />
       <Column
         hidden={division !== "l10"}
+        field="reloadMatters"
+        header="Reload Matters"
+        sortable
+        style={{ width: "32px" }}
+        bodyStyle={{ textAlign: "center" }}
+        headerClassName="text-xs"
+        body={c => (reloadMattersL10(c.code) ? "✔︎" : " ")}
+      />
+      <Column
+        hidden
         field="hhf3"
         header="Weibull HHF"
         sortable
@@ -311,7 +344,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         )}
       />
       <Column
-        hidden={!schizoMode}
+        hidden={division !== "l10"}
         field="opnHHF"
         header="Open HHF"
         sortable
