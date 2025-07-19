@@ -19,11 +19,7 @@ const go = async () => {
   console.log(`<${division}>`);
   const classifiers = await classifiersForDivision(division);
   classifiers.forEach(
-    ({
-      classifier,
-      name,
-      recHHFs: { curHHF, recHHF, opnHHF, locoMajorHHF, prod10MajorHHF },
-    }) => {
+    ({ classifier, name, recHHFs: { recHHF, opnHHF, locoMajorHHF, prod10MajorHHF } }) => {
       const method =
         recHHF === locoMajorHHF
           ? "LOCO Major"
