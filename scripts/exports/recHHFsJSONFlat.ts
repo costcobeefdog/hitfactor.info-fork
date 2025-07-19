@@ -1,18 +1,28 @@
 /* eslint-disable no-console */
 
+import { uspsaClassifiers2025 } from "@shared/constants/classifiers";
+
 import {
   classifierToId,
   deprecatedUSPSAClassifiers,
 } from "../../api/src/dataUtil/classifiersData";
-import { Classifiers } from "../../api/src/db/classifiers";
+import { Classifiers, ClassifierWithVirtuals } from "../../api/src/db/classifiers";
 import { connect } from "../../api/src/db/index";
 import { divShortToId, uspsaDivShortNames } from "../../shared/constants/divisions";
 
 const classifiersForDivision = async (division: string) =>
-  Classifiers.find({
-    division,
-    classifier: { $nin: deprecatedUSPSAClassifiers },
-  }).populate("recHHFs");
+  (
+    await Classifiers.find({
+      division,
+      classifier: { $nin: deprecatedUSPSAClassifiers },
+    })
+      .populate("recHHFs")
+      .lean<ClassifierWithVirtuals[]>({ virtuals: true })
+  ).toSorted(
+    (a, b) =>
+      uspsaClassifiers2025.indexOf(a.classifier) -
+      uspsaClassifiers2025.indexOf(b.classifier),
+  );
 
 interface FlatHHF {
   classifier_id: string;
@@ -24,9 +34,6 @@ const go = async () => {
 
   const all = [] as FlatHHF[];
   for (const division of uspsaDivShortNames) {
-    if (division === "l10") {
-      continue;
-    }
     const classifiers = await classifiersForDivision(division);
     classifiers.forEach(({ classifier, recHHFs: { recHHF } }) => {
       all.push({

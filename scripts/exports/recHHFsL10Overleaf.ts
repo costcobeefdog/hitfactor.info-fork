@@ -1,15 +1,17 @@
 /* eslint-disable no-console */
+import { uspsaClassifiers2025 } from "@shared/constants/classifiers";
 import terrenceHHFs from "@shared/constants/terrenceHHF";
 
-import { deprecatedUSPSAClassifiers } from "../../api/src/dataUtil/classifiersData";
-import { Classifiers } from "../../api/src/db/classifiers";
+import { Classifiers, ClassifierWithVirtuals } from "../../api/src/db/classifiers";
 import { connect } from "../../api/src/db/index";
 
 const classifiersForDivision = async (division: string) =>
   Classifiers.find({
     division,
-    classifier: { $nin: deprecatedUSPSAClassifiers },
-  }).populate("recHHFs");
+    classifier: { $in: uspsaClassifiers2025 },
+  })
+    .populate("recHHFs")
+    .lean<ClassifierWithVirtuals[]>({ virtuals: true });
 
 const go = async () => {
   await connect();
@@ -17,7 +19,11 @@ const go = async () => {
   const division = "l10";
   console.log("");
   console.log(`<${division}>`);
-  const classifiers = await classifiersForDivision(division);
+  const classifiers = (await classifiersForDivision(division)).toSorted(
+    (a, b) =>
+      uspsaClassifiers2025.indexOf(a.classifier) -
+      uspsaClassifiers2025.indexOf(b.classifier),
+  );
   classifiers.forEach(
     ({ classifier, name, recHHFs: { recHHF, opnHHF, locoMajorHHF, prod10MajorHHF } }) => {
       const method =
@@ -28,7 +34,7 @@ const go = async () => {
             : recHHF === opnHHF
               ? "Open"
               : recHHF === terrenceHHFs[classifier]
-                ? "Terrence"
+                ? "L/LO/Open Regression"
                 : "SS";
       console.log(
         `    ${classifier} ${name.replace("#", "\\#").replace("&", "\\&")} & ${recHHF.toFixed(4)} & ${opnHHF?.toFixed(4)} & ${method} \\\\`,
