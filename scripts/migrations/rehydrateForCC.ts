@@ -17,22 +17,6 @@ import { Shooters } from "../../api/src/db/shooters";
 import { hydrateStats } from "../../api/src/db/stats";
 import { uspsaDivShortNames } from "../../shared/constants/divisions";
 
-export const goodClassifiers = [
-  "24-08",
-  "21-01",
-  "20-01",
-  "19-02",
-  "18-09",
-  "19-04",
-  "20-03",
-  "18-03",
-  "99-28",
-  "03-05",
-  "22-01",
-  "22-07",
-  "13-05",
-];
-
 const rehydrateShooters = async (divisions: string[]) => {
   const shooters = await Shooters.find({
     memberNumberDivision: { $exists: true },
