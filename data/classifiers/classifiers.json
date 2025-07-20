@@ -1405,6 +1405,60 @@
             "thumb": "",
             "image_file": "",
             "wsb_file": ""
+        },
+        {
+            "id": "-",
+            "classifier": "25-01",
+            "name": "Return to Monke",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-02",
+            "name": "Look at Me I Am the Captain Now",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-03",
+            "name": "Let Him Cook",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-04",
+            "name": "We Did Our Homework",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-05",
+            "name": "Its All Porta the Plan",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-06",
+            "name": "They All Count",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-07",
+            "name": "Absolute Cinema",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-08",
+            "name": "We Lost Hero or Zero",
+            "scoring": "Comstock"
+        },
+        {
+            "id": "-",
+            "classifier": "25-09",
+            "name": "Descent Into Madness",
+            "scoring": "Virginia"
         }
     ]
 }

@@ -504,7 +504,19 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         headerTooltip="HQ HHF before March 2025 Update"
         sortable
         style={{ width: "100px", textAlign: "right" }}
-        body={c => c.oldHHF.toFixed(4)}
+        body={c => {
+          if (c.oldHHF <= 0) {
+            return (
+              <span
+                style={{ display: "inline-block", width: "100%", textAlign: "center" }}
+              >
+                —
+              </span>
+            );
+          }
+
+          return c.oldHHF.toFixed(4);
+        }}
       />
       <Column
         hidden

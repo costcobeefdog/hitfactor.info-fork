@@ -222,6 +222,20 @@ export const hitFactorLikeMatchInfo = (
   );
   const classifiersMap = Object.fromEntries(
     match_stages
+      .map(s => {
+        try {
+          const provisionalClassifierNumber = (s.stage_name || "")
+            .trimStart()
+            .match(/^25-0[123456789]/)?.[0];
+          if (provisionalClassifierNumber) {
+            return { ...s, stage_classifiercode: provisionalClassifierNumber };
+          }
+        } catch (all) {
+          console.error(`paranoia paid off: ${s.stage_name}`);
+        }
+
+        return s;
+      })
       .filter(s => s.stage_scoretype !== "Chrono")
       .filter(s => !onlyClassifiers || !!s.stage_classifiercode)
       .map(s => [s.stage_uuid, classifierCodeFromMatchDefStage(s, onlyClassifiers)]),

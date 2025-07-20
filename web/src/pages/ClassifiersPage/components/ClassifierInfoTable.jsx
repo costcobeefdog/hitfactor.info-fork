@@ -47,7 +47,7 @@ export const ClassifierInfoTable = ({
             showHeaders={false}
             stripedRows
             value={[
-              ...(info?.hhfs || []),
+              ...(info?.hhfs?.filter(infoHHF => infoHHF > 0) || []),
               ...(!oldHHF || oldHHF < 0
                 ? []
                 : [

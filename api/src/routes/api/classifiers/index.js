@@ -178,7 +178,6 @@ const classifiersRoutes = async fastify => {
       Classifiers.find({
         division,
         classifier: { $in: uspsaClassifiers2025 },
-        code: { $exists: true, $ne: null },
       }).populate("recHHFs"),
       division.startsWith("scsa")
         ? allScsaDivisionClassifiersQuality()

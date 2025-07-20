@@ -214,6 +214,7 @@ export const scoresForRecommendedClassification = (
         bad: { $ne: true },
         source: { $ne: "Major Match" }, // majors only come from MatchScores now
         memberNumber: { $in: memberNumbers },
+        classifier: { $not: /^25-/ }, // temp skip 25-series for classification
         ...(opts?.includeZeros ? {} : { hf: { $gt: 0 } }),
 
         // optional filtering

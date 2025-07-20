@@ -1,4 +1,5 @@
 import { Button } from "primereact/button";
+import { Message } from "primereact/message";
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -149,6 +150,9 @@ export const ClassifierRunsAndInfo = ({
           />
         </a>*/}
       </div>
+      {classifier.startsWith("25-") && (
+        <Message severity="info" className="mb-3 w-full" text="Provisional Classifier" />
+      )}
       <ClassifierInfoTable {...{ division, classifier, loading, hhfs }} {...info} />
 
       <RunsTable

@@ -65,6 +65,16 @@ export const uspsaClassifiers2025 = [
   "24-06",
   "24-08",
   "24-09",
+
+  "25-01",
+  "25-02",
+  "25-03",
+  "25-04",
+  "25-05",
+  "25-06",
+  "25-07",
+  "25-08",
+  "25-09",
 ];
 
 export const classifiersThatUseMoreThan10RoundsBetweenReloads = [

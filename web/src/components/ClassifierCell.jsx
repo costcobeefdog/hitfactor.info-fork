@@ -16,6 +16,12 @@ export const ClassifierCell = ({ info, onClick, fallback, showScoring }) => {
       <div className="flex flex-row justify-content-between">
         <div className={cx("font-bold", { "text-color-secondary": !!code })}>
           {code || fallback}
+          {code?.startsWith("25-") && (
+            <i
+              className="pi pi-exclamation-circle ml-1 text-xs"
+              title="Provisional Classifier"
+            />
+          )}
         </div>
         {showScoring && scoring && (
           <div className="text-xs text-color-secondary">{scoring}</div>
