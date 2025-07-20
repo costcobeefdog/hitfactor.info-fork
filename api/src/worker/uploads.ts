@@ -226,6 +226,7 @@ export const hitFactorLikeMatchInfo = (
         try {
           const provisionalClassifierNumber = (s.stage_name || "")
             .trimStart()
+            .replace(/^[.,\s_#\-\t:;]+/, "")
             .match(/^25-0[123456789]/)?.[0];
           if (provisionalClassifierNumber) {
             return { ...s, stage_classifiercode: provisionalClassifierNumber };
