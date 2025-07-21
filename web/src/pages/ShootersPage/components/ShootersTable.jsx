@@ -49,8 +49,7 @@ export const useShootersTableData = ({ division, inconsistencies, classFilter })
     onSortCallback: () => resetPage(),
     initial: [{ field: "reclassificationsRecPercentUncappedCurrent", order: -1 }],
   });
-  const isHFU = useIsHFU(division);
-  useEffect(() => resetSort(), [isHFU]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => resetPage(), [division]); // eslint-disable-line react-hooks/exhaustive-deps
   const [filter, setFilter] = useState("");
   const filtersQuery = qs.stringify({
     filter,
