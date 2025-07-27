@@ -5,10 +5,13 @@ import { useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 import MultiProgress from "react-multi-progress";
 
+import ModeSwitch from "@web/components/ModeSwitch";
+
 import Activity from "./Activity";
 import Distribution from "./Distribution";
 import ELO from "./ELO";
 import Inconsistencies from "./Inconsistencies";
+import ProvisionalClassifiers from "./ProvisionalClassifiers";
 
 import divisionPopularity0 from "../../../../data/stats/divisions_0YTD.json";
 import divisionPopularity1 from "../../../../data/stats/divisions_1YTD.json";
@@ -178,18 +181,6 @@ export const ClassificationsChart = ({
     </div>
   );
 };
-
-const ModeSwitch = ({ mode, setMode, modes }) => (
-  <div className="card flex justify-content-center mt-4 mb-2 text-xs md:text-sm">
-    <SelectButton
-      className="compact"
-      allowEmpty={false}
-      options={modes}
-      value={mode}
-      onChange={e => setMode(e.value)}
-    />
-  </div>
-);
 
 const titleForDivMap = {
   opn: "Open",
@@ -542,6 +533,9 @@ export const StatsPage = () => {
         </TabPanel>
         <TabPanel header="Divisions" className="p-0 text-sm md:text-base">
           <Divisions />
+        </TabPanel>
+        <TabPanel header="25-Series" className="p-0 text-sm md:text-base">
+          <ProvisionalClassifiers />
         </TabPanel>
         <TabPanel header="Activity" className="hidden p-0 text-sm md:text-base">
           <Activity />

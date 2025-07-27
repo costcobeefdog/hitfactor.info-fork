@@ -40,6 +40,15 @@ export const divShortToLong = uspsaDivisions.reduce(
   {},
 );
 export const uspsaDivShortToLong = divShortToLong;
+export const uspsaDivShortToShortDisplay = {
+  ...divShortToLong,
+  co: "CO",
+  lo: "LO",
+  ltd: "Ltd",
+  ss: "Stack",
+  prod: "Prod",
+  rev: "Revo",
+};
 
 export const divIdToShort = Object.fromEntries(
   Object.entries(divShortToId).map(flip => [flip[1], flip[0]]),
