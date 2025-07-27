@@ -224,10 +224,9 @@ export const hitFactorLikeMatchInfo = (
     match_stages
       .map(s => {
         try {
-          const provisionalClassifierNumber = (s.stage_name || "")
-            .trimStart()
-            .replace(/^[.,\s_#\-\t:;]+/, "")
-            .match(/^25-0[123456789]/)?.[0];
+          const provisionalClassifierNumber = (s.stage_name || "").match(
+            /(?<!\d)25-0[123456789](?!\d)/,
+          )?.[0];
           if (provisionalClassifierNumber) {
             return { ...s, stage_classifiercode: provisionalClassifierNumber };
           }
