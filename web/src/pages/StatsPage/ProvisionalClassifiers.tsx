@@ -22,7 +22,26 @@ const Progress = ({
     })}
     style={{ width: "calc(min(92vw, 32rem))" }}
   >
-    <ProgressBar value={value} style={{ width: "calc(min(70vw, 26rem))" }} />
+    <ProgressBar
+      className="text-xs md:text-base"
+      value={value}
+      style={{ width: "calc(min(70vw, 26rem))" }}
+      pt={
+        value >= 6
+          ? {}
+          : {
+              value: { style: { overflow: "visible" } },
+              label: {
+                className: "ml-2 md:ml-0",
+                style: {
+                  color: "white",
+                  position: "relative",
+                  left: "1.5em",
+                },
+              },
+            }
+      }
+    />
     <div>{label}</div>
   </div>
 );
