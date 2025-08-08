@@ -42,6 +42,8 @@ export const divShortToLong = uspsaDivisions.reduce(
 export const uspsaDivShortToLong = divShortToLong;
 export const uspsaDivShortToShortDisplay = {
   ...divShortToLong,
+  optics: "Optics",
+  irons: "Irons",
   co: "CO",
   lo: "LO",
   ltd: "Ltd",

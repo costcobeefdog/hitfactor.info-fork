@@ -1,4 +1,5 @@
 import cx from "classnames";
+import { Checkbox } from "primereact/checkbox";
 import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useState } from "react";
@@ -52,15 +53,26 @@ interface ScoresStat {
   division: string;
 }
 
-// l10 fully depends on other divisions for HHFs
-const divisions = ["opn", "ltd", "prod", "rev", "ss", "co", "lo", "pcc"];
+//const consolidatedDivisions = ["opn", "optics", "irons", "pcc"];
 const classifiers = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(c => `25-0${c}`);
+
+const divisionsFromData = data =>
+  data
+    .reduce((acc, cur) => {
+      if (!acc.includes(cur.division)) {
+        acc.push(cur.division);
+      }
+      return acc;
+    }, [] as string[])
+    .filter(div => div !== "rev" && div !== "l10");
+//< l10 fully depends on other divisions for HHFs, and revo wont have enough in next 2 years
 
 const ByClassifier = ({ data }: { data: ScoresStat[] | null }) => {
   if (!data) {
     return null;
   }
 
+  const divisions = divisionsFromData(data);
   const percentData = data.map(c => ({
     ...c,
     percent: (100 * Math.min(c.scores, 150)) / 150,
@@ -69,8 +81,8 @@ const ByClassifier = ({ data }: { data: ScoresStat[] | null }) => {
     (acc, cur) => {
       acc.total ??= 0;
       acc[cur.classifier] ??= 0;
-      acc[cur.classifier] += Math.round(cur.percent / divisions.length);
-      acc.total += Math.round(cur.percent / (divisions.length * classifiers.length));
+      acc[cur.classifier] += cur.percent / divisions.length;
+      acc.total += cur.percent / (divisions.length * classifiers.length);
       return acc;
     },
     {} as Record<string, number>,
@@ -79,10 +91,19 @@ const ByClassifier = ({ data }: { data: ScoresStat[] | null }) => {
   return (
     <>
       <div className="mb-4 mt-2">
-        <Progress label="Total" value={percentDataByClassifier.total} reverse />
+        <Progress
+          label="Total"
+          value={Math.round(percentDataByClassifier.total)}
+          reverse
+        />
       </div>
       {classifiers.map(c => (
-        <Progress key={c} label={c} value={percentDataByClassifier[c] ?? 0} reverse />
+        <Progress
+          key={c}
+          label={c}
+          value={Math.round(percentDataByClassifier[c] ?? 0)}
+          reverse
+        />
       ))}
     </>
   );
@@ -97,6 +118,7 @@ const ByBoth = ({ data }: { data: ScoresStat[] | null }) => {
     ...c,
     percent: (100 * Math.min(c.scores, 150)) / 150,
   }));
+  const divisions = divisionsFromData(data);
   const percentDataByClassifierDivision = percentData.reduce(
     (acc, cur) => {
       const key = `${cur.classifier}:${cur.division}`;
@@ -113,7 +135,7 @@ const ByBoth = ({ data }: { data: ScoresStat[] | null }) => {
     .sort(
       (a, b) => percentDataByClassifierDivision[b] - percentDataByClassifierDivision[a],
     )
-    .filter(key => key !== "total" && !key.endsWith("l10"));
+    .filter(key => key !== "total" && !key.endsWith("l10") && !key.endsWith("rev"));
 
   return (
     <>
@@ -135,6 +157,40 @@ const ByBoth = ({ data }: { data: ScoresStat[] | null }) => {
   );
 };
 
+const consolidateDivisionsData = (data, consolidate) => {
+  if (!consolidate) {
+    return data;
+  }
+  const divisionMapper = div => {
+    switch (div) {
+      case "lo":
+      case "co":
+      case "l10":
+        return "optics";
+
+      case "ss":
+      case "ltd":
+      case "prod":
+        return "irons";
+    }
+    return div;
+  };
+
+  return data
+    .map(c => ({ ...c, division: divisionMapper(c.division) }))
+    .reduce((acc, cur) => {
+      const existing = acc.find(
+        c => c.division === cur.division && c.classifier === cur.classifier,
+      );
+      if (existing) {
+        existing.scores += cur.scores;
+      } else {
+        return [...acc, cur];
+      }
+      return acc;
+    }, [] as ScoresStat[]);
+};
+
 const ByDivision = ({ data }: { data: ScoresStat[] | null }) => {
   if (!data) {
     return null;
@@ -144,12 +200,13 @@ const ByDivision = ({ data }: { data: ScoresStat[] | null }) => {
     ...c,
     percent: (100 * Math.min(c.scores, 150)) / 150,
   }));
+  const divisions = divisionsFromData(data);
   const percentDataByDivision = percentData.reduce(
     (acc, cur) => {
       acc.total ??= 0;
       acc[cur.division] ??= 0;
-      acc[cur.division] += Math.round(cur.percent / classifiers.length);
-      acc.total += Math.round(cur.percent / (divisions.length * classifiers.length));
+      acc[cur.division] += cur.percent / classifiers.length;
+      acc.total += cur.percent / (divisions.length * classifiers.length);
       return acc;
     },
     {} as Record<string, number>,
@@ -157,12 +214,12 @@ const ByDivision = ({ data }: { data: ScoresStat[] | null }) => {
   return (
     <>
       <div className="mb-4 mt-2">
-        <Progress label="Total" value={percentDataByDivision.total} />
+        <Progress label="Total" value={Math.round(percentDataByDivision.total)} />
       </div>
       {divisions.map(div => (
         <Progress
           label={uspsaDivShortToShortDisplay[div]}
-          value={percentDataByDivision[div] ?? 0}
+          value={Math.round(percentDataByDivision[div] ?? 0)}
           key={div}
         />
       ))}
@@ -172,6 +229,7 @@ const ByDivision = ({ data }: { data: ScoresStat[] | null }) => {
 
 const ProvisionalClassifiers = () => {
   const [mode, setMode] = useState("By Division");
+  const [consolidated, setConsolidated] = useState(false);
   const { json: data, loading } = useApi("/stats/25series");
   return (
     <div className="flex flex-column gap-2 flex-wrap align-items-center">
@@ -184,9 +242,22 @@ const ProvisionalClassifiers = () => {
           <ModeSwitch
             {...{ mode, setMode, modes: ["By Classifier", "By Division", "By Both"] }}
           />
-          {mode === "By Division" && <ByDivision data={data} />}
-          {mode === "By Classifier" && <ByClassifier data={data} />}
-          {mode === "By Both" && <ByBoth data={data} />}
+          <div className="flex align-items-center gap-2">
+            <Checkbox
+              onChange={e => setConsolidated(!!e.checked)}
+              checked={consolidated}
+            />
+            Consolidate Divisions
+          </div>
+          {mode === "By Division" && (
+            <ByDivision data={consolidateDivisionsData(data, consolidated)} />
+          )}
+          {mode === "By Classifier" && (
+            <ByClassifier data={consolidateDivisionsData(data, consolidated)} />
+          )}
+          {mode === "By Both" && (
+            <ByBoth data={consolidateDivisionsData(data, consolidated)} />
+          )}
         </>
       )}
     </div>
