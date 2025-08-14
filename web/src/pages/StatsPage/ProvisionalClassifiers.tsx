@@ -124,8 +124,8 @@ const ByBoth = ({ data }: { data: ScoresStat[] | null }) => {
       const key = `${cur.classifier}:${cur.division}`;
       acc.total ??= 0;
       acc[key] ??= 0;
-      acc[key] += Math.round(cur.percent);
-      acc.total += Math.round(cur.percent / (divisions.length * classifiers.length));
+      acc[key] += cur.percent;
+      acc.total += cur.percent / (divisions.length * classifiers.length);
       return acc;
     },
     {} as Record<string, number>,
@@ -140,7 +140,11 @@ const ByBoth = ({ data }: { data: ScoresStat[] | null }) => {
   return (
     <>
       <div className="mb-4 mt-2">
-        <Progress label="Total" value={percentDataByClassifierDivision.total} reverse />
+        <Progress
+          label="Total"
+          value={Math.round(percentDataByClassifierDivision.total)}
+          reverse
+        />
       </div>
       {pairs.map(cd => {
         const [classifier, division] = cd.split(":");
@@ -149,7 +153,7 @@ const ByBoth = ({ data }: { data: ScoresStat[] | null }) => {
           <Progress
             key={cd}
             label={label}
-            value={percentDataByClassifierDivision[cd] ?? 0}
+            value={Math.round(percentDataByClassifierDivision[cd] ?? 0)}
           />
         );
       })}
