@@ -179,6 +179,9 @@ const consolidateDivisionsData = (data, consolidate) => {
   return data
     .map(c => ({ ...c, division: divisionMapper(c.division) }))
     .reduce((acc, cur) => {
+      if (cur.division === "rev") {
+        return acc;
+      }
       const existing = acc.find(
         c => c.division === cur.division && c.classifier === cur.classifier,
       );
