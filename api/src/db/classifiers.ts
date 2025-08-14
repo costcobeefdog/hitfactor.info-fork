@@ -166,6 +166,8 @@ const extendedInfoForClassifier = (
     .filter(({ id }) => !!id)
     .sort((a, b) => stringSort(a, b, "id", 1));
 
+  const yearAgoMs = new Date().getTime() - 365 * 24 * 60 * 60_000;
+
   const result = {
     updated: curHHFInfo?.updated, //actualLastUpdate, // before was using curHHFInfo.updated, and it's bs
     hhf,
@@ -178,6 +180,9 @@ const extendedInfoForClassifier = (
       (r, v, k) => (r[`runsTotalsLegit${k}`] = v),
     ),
     runs: hitFactorScores.length,
+    lastYearRuns: hitFactorScores.filter(
+      curScore => new Date(curScore.sd).getTime() >= yearAgoMs,
+    ).length,
     prod10Runs: hitFactorScores.filter(
       curScore => new Date(curScore.sd).getTime() < PROD_15_EFFECTIVE_TS,
     ).length,
@@ -536,6 +541,7 @@ export const rehydrateSingleClassifier = async (
 
 // linear rehydration to prevent OOMs on uploader and mongod
 export const rehydrateClassifiers = async (classifiers: ClassifierDivision[]) => {
+  console.log(`selecting RecHHFs for ${classifiers.length} classifiers`);
   const recHHFs = await RecHHFs.find({
     classifierDivision: {
       $in: classifiers.map(c => [c.classifier, c.division].join(":")),
@@ -548,12 +554,17 @@ export const rehydrateClassifiers = async (classifiers: ClassifierDivision[]) =>
     return acc;
   }, {});
 
+  console.log(`recHHF ready, rehydrating...`);
+  let i = classifiers.length;
   for (const classifierDivision of classifiers) {
+    i--;
     const { classifier, division } = classifierDivision;
+    console.log(`${classifier} in ${division}...`);
     await rehydrateSingleClassifier(
       classifier,
       division,
       recHHFsByClassifierDivision[[classifier, division].join(":")],
     );
+    console.log(`done, ${i}/${classifiers.length} remaining`);
   }
 };

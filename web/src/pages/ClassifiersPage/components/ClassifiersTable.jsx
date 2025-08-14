@@ -257,6 +257,15 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         bodyStyle={{ textAlign: "center" }}
       />
       <Column
+        hidden={!nerdMode}
+        field="lastYearRuns"
+        header="Last Year Scores"
+        sortable
+        style={{ width: "100px" }}
+        bodyStyle={{ textAlign: "center" }}
+        body={c => c.lastYearRuns || "N/A"}
+      />
+      <Column
         hidden={!prod1015Mode}
         field="prod10Runs"
         header="Prod.10 Scores"
