@@ -50,6 +50,8 @@ export interface Classifier {
   // new cc fields
   eloRuns: number;
   eloCorrelation: number;
+  majorsRuns: number;
+  majorsCorrelation: number;
   classificationCorrelation: number;
 }
 
@@ -236,6 +238,8 @@ const ClassifierSchema = new mongoose.Schema<
     // new cc fields
     eloRuns: Number,
     eloCorrelation: Number,
+    majorsRuns: Number,
+    majorsCorrelation: Number,
     classificationCorrelation: Number,
   },
   { strict: false },
@@ -362,6 +366,7 @@ export const singleClassifierExtendedMetaDoc = async (
     .map(curScore => ({
       ...curScore,
       elo: curScore.Shooters?.[0]?.elo as unknown as number,
+      majors: curScore.Shooters?.[0]?.reclassificationsMajorsCurrent as unknown as number,
       recPercentUncapped: curScore.Shooters?.[0]
         ?.reclassificationsRecPercentUncappedCurrent as unknown as number,
     }));
@@ -371,11 +376,22 @@ export const singleClassifierExtendedMetaDoc = async (
     scores.filter(cur => cur.elo > 0 && cur.hf > 0).sort((a, b) => b.hf - a.hf),
     cur => cur.memberNumber,
   );
+  const majorsCorrelationScores = uniqBy(
+    scores.filter(cur => cur.majors > 0 && cur.hf > 0).sort((a, b) => b.hf - a.hf),
+    cur => cur.memberNumber,
+  );
   const eloCorrelation =
     eloCorrelationScores.length >= 4
       ? correlation(
           eloCorrelationScores.map(cur => cur.elo),
           eloCorrelationScores.map(cur => cur.hf),
+        )
+      : 0;
+  const majorsCorrelation =
+    majorsCorrelationScores.length >= 4
+      ? correlation(
+          majorsCorrelationScores.map(cur => cur.majors),
+          majorsCorrelationScores.map(cur => cur.hf),
         )
       : 0;
   const classificationCorrelationScores = uniqBy(
@@ -409,6 +425,7 @@ export const singleClassifierExtendedMetaDoc = async (
     ...basicInfo,
     ...extendedInfoForClassifier(c, division, hitFactorScores),
     eloRuns: eloCorrelationScores.length,
+    majorsRuns: majorsCorrelationScores.length,
     recHHF,
     ...inverseRecPercentileStats(100),
     ...inverseRecPercentileStats(95),
@@ -417,6 +434,7 @@ export const singleClassifierExtendedMetaDoc = async (
     ...inverseRecPercentileStats(60),
     ...inverseRecPercentileStats(40),
     eloCorrelation,
+    majorsCorrelation,
     classificationCorrelation,
   };
 };

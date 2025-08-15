@@ -291,6 +291,16 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         bodyStyle={{ textAlign: "center" }}
       />
       <Column
+        hidden={!nerdMode}
+        field="majorsRuns"
+        header="Majors Scores"
+        headerTooltip="Scores by shooters that have Majors Classification"
+        sortable
+        style={{ width: "100px" }}
+        bodyStyle={{ textAlign: "center" }}
+        body={c => c.majorsRuns || "N/A"}
+      />
+      <Column
         hidden={schizoMode}
         field="recHHF"
         header={division === "l10" ? "Rec. HHF (Prophecy)" : "Rec. HHF"}
@@ -556,6 +566,14 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         hidden={!nerdMode}
         field="eloCorrelation"
         header="rELO"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={(c, { field }) => c[field]?.toFixed(4) || "?"}
+      />
+      <Column
+        hidden={!nerdMode}
+        field="majorsCorrelation"
+        header="rMajors"
         sortable
         style={{ width: "100px", textAlign: "right" }}
         body={(c, { field }) => c[field]?.toFixed(4) || "?"}
