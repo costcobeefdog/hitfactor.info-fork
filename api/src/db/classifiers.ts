@@ -289,7 +289,7 @@ ClassifierSchema.virtual("recHHFPSData").get(function () {
 
 ClassifierSchema.virtual("ccQuality").get(function () {
   return (
-    (200 * this.eloCorrelation + 100 * this.classificationCorrelation) / 2.4 -
+    (200 * this.majorsCorrelation + 100 * this.classificationCorrelation) / 2.4 -
     this.superMeanSquaredError
   );
 });
@@ -297,6 +297,24 @@ ClassifierSchema.virtual("ccQuality").get(function () {
 ClassifierSchema.index({ classifier: 1, division: 1 }, { unique: true });
 ClassifierSchema.index({ division: 1 });
 export const Classifiers = mongoose.model("Classifiers", ClassifierSchema);
+
+const consolidatedDivisionsForQuality = (division: string): string[] => {
+  switch (division) {
+    // optics
+    case "co":
+    case "lo":
+      return ["co", "lo"];
+
+    // irons
+    case "ltd":
+    case "prod":
+    case "ss":
+      return ["ltd", "prod", "ss"];
+
+    default:
+      return [division];
+  }
+};
 
 export const singleClassifierExtendedMetaDoc = async (
   division: string,
@@ -312,7 +330,7 @@ export const singleClassifierExtendedMetaDoc = async (
     recHHFReady ??
       RecHHFs.findOne<RecHHF>({ division, classifier }).select("recHHF").lean(),
     Scores.find({
-      division: { $in: divisionsForScoresAdapter(division) },
+      division: { $in: consolidatedDivisionsForQuality(division) },
       classifier,
       hf: { $gte: 0 },
       bad: { $ne: true },
@@ -372,7 +390,7 @@ export const singleClassifierExtendedMetaDoc = async (
         )
       : 0;
 
-  const hitFactorScores: Score[] = scores;
+  const hitFactorScores: Score[] = scores.filter(s => s.division === division);
   const recHHF = recHHFQuery?.recHHF ?? 0;
   const inverseRecPercentileStats = xPercent => ({
     [`inverse${xPercent}RecPercentPercentile`]:

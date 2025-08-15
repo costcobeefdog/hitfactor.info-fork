@@ -209,7 +209,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         hidden={isSCSA || schizoMode}
         field="ccQuality"
         header="Quality"
-        headerTooltip="New Quality for Classifier Committee, using correlations and SMSE"
+        headerTooltip="Quality Rating, using correlations against majors classification, overall classification, and the distribution shape."
         sortable
         style={{ width: "9em", minWidth: "9em", maxWidth: "9em" }}
         body={(c, { field }) => (
@@ -235,7 +235,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         hidden={isSCSA || schizoMode}
         field="allDivQuality"
         header="OA Qual."
-        headerTooltip="New All Division Quality for Classifier Committee, using correlations and SMSE"
+        headerTooltip="Average of Quality Rating between Open, Limited, Carry Optics and PCC divisions"
         sortable
         style={{ maxWidth: "7em" }}
         body={(c, { field }) => (
