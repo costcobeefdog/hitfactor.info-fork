@@ -6,16 +6,10 @@ import mongoose, { Model } from "mongoose";
 
 import {
   basicInfoForClassifier,
-  classifiers as _classifiers,
   classifiersByNumber,
   ClassifierJSON,
 } from "@api/dataUtil/classifiersData";
-import {
-  divisionsForScoresAdapter,
-  divShortNames,
-  L10_OPTICS_EFFECTIVE_TS,
-  PROD_15_EFFECTIVE_TS,
-} from "@api/dataUtil/divisions";
+import { L10_OPTICS_EFFECTIVE_TS, PROD_15_EFFECTIVE_TS } from "@api/dataUtil/divisions";
 import { hhfsForDivision } from "@api/dataUtil/hhf";
 import { HF, Percent } from "@api/dataUtil/numbers";
 import recHHFsPSData from "@data/recHHFsPSData.json";
@@ -57,7 +51,6 @@ export interface Classifier {
 
 interface ClassifierVirtuals {
   recHHFs: RecHHF;
-  quality: number;
 
   // new cc virtuals
   superMeanSquaredError: number;
@@ -245,21 +238,6 @@ const ClassifierSchema = new mongoose.Schema<
   { strict: false },
 );
 
-const WORST_QUALITY_DISTANCE_FROM_TARGET = 100;
-const scoresCountOffset = runsCount => {
-  if (runsCount < 200) {
-    return -40;
-  } else if (runsCount < 400) {
-    return -20;
-  } else if (runsCount < 750) {
-    return -10;
-  } else if (runsCount < 1400) {
-    return -5;
-  }
-
-  return 0;
-};
-
 ClassifierSchema.virtual("recHHFs", {
   ref: "RecHHFs",
   foreignField: "classifier",
@@ -315,21 +293,6 @@ ClassifierSchema.virtual("ccQuality").get(function () {
   );
 });
 
-// TODO: remove, only used by SCSA
-ClassifierSchema.virtual("quality").get(function () {
-  return (
-    scoresCountOffset(this.runs) +
-    Percent(
-      WORST_QUALITY_DISTANCE_FROM_TARGET -
-        (10.0 * Math.abs(1 - this.inverse95RecPercentPercentile) +
-          4.0 * Math.abs(5 - this.inverse85RecPercentPercentile) +
-          1.0 * Math.abs(15 - this.inverse75RecPercentPercentile) +
-          0.5 * Math.abs(45 - this.inverse60RecPercentPercentile) +
-          0.3 * Math.abs(85 - this.inverse40RecPercentPercentile)),
-      WORST_QUALITY_DISTANCE_FROM_TARGET,
-    )
-  );
-});
 ClassifierSchema.index({ classifier: 1, division: 1 }, { unique: true });
 ClassifierSchema.index({ division: 1 });
 export const Classifiers = mongoose.model("Classifiers", ClassifierSchema);
@@ -439,8 +402,6 @@ export const singleClassifierExtendedMetaDoc = async (
   };
 };
 
-// TODO: classifier quality score, maybe dependent on number of scores, but most importantly:
-// 10* percentDiffFromGMTarget 4*fromM 1*fromA
 let _allDivQuality: Record<string, number> | null = null;
 export const allDivisionClassifiersQuality = async () => {
   if (_allDivQuality) {
@@ -484,60 +445,6 @@ export const allDivisionClassifiersQuality = async () => {
   }, {});
 
   return _allDivQuality;
-};
-
-let _allDivQualityScsa: Record<string, number> | null = null;
-export const allScsaDivisionClassifiersQuality = async () => {
-  const [coDB, opnDB, rfroDB, rfpoDB] = await Promise.all([
-    Classifiers.find({ division: "scsa_co" }),
-    Classifiers.find({ division: "scsa_opn" }),
-    Classifiers.find({ division: "scsa_rfro" }),
-    Classifiers.find({ division: "scsa_rfpo" }),
-  ]);
-
-  const co = coDB.map(c => c.toObject<ClassifierWithVirtuals>({ virtuals: true }));
-  const opn = opnDB
-    .map(c => c.toObject({ virtuals: true }))
-    .reduce((acc, cur) => {
-      acc[cur.classifier] = cur;
-      return acc;
-    }, {});
-  const rfro = rfroDB
-    .map(c => c.toObject({ virtuals: true }))
-    .reduce((acc, cur) => {
-      acc[cur.classifier] = cur;
-      return acc;
-    }, {});
-  const rfpo = rfpoDB
-    .map(c => c.toObject({ virtuals: true }))
-    .reduce((acc, cur) => {
-      acc[cur.classifier] = cur;
-      return acc;
-    }, {});
-
-  _allDivQualityScsa = co.reduce((acc, c) => {
-    const id = c.classifier;
-    acc[id] = (c.quality + opn[id].quality + rfro[id].quality + rfpo[id].quality) / 4;
-    return acc;
-  }, {});
-
-  return _allDivQualityScsa;
-};
-
-export const hydrateClassifiersExtendedMeta = async () => {
-  let i = 0;
-  const total = _classifiers.length * 9;
-  console.log("hydrating classifiers extended meta");
-  console.time("classifiers");
-  for (const division of divShortNames) {
-    for (const c of _classifiers) {
-      ++i;
-      const { classifier } = c;
-      await rehydrateSingleClassifier(classifier, division);
-      process.stdout.write(`\r${i}/${total}`);
-    }
-  }
-  console.timeEnd("classifiers");
 };
 
 export const rehydrateSingleClassifier = async (

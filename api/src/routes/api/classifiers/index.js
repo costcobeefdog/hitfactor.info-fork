@@ -11,11 +11,7 @@ import {
   L10_OPTICS_EFFECTIVE_TS,
 } from "../../../dataUtil/divisions";
 import { HF, N, Percent, PositiveOrMinus1 } from "../../../dataUtil/numbers";
-import {
-  allDivisionClassifiersQuality,
-  allScsaDivisionClassifiersQuality,
-  Classifiers,
-} from "../../../db/classifiers";
+import { allDivisionClassifiersQuality, Classifiers } from "../../../db/classifiers";
 import { RecHHFs } from "../../../db/recHHF";
 import { Scores } from "../../../db/scores";
 import {
@@ -179,9 +175,7 @@ const classifiersRoutes = async fastify => {
         division,
         classifier: { $in: uspsaClassifiers2025 },
       }).populate("recHHFs"),
-      division.startsWith("scsa")
-        ? allScsaDivisionClassifiersQuality()
-        : allDivisionClassifiersQuality(),
+      allDivisionClassifiersQuality(),
     ]);
     return classifiersFromDB.map(c => {
       const cur = c.toObject({ virtuals: true });
