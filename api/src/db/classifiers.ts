@@ -131,10 +131,11 @@ const extendedInfoForClassifier = (
   });
 
   const inversePercentileStats = xPercent => ({
-    [`inverse${xPercent}CurPercentPercentile`]: Percent(
-      hitFactorScores.findLastIndex(s => (100 * s.hf) / hhf >= xPercent),
-      hitFactorScores.length,
-    ),
+    [`inverse${xPercent}CurPercentPercentile`]:
+      Percent(
+        hitFactorScores.findLastIndex(s => (100 * s.hf) / hhf >= xPercent) + 1,
+        hitFactorScores.length,
+      ) || 0,
   });
 
   // sik maf bro
@@ -374,14 +375,15 @@ export const singleClassifierExtendedMetaDoc = async (
   const hitFactorScores: Score[] = scores;
   const recHHF = recHHFQuery?.recHHF ?? 0;
   const inverseRecPercentileStats = xPercent => ({
-    [`inverse${xPercent}RecPercentPercentile`]: Percent(
-      recHHF > 0
-        ? hitFactorScores.findLastIndex(
-            curScore => (100 * curScore.hf) / recHHF >= xPercent,
-          )
-        : -1,
-      hitFactorScores.length,
-    ),
+    [`inverse${xPercent}RecPercentPercentile`]:
+      Percent(
+        recHHF > 0
+          ? hitFactorScores.findLastIndex(
+              curScore => (100 * curScore.hf) / recHHF >= xPercent,
+            ) + 1
+          : -1,
+        hitFactorScores.length,
+      ) || 0,
   });
   return {
     division,
