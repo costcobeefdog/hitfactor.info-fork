@@ -127,6 +127,12 @@ const mainConfig = [
     path: "/majors",
   },
   {
+    visible: location.hostname === "localhost",
+    label: "Reports",
+    icon: "pi pi-flag",
+    path: "/reports",
+  },
+  {
     className: "flex-grow-1",
     separator: true,
     disabled: true,
@@ -248,6 +254,14 @@ const router = createBrowserRouter([
             {
               path: "majors",
               Component: React.lazy(() => import("../pages/MajorsPage")),
+            },
+          ]),
+      ...(location.hostname !== "localhost"
+        ? []
+        : [
+            {
+              path: "reports",
+              Component: React.lazy(() => import("../pages/ReportsPage")),
             },
           ]),
     ],

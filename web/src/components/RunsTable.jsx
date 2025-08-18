@@ -241,14 +241,6 @@ const RunsTable = ({ classifier, division, clubs, onShooterSelection }) => {
             <ReportDialog.Button onClick={() => reportDialogRef.current.startReport(c)} />
           )}
         />
-        <Column
-          hidden={location.hostname !== "localhost"}
-          body={c => (
-            <ReportDialog.MarkAsBadButton
-              onClick={() => reportDialogRef.current.markAsBad(c)}
-            />
-          )}
-        />
       </DataTable>
     </>
   );

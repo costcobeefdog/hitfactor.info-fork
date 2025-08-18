@@ -23,6 +23,9 @@ const renderField = (value, fieldName) => {
     }
 
     case "hf":
+      if (value < 0) {
+        return "";
+      }
       return `HF ${value}`;
 
     case "division":
@@ -44,6 +47,7 @@ const reportDocRenderFields = [
   "name",
   "division",
   "classifier",
+  "matchName",
   "hf",
   "recPercent",
 ];
@@ -52,7 +56,8 @@ const reportDocSendFields = [
   "clubid",
   "club_name",
   "percent",
-  "_id",
+  "targetId",
+  "reportId",
 ];
 
 export const ReportDialog = forwardRef(({ type }, ref) => {
@@ -79,6 +84,29 @@ export const ReportDialog = forwardRef(({ type }, ref) => {
         setSending(false);
         setVisible(true);
       },
+      ignore: async reportId => {
+        try {
+          const response = await postApi("/report/ignore", { reportId });
+          if (response.status !== 200) {
+            throw new Error(JSON.stringify(response));
+          }
+          setVisible(false);
+          setSending(false);
+          toast.current.show({
+            severity: "success",
+            summary: "Report Ignored",
+            detail: <div>{JSON.stringify(response)}</div>,
+            life: 3000,
+          });
+        } catch (e) {
+          toast.current.show({
+            severity: "error",
+            summary: "Error Ignoring Report",
+            detail: e.toString(),
+            life: 5000,
+          });
+        }
+      },
       markAsBad: async newDoc => {
         try {
           const reportDoc = Object.fromEntries(
@@ -89,7 +117,7 @@ export const ReportDialog = forwardRef(({ type }, ref) => {
           reportDoc.url = location.toString();
           reportDoc.reason = "bad";
           reportDoc.comment = "";
-          reportDoc.type = type;
+          reportDoc.type = type || newDoc.type;
           const response = await postApi("/report/bad", reportDoc);
           if (response.status !== 200) {
             throw new Error(JSON.stringify(response));

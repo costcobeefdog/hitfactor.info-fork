@@ -10,6 +10,7 @@ export interface Report {
   percent: number;
   clubid: string;
   club_name: string;
+  matchName: string;
 
   url: string;
   reason: string;
@@ -17,6 +18,8 @@ export interface Report {
 
   type: string;
   targetId: ObjectId;
+
+  done: boolean;
 }
 
 const ReportShema = new mongoose.Schema<Report>({
@@ -29,12 +32,15 @@ const ReportShema = new mongoose.Schema<Report>({
   percent: Number,
   clubid: String,
   club_name: String,
+  matchName: String,
 
   url: String,
   reason: String,
   comment: String,
   type: String,
   targetId: mongoose.Schema.ObjectId,
+
+  done: Boolean,
 });
 
 export const Reports = mongoose.model("Reports", ReportShema);
