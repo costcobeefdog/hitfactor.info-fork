@@ -21,7 +21,7 @@ const statsRoutes = async fastify => {
     if (!_provisional25StatsCached) {
       _provisional25StatsCached = await Scores.aggregate([
         [
-          { $match: { classifier: /25-/, bad: { $ne: true } } },
+          { $match: { classifier: /25-0\d/, subType: "uspsa", bad: { $ne: true } } },
           {
             $group: {
               _id: {
