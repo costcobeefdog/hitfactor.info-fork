@@ -6,6 +6,7 @@ import {
   divisionsForRecHHFAdapter,
   L10_OPTICS_EFFECTIVE_TS,
   PROD_15_EFFECTIVE_TS,
+  uspsaDivShortNames,
 } from "@api/dataUtil/divisions";
 import {
   curHHFForDivisionClassifier,
@@ -196,7 +197,7 @@ const extraHHFsForL10 = (mixedRuns: Score[]) => {
 };
 
 const recHHFUpdate = (runs: Score[], division: string, classifier: string) => {
-  if (!runs) {
+  if (!runs || !runs.length || !uspsaDivShortNames.includes(division)) {
     return null;
   }
 
@@ -252,7 +253,7 @@ const recHHFUpdate = (runs: Score[], division: string, classifier: string) => {
  *
  * Used in initial hydration and to update recHHFs after an upload
  */
-export const hydrateSingleRecHFF = async (division, classifier) => {
+const hydrateSingleRecHHF = async (division, classifier) => {
   const allRuns = await runsForRecs({ division, number: classifier });
   const update = recHHFUpdate(allRuns, division, classifier);
 
@@ -279,7 +280,7 @@ export const rehydrateRecHHF = async (
   const total = divisions.length * classifiers.length;
   for (const division of divisions) {
     for (const classifier of classifiers) {
-      await hydrateSingleRecHFF(division, classifier);
+      await hydrateSingleRecHHF(division, classifier);
       process.stdout.write(`\r${i}/${total}`);
       ++i;
     }

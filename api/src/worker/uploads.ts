@@ -22,6 +22,7 @@ import {
   arrayWithExplodedDivisions,
   hfuDivisionsShortNames,
   pairToDivision,
+  uspsaDivShortNames,
 } from "../dataUtil/divisions";
 import { curHHFForDivisionClassifier } from "../dataUtil/hhf";
 import { Percent } from "../dataUtil/numbers";
@@ -109,9 +110,11 @@ export const classifiersAndShootersFromScores = (
 
   return {
     classifiers: uniqBy(classifiers, c => c.classifierDivision).filter(
-      c => !!c.classifier,
+      c => !!c.classifier && uspsaDivShortNames.includes(c.division),
     ),
-    shooters: uniqBy(shooters, s => s.memberNumberDivision).filter(s => !!s.memberNumber),
+    shooters: uniqBy(shooters, s => s.memberNumberDivision).filter(
+      s => !!s.memberNumber && uspsaDivShortNames.includes(s.division),
+    ),
   };
 };
 
@@ -827,11 +830,8 @@ const metaClassifiersLoop = async (batchSize = 8) => {
     });
 
     updated += classifiers.length;
-    process.stdout.write(`\r${updated}/${totalCount}`);
+    console.log(`${updated}/${totalCount} classifiers updated`);
   } while (classifiers.length);
-  if (updated) {
-    process.stdout.write(`\n`);
-  }
 };
 
 const metaShootersLoop = async (batchSize = 8) => {
