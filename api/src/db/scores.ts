@@ -64,6 +64,15 @@ export interface Score {
   // USPSA Only
   uploadedClass?: string;
   currentClass?: string;
+
+  string0?: number[];
+  stringDatetime0?: Date;
+  string1?: number[];
+  stringDatetime1?: Date;
+  string2?: number[];
+  stringDatetime2?: Date;
+  string3?: number[];
+  stringDatetime3?: Date;
 }
 
 export interface ScoreVirtuals {
@@ -123,6 +132,16 @@ const ScoreSchema = new mongoose.Schema<Score, ScoreModel, ScoreVirtuals>(
     // compound keys for lookups
     classifierDivision: String,
     memberNumberDivision: String,
+
+    // Timer Splits Data
+    string0: [Number],
+    stringDatetime0: Date,
+    string1: [Number],
+    stringDatetime1: Date,
+    string2: [Number],
+    stringDatetime2: Date,
+    string3: [Number],
+    stringDatetime3: Date,
   },
   { strict: false },
 );

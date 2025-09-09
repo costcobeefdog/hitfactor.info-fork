@@ -189,6 +189,35 @@ const fixMatchPoints = (matchPoints: unknown): number => {
   }
 };
 
+interface DetailedScoresMeta {
+  k: string;
+  v: string;
+  t: string;
+}
+
+const stringsFromMeta = (meta: DetailedScoresMeta[]) => {
+  if (!Array.isArray(meta)) {
+    return {};
+  }
+  try {
+    const stringsMeta = meta.filter(
+      c => typeof c.k === "string" && c.k.match(/string\d/i),
+    );
+    const strings = stringsMeta.map(s => s.v.split(";")[0].split(",").map(Number));
+    const timestamps = stringsMeta.map(s => new Date(`${s.t}Z`));
+
+    return Object.fromEntries(
+      strings
+        .map((s, idx) => [
+          [`string${idx}`, s],
+          [`stringDatetime${idx}`, timestamps[idx]],
+        ])
+        .flat(),
+    );
+  } catch (all) {}
+  return {};
+};
+
 interface IntermediateScore extends Score {
   // Major Match Scores Fields
   matchPercent?: number;
@@ -341,8 +370,10 @@ export const hitFactorLikeMatchInfo = (
         const modifiedDate = new Date(detailedScores.mod);
         const modified = Number.isNaN(modifiedDate.getTime()) ? undefined : modifiedDate;
         const shooterFullName = match.memberNumberToNamesMap[memberNumber];
+        const stringsMeta = stringsFromMeta(detailedScores.meta);
 
         const curScore = {
+          ...stringsMeta,
           hf: Number(a.hitFactor),
           hhf,
 
@@ -590,18 +621,42 @@ export const processUploadResults = async ({ uploadResults }) => {
     if (scores.length) {
       console.time("scoreWrite");
       await Scores.bulkWrite(
-        scores.map(s => ({
-          updateOne: {
-            filter: {
-              memberNumberDivision: s.memberNumberDivision,
-              classifierDivision: s.classifierDivision,
-              hf: s.hf,
-              sd: s.sd,
+        scores.map(
+          ({
+            string0,
+            string1,
+            string2,
+            string3,
+            stringDatetime0,
+            stringDatetime1,
+            stringDateTime2,
+            stringDatetime3,
+            ...s
+          }) => ({
+            updateOne: {
+              filter: {
+                memberNumberDivision: s.memberNumberDivision,
+                classifierDivision: s.classifierDivision,
+                hf: s.hf,
+                sd: s.sd,
+              },
+              update: {
+                $setOnInsert: s,
+                $set: {
+                  string0: string0,
+                  stringDatetime0: stringDatetime0,
+                  string1: string1,
+                  stringDatetime1: stringDatetime1,
+                  string2: string2,
+                  stringDatetime2: stringDateTime2,
+                  string3: string3,
+                  stringDatetime3: stringDatetime3,
+                },
+              },
+              upsert: true,
             },
-            update: { $setOnInsert: s },
-            upsert: true,
-          },
-        })),
+          }),
+        ),
       );
       console.timeEnd("scoreWrite");
     }
