@@ -19,7 +19,11 @@ export const EmptyMatchResultsFactory = () => ({
   matchResults: [],
 });
 
-export const _fetchPSS3ObjectJSON = async (objectKey: string, noGZip = false) => {
+export const _fetchPSS3ObjectJSON = async (
+  objectKey: string,
+  noGZip = false,
+  attempt = 1,
+) => {
   let s3Client = null as S3Client | null;
   try {
     s3Client = new S3Client({
@@ -59,6 +63,9 @@ export const _fetchPSS3ObjectJSON = async (objectKey: string, noGZip = false) =>
       return JSON.parse(bodyString);
     }
   } catch (e) {
+    if (attempt <= 3) {
+      return _fetchPSS3ObjectJSON(objectKey, noGZip, attempt + 1);
+    }
     console.error(
       `fetchPSS3ObjectJSON failed: ${objectKey}; ${(e as Error)?.message || ""}`,
     );
