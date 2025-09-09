@@ -98,8 +98,8 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
     .map(d => ({
       ...d,
       updated: new Date(d.updated).toLocaleDateString("en-us", { timeZone: "UTC" }),
-      recHHFChange: d.hhf - d.recHHF,
-      recHHFChangePercent: 100 * (d.hhf / d.recHHF - 1),
+      recHHFChange: d.curHHF - d.recHHF,
+      recHHFChangePercent: 100 * (d.curHHF / d.recHHF - 1),
       oldHHFChange: d.oldHHF - d.recHHF,
       oldHHFChangePercent: 100 * (d.oldHHF / d.recHHF - 1),
       terrenceHHF: terrenceHHFs[d.code],
@@ -331,7 +331,8 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         }}
       />
       <Column
-        hidden={division !== "l10"}
+        hidden
+        //hidden={division !== "l10"}
         field="reloadMatters"
         header="Reload Matters"
         sortable
@@ -361,14 +362,6 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
             {c.prophecyHHF ? c.prophecyHHF.toFixed(4) : "—"}
           </span>
         )}
-      />
-      <Column
-        hidden={division !== "l10"}
-        field="opnHHF"
-        header="Open HHF"
-        sortable
-        style={{ width: "100px", textAlign: "right" }}
-        body={c => c.opnHHF.toFixed(4)}
       />
       <Column
         hidden={!schizoMode}
@@ -543,6 +536,14 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header="Rec. minus Old HQ"
         sortable
         body={numFieldsDiff("recHHF", "oldHHF", isSCSA ? 2 : 4, isSCSA ? "s" : " HF")}
+      />
+      <Column
+        hidden={division !== "l10"}
+        field="opnHHF"
+        header="Open Rec. HHF"
+        sortable
+        style={{ width: "100px", textAlign: "right" }}
+        body={c => c.opnHHF.toFixed(4)}
       />
       <Column
         hidden={!nerdMode}

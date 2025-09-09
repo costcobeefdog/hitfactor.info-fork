@@ -53,6 +53,9 @@ export const classifierToId = classifiers.reduce(
   (acc, cur) => ({ ...acc, [cur.classifier]: cur.id }),
   {},
 );
+export const idToClassifier = Object.fromEntries(
+  Object.entries(classifierToId).map(([classifier, id]) => [id, classifier]),
+);
 
 /** whitelist for wsb downloads */
 export const classifierNumbers = classifiers.map(cur => cur.classifier);

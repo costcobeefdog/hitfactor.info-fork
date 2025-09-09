@@ -253,10 +253,6 @@ const classifiersRoutes = async fastify => {
         run.percentMinusCurPercent = percent >= 100 ? 0 : percentMinusCurPercent;
         run.classifier = number;
         run.index = index;
-        if (division.startsWith("scsa")) {
-          // This is the "adapter" hack that makes everything work in the frontend for SCSA.
-          run.hf = Number(run.stageTimeSecs);
-        }
         return run;
       }),
       runsTotal: runsFromDB[0]?.total || 0,

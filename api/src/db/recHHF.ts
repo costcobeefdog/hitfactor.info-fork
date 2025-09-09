@@ -111,6 +111,10 @@ const extraHHFsForLO = (locoHHF: number, locoRuns: Score[]) => {
 };
 
 const extraHHFsForL10 = (mixedRuns: Score[]) => {
+  if (!mixedRuns.length) {
+    return {};
+  }
+
   const ssHFs = mixedRuns
     .filter(c => c.division === "ss")
     .map(c => c.hf)
