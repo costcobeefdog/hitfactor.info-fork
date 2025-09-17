@@ -25,7 +25,7 @@ import { forcedWeibull, solveWeibull } from "@shared/utils/weibull";
 const runsForRecs = async ({ division, number }): Promise<Score[]> =>
   Scores.find({
     classifier: number,
-    division: { $in: divisionsForRecHHFAdapter(division) },
+    division: { $in: divisionsForRecHHFAdapter(division, number) },
     hf: { $gt: 0 },
     bad: { $ne: true },
   })
@@ -111,6 +111,145 @@ const extraHHFsForLO = (locoHHF: number, locoRuns: Score[]) => {
   };
 };
 
+const extraHHFsFor25Series = (
+  mixedRuns: Score[],
+  division: string,
+  classifier: string,
+) => {
+  if (!classifier.startsWith("25-")) {
+    return {};
+  }
+
+  switch (division) {
+    // mix-in open-minor with adjusted time (-0.3s for PCC "draw"), pick max HF from [that+pcc, pcc]
+    case "pcc": {
+      const adjustedRuns = mixedRuns
+        .filter(
+          s =>
+            s.division === "pcc" ||
+            (s.division === "opn" &&
+              (s?.minorHF || 0) > 0 &&
+              Number(s.stageTimeSecs) > 0),
+        )
+        .map(s => {
+          if (s.division === "opn") {
+            const time = Number(s.stageTimeSecs);
+            const minorPoints = time * s.minorHF!;
+            const adjustedTime = time - 0.3;
+            return { ...s, hf: minorPoints / adjustedTime };
+          }
+          return s;
+        });
+
+      const mixed = solveWeibull(adjustedRuns.map(c => c.hf));
+      const pccOnly = solveWeibull(
+        adjustedRuns.filter(s => s.division === "pcc").map(c => c.hf),
+      );
+
+      return {
+        ...mixed,
+        recHHF: Math.max(mixed.hhf3, pccOnly.hhf3),
+      };
+    }
+
+    // open as-is
+    case "opn":
+      return {};
+
+    // co - optics, lo - Max(CO, LO, LOCO), aka as-is from prev algo
+    case "co":
+    case "lo":
+      return {};
+
+    // irons
+    case "prod": {
+      // irons minor
+      const solved = solveWeibull(
+        mixedRuns.map(s => s.minorHF || 0).filter(hf => hf > 0),
+      );
+      return { ...solved, recHHF: solved.hhf3 };
+    }
+    case "ltd": {
+      // irons major
+      const solved = solveWeibull(
+        mixedRuns.map(s => s.majorHF || 0).filter(hf => hf > 0),
+      );
+      return { ...solved, recHHF: solved.hhf3 };
+    }
+    case "ss": {
+      // 60% irons major / 40% irons minor
+      const majorHFs = mixedRuns.map(s => s.majorHF || 0).filter(hf => hf > 0);
+      const minorHFs = mixedRuns.map(s => s.minorHF || 0).filter(hf => hf > 0);
+
+      const solvedMinor = solveWeibull(minorHFs);
+      const solvedMajor = solveWeibull(majorHFs);
+
+      const recHHF = solvedMajor.hhf3 * 0.6 + solvedMinor.hhf3 * 0.4;
+
+      return { ...solvedMajor, recHHF };
+    }
+
+    case "rev": {
+      // TODO: verify constants from 100% El Prez Revo
+      // TODO: implement split adjustment 0.3 min split/transition, 2.0 min reload, same everything else
+      const adjustedRuns = mixedRuns
+        .filter(
+          s =>
+            s.division === "rev" ||
+            (["ltd", "prod", "ss"].includes(s.division) &&
+              (s?.minorHF || 0) > 0 &&
+              Number(s.stageTimeSecs) > 0),
+        )
+        .map(s => {
+          if (s.division !== "rev") {
+            const time = Number(s.stageTimeSecs);
+            const minorPoints = time * s.minorHF!;
+            const adjustedTime = time + extraTimeForRevo25Series(classifier);
+            return { ...s, hf: minorPoints / adjustedTime };
+          }
+          return s;
+        });
+
+      const solved = solveWeibull(adjustedRuns.map(s => s.hf).filter(hf => hf > 0));
+      return { ...solved, recHHF: solved.hhf3 };
+    }
+  }
+  return {};
+};
+
+const extraTimeForRevo25Series = (classifier: string) => {
+  switch (classifier) {
+    case "25-01":
+      return 0.64;
+
+    case "25-02":
+      return 0.86 + 0.45;
+
+    case "25-03":
+      return 0.21 + 0.38;
+
+    case "25-04":
+      return 0.65 + 0.74;
+
+    case "25-05":
+      return 0.13;
+
+    case "25-06":
+      return 0.93;
+
+    case "25-07":
+      return 1.51 + 0.56;
+
+    case "25-08":
+      return 0.5;
+
+    case "25-09":
+      return 0.7;
+  }
+
+  return 0;
+};
+
 const extraHHFsForL10 = (mixedRuns: Score[]) => {
   if (!mixedRuns.length) {
     return {};
@@ -159,7 +298,10 @@ const extraHHFsForL10 = (mixedRuns: Score[]) => {
   const { hhf: ssHHF } = solveWeibull(ssHFs);
 
   const classifier = mixedRuns[0].classifier;
-  const noProd10data = classifier.startsWith("23-") || classifier.startsWith("24-");
+  const noProd10data =
+    classifier.startsWith("23-") ||
+    classifier.startsWith("24-") ||
+    classifier.startsWith("25-");
 
   const k = coK - prodK + ltdK;
   const lambda = coLambda - prodLambda + ltdLambda;
@@ -244,6 +386,9 @@ const recHHFUpdate = (runs: Score[], division: string, classifier: string) => {
     ...(division === "prod" ? extraHHFsForProd(wbl3HHF, runs, classifier) : {}),
     ...(division === "lo" ? extraHHFsForLO(wbl3HHF, runs) : {}),
     ...(division === "l10" ? extraHHFsForL10(runs) : {}),
+    ...(classifier.startsWith("25-")
+      ? extraHHFsFor25Series(runs, division, classifier)
+      : {}),
   };
 };
 

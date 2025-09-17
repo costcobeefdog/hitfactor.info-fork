@@ -292,19 +292,45 @@ export const divisionsForScoresAdapter = division => {
   return [division];
 };
 
-export const divisionsForRecHHFAdapter = division => {
+export const divisionsForRecHHFAdapter = (division, classifier = "") => {
   const hfu = hfuDivisionExplosionForRecHHF[division];
   if (hfu) {
     return hfu;
   }
 
-  if (division === "lo") {
-    return ["lo", "co"];
+  // L10 is forever in prophecy mode
+  if (division === "l10") {
+    return ["l10", "co", "prod", "ltd", "opn", "ss", "lo"];
   }
 
-  if (division === "l10") {
-    // needs a lot to compare to and calculate schizoHHF from
-    return ["l10", "co", "prod", "ltd", "opn", "ss", "lo"];
+  // consolidated divisions hacks for 25-series
+  if (classifier.startsWith("25-")) {
+    switch (division) {
+      // pcc & opn-minor-minus0.3s
+      case "pcc":
+        return ["pcc", "opn"];
+
+      case "opn":
+        return ["opn"];
+
+      // optics
+      case "co":
+      case "lo":
+        return ["co", "lo"];
+
+      // irons (minus revolver)
+      case "prod":
+      case "ltd":
+      case "ss":
+        return ["prod", "ltd", "ss"];
+      case "rev":
+        return ["prod", "ltd", "ss", "rev"];
+    }
+  }
+
+  // LO is forever max(LO, CO, LOCO) mode
+  if (division === "lo") {
+    return ["lo", "co"];
   }
 
   return [division];
