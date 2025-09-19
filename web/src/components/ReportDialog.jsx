@@ -57,6 +57,7 @@ const reportDocSendFields = [
   "club_name",
   "percent",
   "targetId",
+  "_id",
   "reportId",
 ];
 
