@@ -23,10 +23,13 @@ import { useApi } from "../../../utils/client";
 //isSCSA ? 2 : 4
 //isSCSA ? 's' : 0
 const numFieldsDiff =
-  (b, a, precision = 4, suffix = "") =>
+  (b, a, precision = 4, suffix = "", aAndBMustBePositive = false) =>
   c => {
     const { [a]: ca, [b]: cb } = c;
     if (!ca || !cb) {
+      return "—";
+    }
+    if (aAndBMustBePositive && (ca < 0 || cb < 0)) {
       return "—";
     }
     const sign = ca > cb ? "" : "+";
@@ -508,7 +511,7 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         field="recHHFChangePercent" /** field is Percent for sorting, still shows like PeakTime/HHF */
         header="Rec. minus HQ"
         sortable
-        body={numFieldsDiff("recHHF", "curHHF", isSCSA ? 2 : 4, isSCSA ? "s" : " HF")}
+        body={numFieldsDiff("recHHF", "curHHF", 4, " HF", true)}
       />
       <Column
         field="oldHHF"
