@@ -243,8 +243,13 @@ const DivisionsChart = ({ apiData }) => {
 
   return (
     <div
-      style={{ cursor: "pointer" }}
-      className="min-w-20rem max-w-30rem flex-grow-1 mx-auto my-2"
+      style={{
+        cursor: "pointer",
+        flex: "1 1 calc(33.333% - 1rem)",
+        minWidth: "18rem",
+        maxWidth: "26rem",
+      }}
+      className="mx-auto my-2"
     >
       <div>
         <PieChart
@@ -273,7 +278,7 @@ const DivisionsChart = ({ apiData }) => {
 };
 
 const Divisions = () => (
-  <div className="flex gap-4 flex-wrap mt-4">
+  <div className="flex gap-4 flex-wrap mt-4 mx-auto" style={{ maxWidth: 1280 }}>
     <DivisionsChart apiData={divisionPopularity0} />
     <DivisionsChart apiData={divisionPopularity1} />
     <DivisionsChart apiData={divisionPopularity2} />
