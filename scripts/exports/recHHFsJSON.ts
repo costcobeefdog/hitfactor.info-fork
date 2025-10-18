@@ -8,8 +8,11 @@ import { uspsaDivShortNames } from "../../shared/constants/divisions";
 const classifiersForDivision = async (division: string) =>
   Classifiers.find({
     division,
-    classifier: { $nin: deprecatedUSPSAClassifiers },
-  }).populate("recHHFs");
+    //classifier: { $nin: deprecatedUSPSAClassifiers },
+    classifier: /25-/,
+  })
+    .sort({ classifier: 1 })
+    .populate("recHHFs");
 
 const go = async () => {
   await connect();
@@ -17,7 +20,7 @@ const go = async () => {
   const allDivs = {};
   for (const division of uspsaDivShortNames) {
     if (division === "l10") {
-      continue;
+      //continue;
     }
     allDivs[division] = {};
     const classifiers = await classifiersForDivision(division);
