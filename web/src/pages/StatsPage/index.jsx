@@ -539,7 +539,7 @@ export const StatsPage = () => {
         <TabPanel header="Divisions" className="p-0 text-sm md:text-base">
           <Divisions />
         </TabPanel>
-        <TabPanel header="25-Series" className="p-0 text-sm md:text-base">
+        <TabPanel header="25-Series" className="hidden p-0 text-sm md:text-base">
           <ProvisionalClassifiers />
         </TabPanel>
         <TabPanel header="Activity" className="hidden p-0 text-sm md:text-base">
