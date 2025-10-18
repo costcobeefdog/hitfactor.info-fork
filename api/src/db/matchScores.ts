@@ -9,6 +9,7 @@ import { MatchScore } from "@data/types/MatchScore";
 import { ScoresMode, ScoreSource } from "@data/types/ScoresModes";
 import { calculateUSPSAClassification } from "@shared/classification/engine";
 import { classificationDifficulty } from "@shared/constants/difficulty";
+import { uspsaDivShortNames } from "@shared/constants/divisions";
 import { UTCDate } from "@shared/utils/date";
 import { dateSort } from "@shared/utils/sort";
 
@@ -151,9 +152,10 @@ interface ScoresForModeArgs {
 export const scoresForMode = async ({
   mode,
   memberNumbers,
-  division,
+  division: divisionParam,
   until,
 }: ScoresForModeArgs): Promise<ScoreMini[]> => {
+  const division = divisionParam === "all" ? { $in: uspsaDivShortNames } : divisionParam;
   const getClassifiers = async () =>
     scoresForRecommendedClassification({ memberNumbers, division, until });
   const getMatchScores = async () =>
@@ -218,7 +220,7 @@ export const backfillComboClassifications = async (
 };
 
 interface MatchScoresFilter {
-  division?: string;
+  division?: string | { $in: string[] };
   memberNumber?: string | string[];
   match?: string;
   until?: Date;
@@ -260,6 +262,7 @@ export const matchScoresFor = async ({
         eligible: c.matchBump.eligible,
         maybeEligible: c.matchBump.maybeEligible,
         bump,
+        division: m.division,
       };
     })
     .filter(Boolean) as MatchScoreWithExtras[];

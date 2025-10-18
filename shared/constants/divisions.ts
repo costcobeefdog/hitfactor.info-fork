@@ -284,6 +284,9 @@ export const classifierDivisionArrayForHFURecHHFs = (classifiers): string[] =>
   );
 
 export const divisionsForScoresAdapter = division => {
+  if (division === "all") {
+    return uspsaDivShortNames;
+  }
   const hfu = hfuDivisionExplosionForScores[division];
   if (hfu) {
     return hfu;

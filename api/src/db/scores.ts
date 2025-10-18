@@ -324,10 +324,13 @@ export const hydrateScores = async () => {
   console.timeEnd("scores");
 };
 
-export const shooterScoresChartData = async ({ memberNumber, division }) => {
+export const shooterScoresChartData = async ({
+  memberNumber,
+  division: divisionParam,
+}) => {
   const scores = await Scores.find({
     memberNumber,
-    division: { $in: divisionsForScoresAdapter(division) },
+    division: { $in: divisionsForScoresAdapter(divisionParam) },
     bad: { $ne: true },
   })
     .populate("HHFs")
@@ -343,9 +346,11 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
       percent: run.percent,
       classifier: run.classifier,
       source: "Stage Score",
+      division: run.division,
     }))
     .filter(run => !!run.classifier); // no legacy majors in the graph
 
+  const division = divisionParam === "all" ? { $in: uspsaDivShortNames } : divisionParam;
   const matchScores = await matchScoresFor({ division, memberNumber });
   const convertedMatchScores = matchScores
     .filter(c => c!.level >= 2)
@@ -359,6 +364,7 @@ export const shooterScoresChartData = async ({ memberNumber, division }) => {
       recPercent: ms.bump,
       eligible: ms.eligible,
       maybeEligible: ms.maybeEligible,
+      division: ms.division,
     }));
   return classifiers
     .concat(convertedMatchScores)

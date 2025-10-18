@@ -1,6 +1,7 @@
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useState } from "react";
 
+import { uspsaDivShortNames } from "@shared/constants/divisions";
 import {
   ScoresModeSelectButton,
   defaultScoresMode,
@@ -10,10 +11,34 @@ import { Line, r1annotationColor } from "./common";
 
 import { keepPreviousData, useApi } from "../../utils/client";
 
+const paletteA = {
+  opn: "#a855f7",
+  pcc: "#fb7185",
+  lo: "#6366f1",
+  co: "#38bdf8",
+  prod: "#a3e635",
+  ltd: "#ae9ef1",
+  l10: "#f97316",
+  ss: "#2dd4bf",
+  rev: "#fbbf24",
+};
+
+const paletteB = {
+  opn: "#ca258a",
+  pcc: "#be123c",
+  lo: "#312e81",
+  co: "#0284c7",
+  prod: "#65a30d",
+  ltd: "#7e22ce",
+  l10: "#c2410c",
+  ss: "#0d9488",
+  rev: "#f59e0b",
+};
+
 export const ShooterProgressChart = ({ division, memberNumber }) => {
   const [mode, setMode] = useState(defaultScoresMode);
   const { json: dataRaw, loading } = useApi(
-    `/shooters/${division}/${memberNumber}/chart/progress/${mode.toLowerCase()}`,
+    `/shooters/all/${memberNumber}/chart/progress/${mode.toLowerCase()}`,
     { placeholderData: keepPreviousData },
   );
   if (loading && !dataRaw) {
@@ -24,16 +49,24 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
     return null;
   }
 
-  const data = dataRaw.map(c => ({
-    x: new Date(new Date(c.sd).toLocaleDateString("en-us", { timeZone: "UTC" })),
-    y: c.p.toFixed(2),
-  }));
-  const high = data.toSorted((a, b) => b.y - a.y)[0];
+  const dataForDivision = div =>
+    dataRaw[div].map(c => ({
+      x: new Date(new Date(c.sd).toLocaleDateString("en-us", { timeZone: "UTC" })),
+      y: c.p.toFixed(2),
+    }));
+  const allDivisionsData = uspsaDivShortNames.map(div => dataForDivision(div)).flat();
+  const high = allDivisionsData.toSorted((a, b) => b.y - a.y)[0];
 
   return (
     <>
-      <div className="flex justify-content-around bg-primary-reverse">
-        <h4 className="mb-0 mt-1 text-center text-lg">Classification Progress</h4>
+      <div className="flex pb-0 pt-1 bg-primary-reverse justify-content-around">
+        <ScoresModeSelectButton
+          className="compact bg-primary-reverse right-0"
+          size={10}
+          style={{ margin: "auto", transform: "scale(0.65)" }}
+          mode={mode}
+          setMode={setMode}
+        />
       </div>
       <div className="relative bg-primary-reverse flex-grow-1">
         <Line
@@ -44,7 +77,7 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
             maintainAspectRatio: false,
             scales: {
               y: {
-                max: 120,
+                max: (Number(high?.y) || 100) + 10,
                 min: 0,
               },
               x: {
@@ -79,7 +112,7 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
               },
               tooltip: {
                 callbacks: {
-                  label: ({ raw: { y } }) => `${y}%`,
+                  label: ({ dataset, raw: { y } }) => `${y}% - ${dataset.label}`,
                   title: ([
                     {
                       raw: { x },
@@ -115,28 +148,19 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
             },
           }}
           data={{
-            datasets: [
-              {
-                label: "Rec. Percent",
-                data,
-                backgroundColor: "#ae9ef1",
-                borderColor: "#ca258a",
-              },
-            ],
+            datasets: uspsaDivShortNames
+              .map(div => ({
+                label: div,
+                data: dataForDivision(div),
+                backgroundColor: paletteA[div], //"#ae9ef1",
+                borderColor: paletteB[div], //"#ca258a",
+              }))
+              .filter(d => d.data.length),
           }}
         />
         {loading && (
           <ProgressSpinner className="absolute m-auto top-0 bottom-0 left-0 right-0" />
         )}
-        <div className="flex justify-content-around absolute right-0 left-0 top-0">
-          <ScoresModeSelectButton
-            className="compact bg-primary-reverse"
-            size={10}
-            style={{ margin: "auto", transform: "scale(0.65)" }}
-            mode={mode}
-            setMode={setMode}
-          />
-        </div>
       </div>
     </>
   );

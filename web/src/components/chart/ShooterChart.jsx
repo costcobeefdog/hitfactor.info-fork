@@ -33,7 +33,7 @@ const yLine = (name, y, alpha) => ({
 export const ShooterChart = ({ division, memberNumber }) => {
   const isHFU = sportForDivision(division) === "hfu";
   const [full, setFull] = useState(false);
-  const { json: data, loading } = useApi(`/shooters/${division}/${memberNumber}/chart`);
+  const { json: data, loading } = useApi(`/shooters/all/${memberNumber}/chart`);
   const mappedData = useMemo(
     () =>
       data?.map(c => ({
@@ -99,7 +99,8 @@ export const ShooterChart = ({ division, memberNumber }) => {
         plugins: {
           tooltip: {
             callbacks: {
-              label: ({ raw: { y, classifier } }) => `${classifier}: ${y}%`,
+              label: ({ raw: { y, classifier, division: div } }) =>
+                `${classifier}: ${y}% - ${div}`,
               title: ([
                 {
                   raw: { x },

@@ -196,7 +196,7 @@ export const dedupeGrandbagging = (scores: ScoreObjectWithVirtuals[]) =>
 
 interface ScoresFilter {
   memberNumbers: string[];
-  division?: string;
+  division?: string | { $in: string[] };
   until?: Date;
 }
 

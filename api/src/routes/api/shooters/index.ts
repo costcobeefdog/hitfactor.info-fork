@@ -2,6 +2,7 @@ import sortedUniqBy from "lodash.sorteduniqby";
 import uniqBy from "lodash.uniqby";
 
 import { ScoresMode } from "@data/types/ScoresModes";
+import { uspsaDivShortNames } from "@shared/constants/divisions";
 
 import { calculateUSPSAClassification } from "../../../../../shared/classification/engine";
 import { classificationDifficulty } from "../../../../../shared/constants/difficulty";
@@ -92,6 +93,7 @@ const reclassificationForProgressMode = async (
   mode: ScoresMode,
   memberNumber: string,
   division: string,
+  uncapped: boolean = false,
 ) => {
   const now = new Date();
   const scores = await scoresForMode({ mode, memberNumbers: [memberNumber], division });
@@ -101,7 +103,7 @@ const reclassificationForProgressMode = async (
     classificationDifficulty.window.min,
     classificationDifficulty.window.best,
     classificationDifficulty.window.recent,
-    classificationDifficulty.percentCap,
+    uncapped ? 150 : classificationDifficulty.percentCap,
   );
 };
 
@@ -192,10 +194,23 @@ const shootersRoutes = async fastify => {
 
   fastify.get("/:division/:memberNumber/chart/progress/:mode", async req => {
     const { division, memberNumber, mode } = req.params;
-    const reclass = await reclassificationForProgressMode(mode, memberNumber, division);
-    return sortedUniqBy((reclass?.[division]?.percentWithDates || []).toReversed(), c =>
-      c.sd.getTime(),
-    ).toReversed();
+    const reclass = await reclassificationForProgressMode(
+      mode,
+      memberNumber,
+      division,
+      true,
+    );
+
+    return Object.fromEntries(
+      uspsaDivShortNames.map(div => [
+        div,
+        sortedUniqBy((reclass?.[div]?.percentWithDates || []).toReversed(), c =>
+          c.sd.getTime(),
+        )
+          .toReversed()
+          .filter(c => c.p > 0),
+      ]),
+    );
   });
 
   fastify.get("/:division/chart", async req => {
