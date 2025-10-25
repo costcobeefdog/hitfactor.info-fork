@@ -9,6 +9,7 @@ import {
   headerTooltipOptions,
   renderMatchLevel,
   renderPercent,
+  renderPercentAndAge,
 } from "../../../components/Table";
 import useApiQuery from "../../../query/useApiQuery";
 
@@ -144,17 +145,36 @@ const ShooterMatchScoresTable = ({
       <Column
         body={renderPercent}
         field="matchPercent"
-        header="Result"
+        header="Match"
         sortable
         headerTooltip="Match Division Result in Percent"
         headerTooltipOptions={headerTooltipOptions}
       />
       <Column
-        body={renderPercent}
-        field="shooterRecPercentHistorical"
-        header="Classification"
+        body={renderPercentAndAge}
+        align="center"
+        field="shooterClassifiersPercentHistorical"
+        header="Classifiers"
         sortable
-        headerTooltip="Classification Percentage at the Time of the Match"
+        headerTooltip="Classifiers Classification Percentage at the Time of the Match"
+        headerTooltipOptions={headerTooltipOptions}
+      />
+      <Column
+        body={renderPercentAndAge}
+        align="center"
+        field="shooterMajorsPercentHistorical"
+        header="Majors"
+        sortable
+        headerTooltip="Combined Classification Percentage at the Time of the Match"
+        headerTooltipOptions={headerTooltipOptions}
+      />
+      <Column
+        body={renderPercentAndAge}
+        align="center"
+        field="shooterRecPercentHistorical"
+        header="Combined"
+        sortable
+        headerTooltip="Combined Classification Percentage at the Time of the Match"
         headerTooltipOptions={headerTooltipOptions}
       />
       <Column

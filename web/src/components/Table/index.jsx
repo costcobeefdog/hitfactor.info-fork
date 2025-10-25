@@ -86,6 +86,19 @@ export const renderPercent = (c, { field }, transform = asIs => asIs) => {
   return `${value.toFixed(2)}%`;
 };
 
+export const renderPercentAndAge = (c, { field }) => {
+  if (!c[field]) {
+    return "—";
+  }
+  let age = Number(c[`${field}Age`]) || 999;
+  if (age >= 999) {
+    age = "N/A";
+  } else {
+    age = `${age.toFixed(0)}mo`;
+  }
+  return `${renderPercent(c, { field })} (${age})`;
+};
+
 export const renderMatchLevel = (c, { field }) => {
   switch (c[field]) {
     case 4:

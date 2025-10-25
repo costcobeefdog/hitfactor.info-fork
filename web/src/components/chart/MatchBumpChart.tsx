@@ -16,7 +16,9 @@ import {
   eligibilityFilter,
   grandmasterPercent,
   masterPercent,
+  MatchScore,
   maxPercentDifference,
+  pickEffectiveClassification,
 } from "../../../../data/types/MatchScore";
 import { matchBumpThresholds } from "../../../../shared/constants/difficulty";
 import {
@@ -63,23 +65,15 @@ export const MatchBumpChart = ({ match, division, loading }) => {
     () =>
       (match?.matchScores || [])
         .filter(c => c.division === division)
-        .map(
-          ({
-            matchPercent,
-            shooter,
-            shooterFullName,
-            shooterRecPercentHistorical,
-            ...etc
-          }) => ({
-            ...etc,
-            matchPercent,
-            name: shooterFullName ?? shooter?.name,
-            shooterRecPercentHistorical,
-            x: shooterRecPercentHistorical,
-            y: matchPercent,
-            pointsGraphName: "Match/Classification",
-          }),
-        )
+        .map(({ matchPercent, shooter, shooterFullName, ...etc }) => ({
+          ...etc,
+          matchPercent,
+          name: shooterFullName ?? shooter?.name,
+          shooterRecPercentHistorical: etc.shooterRecPercentHistorical,
+          x: pickEffectiveClassification(etc as MatchScore),
+          y: matchPercent,
+          pointsGraphName: "Match/Classification",
+        }))
         .filter(c => c.x > 0 && c.y > 0)
         .sort((a, b) => {
           if (a.y !== b.y) {

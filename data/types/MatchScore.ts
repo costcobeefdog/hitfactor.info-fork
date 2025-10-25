@@ -15,6 +15,14 @@ export interface MatchScore {
   shooterRecPercentHistorical?: number;
   shooterRecPercentHistoricalHigh?: number;
   shooterRecPercentHistoricalAge?: number;
+
+  shooterMajorsPercentHistorical?: number;
+  shooterMajorsPercentHistoricalHigh?: number;
+  shooterMajorsPercentHistoricalAge?: number;
+
+  shooterClassifiersPercentHistorical?: number;
+  shooterClassifiersPercentHistoricalHigh?: number;
+  shooterClassifiersPercentHistoricalAge?: number;
 }
 
 export const maxPercentDifference = 15;
@@ -24,10 +32,42 @@ export const maxAge = 18; // months
 export const grandmasterPercent = 90;
 export const masterPercent = 80;
 
-export const eligibilityFilter = (c: MatchScore) =>
-  c.matchPercent > 0 &&
-  (c.shooterRecPercentHistorical ?? 0) > 0 &&
-  Math.abs(c.matchPercent - (c.shooterRecPercentHistorical ?? 0)) <=
-    maxPercentDifference &&
-  (c.shooterRecPercentHistoricalAge ?? 999) <= maxAge &&
-  (c.shooterRecPercentHistoricalHigh ?? 0) > 0;
+/**
+ * Picks majors or combined recommended classification from the MatchScore, depending on age
+ * eligibility (majors won't be used if too old).
+ *
+ * @returns number majors or combined classification, or 0 if no classification is eligible
+ */
+export const pickEffectiveClassification = (c: MatchScore) => {
+  const majors = c.shooterMajorsPercentHistorical ?? 0;
+  const combined = c.shooterRecPercentHistorical ?? 0;
+
+  const majorsAge = c.shooterMajorsPercentHistoricalAge ?? 999;
+  const combinedAge = c.shooterRecPercentHistoricalAge ?? 999;
+
+  const canUseMajors = majorsAge <= maxAge && majors > 0;
+  const canUseCombined = combinedAge <= maxAge && combined > 0;
+  const canUseEffective = canUseMajors || canUseCombined;
+
+  if (!canUseEffective) {
+    return 0;
+  }
+
+  if (canUseMajors) {
+    return majors;
+  }
+
+  return combined;
+};
+
+export const eligibilityFilter = (c: MatchScore) => {
+  const effective = pickEffectiveClassification(c);
+  if (effective <= 0) {
+    return false;
+  }
+
+  const matchWithinEffectiveDeviation =
+    Math.abs(c.matchPercent - effective) <= maxPercentDifference;
+
+  return c.matchPercent > 0 && matchWithinEffectiveDeviation;
+};

@@ -55,6 +55,14 @@ const MatchScoreSchema = new mongoose.Schema<
     shooterRecPercentHistorical: Number,
     shooterRecPercentHistoricalHigh: Number,
     shooterRecPercentHistoricalAge: Number,
+
+    shooterMajorsPercentHistorical: Number,
+    shooterMajorsPercentHistoricalHigh: Number,
+    shooterMajorsPercentHistoricalAge: Number,
+
+    shooterClassifiersPercentHistorical: Number,
+    shooterClassifiersPercentHistoricalHigh: Number,
+    shooterClassifiersPercentHistoricalAge: Number,
   },
   { strict: false },
 );
@@ -198,16 +206,22 @@ export const backfillComboClassifications = async (
 
   return matchScores.map(c => {
     const date = matchDate ?? (c.date || new Date());
-    const reclass = calculateUSPSAClassification(
-      scoresByMemberNumber[c.memberNumber]
-        ?.filter(score => score.sd.getTime() < date.getTime())
-        .map(cur => ({ ...cur, percent: cur.recPercent })),
-      date,
-      classificationDifficulty.window.min,
-      classificationDifficulty.window.best,
-      classificationDifficulty.window.recent,
-      classificationDifficulty.percentCap,
-    )[c.division];
+
+    const recalc = (scoreType: ScoreSource | "" = "") =>
+      calculateUSPSAClassification(
+        scoresByMemberNumber[c.memberNumber]
+          ?.filter(s => (!scoreType ? true : s.source === scoreType))
+          .filter(score => score.sd.getTime() < date.getTime())
+          .map(cur => ({ ...cur, percent: cur.recPercent })),
+        date,
+        classificationDifficulty.window.min,
+        classificationDifficulty.window.best,
+        classificationDifficulty.window.recent,
+        classificationDifficulty.percentCap,
+      )[c.division];
+    const reclass = recalc();
+    const reclassMajors = recalc("Major Match");
+    const reclassClassifiers = recalc("Stage Score");
 
     return {
       ...c,
@@ -215,6 +229,14 @@ export const backfillComboClassifications = async (
       shooterRecPercentHistorical: reclass?.percent || 0,
       shooterRecPercentHistoricalHigh: reclass?.highPercent || 0,
       shooterRecPercentHistoricalAge: reclass?.age || 999,
+
+      shooterMajorsPercentHistorical: reclassMajors?.percent || 0,
+      shooterMajorsPercentHistoricalHigh: reclassMajors?.highPercent || 0,
+      shooterMajorsPercentHistoricalAge: reclassMajors?.age || 999,
+
+      shooterClassifiersPercentHistorical: reclassClassifiers?.percent || 0,
+      shooterClassifiersPercentHistoricalHigh: reclassClassifiers?.highPercent || 0,
+      shooterClassifiersPercentHistoricalAge: reclassClassifiers?.age || 999,
     };
   });
 };

@@ -7,6 +7,7 @@ import {
   grandmasterPercent,
   masterPercent,
   MatchScore,
+  pickEffectiveClassification,
 } from "@data/types/MatchScore";
 import { matchBumpThresholds } from "@shared/constants/difficulty";
 import {
@@ -100,7 +101,7 @@ export const matchBumpsForMatchResults = (matchScores: MatchScore[]): MatchBump[
     const data = matchScoresByUploadDivision[uploadDivision]
       .map(c => ({
         ...c,
-        x: c.shooterRecPercentHistorical ?? 0,
+        x: pickEffectiveClassification(c),
         y: c.matchPercent,
       }))
       .sort((a, b) => b.x - a.x);
