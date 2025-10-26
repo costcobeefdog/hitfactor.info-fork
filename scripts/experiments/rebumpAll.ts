@@ -49,7 +49,20 @@ const rebumpAll = async () => {
     console.log(`processing ${uuid} ${++i}/${uuids.length}`);
     await recalculateBumpForMatch(uuid);
   }
+  console.log("done, now reclassify all shooters");
+  process.exit(0);
+};
+
+export const rebumpOne = async () => {
+  await connect();
+
+  console.log("bumping");
+
+  await recalculateBumpForMatch("a36f1dc5-7954-4fc5-9488-0c81d37e8c1d");
+
+  console.log("done");
   process.exit(0);
 };
 
 rebumpAll();
+//rebumpOne();
