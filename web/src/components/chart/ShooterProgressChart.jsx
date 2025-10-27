@@ -1,3 +1,5 @@
+import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useState } from "react";
 
@@ -36,6 +38,7 @@ const paletteB = {
 };
 
 export const ShooterProgressChart = ({ division, memberNumber }) => {
+  const [full, setFull] = useState(false);
   const [mode, setMode] = useState(defaultScoresMode);
   const { json: dataRaw, loading } = useApi(
     `/shooters/all/${memberNumber}/chart/progress/${mode.toLowerCase()}`,
@@ -57,7 +60,100 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
   const allDivisionsData = uspsaDivShortNames.map(div => dataForDivision(div)).flat();
   const high = allDivisionsData.toSorted((a, b) => b.y - a.y)[0];
 
-  return (
+  const graph = (
+    <Line
+      className="bg-primary-reverse"
+      style={{ width: "100%", height: "100%", position: "relative" }}
+      adapters={null}
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            max: (Number(high?.y) || 100) + 10,
+            min: 0,
+          },
+          x: {
+            type: "time",
+            min: "auto",
+          },
+        },
+        elements: {
+          line: {
+            fill: "blue",
+            color: "blue",
+            borderColor: "pink",
+            borderWidth: 1,
+          },
+          point: {
+            label: "kek",
+            radius: 2,
+          },
+        },
+        plugins: {
+          zoom: {
+            pan: { enabled: full },
+            zoom: {
+              mode: "xy",
+              wheel: {
+                enabled: full,
+              },
+              pinch: {
+                enabled: full,
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: ({ dataset, raw: { y } }) => `${y}% - ${dataset.label}`,
+              title: ([
+                {
+                  raw: { x },
+                },
+              ]) => x.toLocaleDateString(),
+            },
+          },
+
+          annotation: {
+            annotations: !high
+              ? {}
+              : {
+                  highLine: {
+                    type: "line",
+                    yMin: high.y || 0,
+                    yMax: high.y || 0,
+                    borderColor: r1annotationColor(1.0),
+                    borderWidth: 1,
+                  },
+                  highLabel: {
+                    type: "label",
+                    xValue: high.x || 0,
+                    yValue: high.y || 0,
+                    color: r1annotationColor(1.0),
+                    position: "end",
+                    content: [`High ${high.y}%`],
+                    font: {
+                      size: 11,
+                    },
+                  },
+                },
+          },
+        },
+      }}
+      data={{
+        datasets: uspsaDivShortNames
+          .map(div => ({
+            label: div,
+            data: dataForDivision(div),
+            backgroundColor: paletteA[div], //"#ae9ef1",
+            borderColor: paletteB[div], //"#ca258a",
+          }))
+          .filter(d => d.data.length),
+      }}
+    />
+  );
+
+  const graphWithMode = (
     <>
       <div className="flex pb-0 pt-1 bg-primary-reverse justify-content-around">
         <ScoresModeSelectButton
@@ -69,99 +165,59 @@ export const ShooterProgressChart = ({ division, memberNumber }) => {
         />
       </div>
       <div className="relative bg-primary-reverse flex-grow-1">
-        <Line
-          style={{ width: "100%", height: "100%", position: "relative" }}
-          adapters={null}
-          options={{
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                max: (Number(high?.y) || 100) + 10,
-                min: 0,
-              },
-              x: {
-                type: "time",
-                min: "auto",
-              },
-            },
-            elements: {
-              line: {
-                fill: "blue",
-                color: "blue",
-                borderColor: "pink",
-                borderWidth: 1,
-              },
-              point: {
-                label: "kek",
-                radius: 2,
-              },
-            },
-            plugins: {
-              zoom: {
-                pan: { enabled: false },
-                zoom: {
-                  mode: "xy",
-                  wheel: {
-                    enabled: false,
-                  },
-                  pinch: {
-                    enabled: false,
-                  },
-                },
-              },
-              tooltip: {
-                callbacks: {
-                  label: ({ dataset, raw: { y } }) => `${y}% - ${dataset.label}`,
-                  title: ([
-                    {
-                      raw: { x },
-                    },
-                  ]) => x.toLocaleDateString(),
-                },
-              },
-
-              annotation: {
-                annotations: !high
-                  ? {}
-                  : {
-                      highLine: {
-                        type: "line",
-                        yMin: high.y || 0,
-                        yMax: high.y || 0,
-                        borderColor: r1annotationColor(1.0),
-                        borderWidth: 1,
-                      },
-                      highLabel: {
-                        type: "label",
-                        xValue: high.x || 0,
-                        yValue: high.y || 0,
-                        color: r1annotationColor(1.0),
-                        position: "end",
-                        content: [`High ${high.y}%`],
-                        font: {
-                          size: 11,
-                        },
-                      },
-                    },
-              },
-            },
-          }}
-          data={{
-            datasets: uspsaDivShortNames
-              .map(div => ({
-                label: div,
-                data: dataForDivision(div),
-                backgroundColor: paletteA[div], //"#ae9ef1",
-                borderColor: paletteB[div], //"#ca258a",
-              }))
-              .filter(d => d.data.length),
-          }}
-        />
+        {graph}
         {loading && (
           <ProgressSpinner className="absolute m-auto top-0 bottom-0 left-0 right-0" />
         )}
       </div>
+    </>
+  );
+
+  if (full) {
+    return (
+      <Dialog
+        header="Shooter Progress"
+        visible
+        style={{
+          width: "96vw",
+          height: "96vh",
+          margin: "16px",
+        }}
+        contentStyle={{
+          paddingBottom: "64px",
+          overflow: "hidden",
+        }}
+        onHide={() => setFull(false)}
+      >
+        <div className="flex pb-0 pt-1 bg-primary-reverse justify-content-around">
+          <ScoresModeSelectButton
+            className="compact bg-primary-reverse right-0"
+            size={10}
+            style={{ margin: "auto", transform: "scale(0.65)" }}
+            mode={mode}
+            setMode={setMode}
+          />
+        </div>
+        {graph}
+      </Dialog>
+    );
+  }
+
+  return (
+    <>
+      {graphWithMode}
+      <Button
+        onClick={() => setFull(true)}
+        rounded
+        text
+        icon="pi pi-arrows-alt"
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          transform: "rotate(45deg)",
+        }}
+      />
     </>
   );
 };

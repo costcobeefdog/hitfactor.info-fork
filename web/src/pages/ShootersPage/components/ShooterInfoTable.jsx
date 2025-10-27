@@ -136,7 +136,7 @@ export const ShooterInfoTable = ({ info, division, loading }) => {
       <Divider className="md:hidden my-3" />
       {!isSCSA && (
         <>
-          <div className="w-12 md:w-5 flex-grow-1 flex flex-column">
+          <div className="relative w-12 md:w-5 flex-grow-1 flex flex-column">
             <ShooterProgressChart
               division={info.division}
               memberNumber={info.memberNumber}
