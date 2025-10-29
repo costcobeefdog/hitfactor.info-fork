@@ -260,5 +260,5 @@ export const normalizeClassifierCode = (psClassifierCode: string) => {
   }
 
   // remove CM prefix if present
-  return psClassifierCode.replace(/^CM\s+/gi, "").trim();
+  return psClassifierCode.match(/(?<!\d)\d\d-\d\d(?!\d)/)?.[0];
 };
