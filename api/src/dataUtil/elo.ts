@@ -4,7 +4,7 @@ import ltdElo from "../../../data/elo/ltd.json";
 import opnElo from "../../../data/elo/open.json";
 import pccElo from "../../../data/elo/pcc.json";
 import prodElo from "../../../data/elo/prod.json";
-import revElo from "../../../data/elo/revo.json";
+import revElo from "../../../data/elo/rev.json";
 import ssElo from "../../../data/elo/ss.json";
 
 const divEloByMemberNumber = divElo =>
