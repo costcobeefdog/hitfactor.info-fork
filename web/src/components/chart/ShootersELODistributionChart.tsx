@@ -367,7 +367,7 @@ export const ShootersELODistributionChart = ({
       <div
         style={{
           maxWidth: "100%",
-          height: "calc(min(100vh, max(60vh, 60vw)))",
+          height: "calc(min(90vh, 100vh - 320px)",
         }}
       >
         {graph}
