@@ -183,6 +183,12 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
   const [scoresMode, setScoresMode] = useState(defaultScoresMode);
   const [nerdMode, setNerdMode] = useState(false);
 
+  useEffect(() => {
+    if (whatIf) {
+      setScoresMode("combined");
+    }
+  }, [whatIf]);
+
   return (
     <>
       <div className="flex justify-content-between align-items-center flex-wrap">
@@ -217,17 +223,19 @@ export const ShooterRunsAndInfo = ({ division, memberNumber, onBackToShooters })
       </div>
       <div className="flex relative justify-content-between align-items-center">
         <h4 className="block md:text-lg lg:text-xl">Scores</h4>
-        <div className="absolute left-0 right-0 flex justify-content-center">
-          <ScoresModeSelectButton
-            className="compact text-xs md:text-base"
-            mode={scoresMode}
-            setMode={setScoresMode}
-          />
-        </div>
+        {!whatIf && (
+          <div className="absolute left-0 right-0 flex justify-content-center">
+            <ScoresModeSelectButton
+              className="compact text-xs md:text-base"
+              mode={scoresMode}
+              setMode={setScoresMode}
+            />
+          </div>
+        )}
         {whatIf && (
           <div className="m-auto">
-            <h5 className="block md:inline mr-4">
-              WhatIf: {renderPercent(whatIf, { field: "recPercent" })}
+            <h5 className="block text-l md:inline mr-4">
+              What If: {renderPercent(whatIf, { field: "recPercent" })}
             </h5>
           </div>
         )}
