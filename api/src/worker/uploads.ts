@@ -256,6 +256,7 @@ export const hitFactorLikeMatchInfo = (
     match_stages
       .map(s => {
         try {
+          // TODO: remove stage name match for provisional 25-series few months after they go live
           const provisionalClassifierNumber = (s.stage_name || "").match(
             /(?<!\d)25-0[123456789](?!\d)/,
           )?.[0];

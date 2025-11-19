@@ -150,9 +150,6 @@ export const ClassifierRunsAndInfo = ({
           />
         </a>*/}
       </div>
-      {classifier.startsWith("25-") && (
-        <Message severity="info" className="mb-3 w-full" text="Provisional Classifier" />
-      )}
       <ClassifierInfoTable {...{ division, classifier, loading, hhfs }} {...info} />
 
       <RunsTable
