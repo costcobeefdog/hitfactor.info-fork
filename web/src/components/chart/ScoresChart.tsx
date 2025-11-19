@@ -468,6 +468,19 @@ export const ScoresChart = ({
                       },
                     ]),
                 {
+                  label: "Division Distribution Weibull",
+                  data: pointsGraph({
+                    yFn: weibulCDFFactory(3.907, lambda /*(61.3098 * hhf3) / 100*/),
+                    minX: 0,
+                    maxX,
+                    name: "Division Weibull",
+                  }),
+                  pointRadius: 1,
+                  pointBorderColor: "black",
+                  pointBorderWidth: 0,
+                  pointBackgroundColor: "pink",
+                },
+                {
                   label: "Weibull",
                   data: pointsGraph({
                     yFn: weibulCDFFactory(k, lambda),

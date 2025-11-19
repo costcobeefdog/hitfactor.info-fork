@@ -1,5 +1,6 @@
 import { v4 as randomUUID } from "uuid";
 
+import { classificationDifficulty } from "@shared/constants/difficulty";
 import orderedUniqBy from "@shared/utils/orderedUniqBy";
 
 import { classForPercent } from "./brackets";
@@ -96,10 +97,10 @@ export const dedupeGrandbagging = (scores: ClassifierScore[]) =>
 export const calculateUSPSAClassification = (
   classifiers: ClassifierScore[],
   now: Date = new Date(),
-  minWindowSize: number = 4, // used for initial, less than that - no classification
-  bestWindowSize: number = 6, // used for non-initial classifications, ideal window size when there are no dupes
-  recentWindowSize: number = 8, // number of most recent scores to consider
-  percentCap: number = 110,
+  minWindowSize: number = classificationDifficulty.window.min, // used for initial, less than that - no classification
+  bestWindowSize: number = classificationDifficulty.window.best, // used for non-initial classifications, ideal window size when there are no dupes
+  recentWindowSize: number = classificationDifficulty.window.recent, // number of most recent scores to consider
+  percentCap: number = classificationDifficulty.percentCap,
 ): ClassificationState => {
   const state = {} as ClassificationState;
   if (!classifiers?.length) {

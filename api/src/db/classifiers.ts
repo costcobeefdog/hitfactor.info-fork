@@ -14,9 +14,11 @@ import { hhfsForDivision } from "@api/dataUtil/hhf";
 import { HF, Percent } from "@api/dataUtil/numbers";
 import recHHFsPSData from "@data/recHHFsPSData.json";
 import { RecHHF } from "@data/types/RecHHF";
+import { calculateUSPSAClassification } from "@shared/classification/engine";
 import { stringSort } from "@shared/utils/sort";
 import { correlation } from "@shared/utils/weibull";
 
+import { scoresForMode } from "./matchScores";
 import { RecHHFs } from "./recHHF";
 import { ScoreObjectWithVirtuals, Scores, Score } from "./scores";
 
@@ -353,15 +355,29 @@ export const singleClassifierExtendedMetaDoc = async (
         ?.reclassificationsRecPercentUncappedCurrent as unknown as number,
     }));
 
+  for (const s of scores) {
+    s.majors = 0;
+    const now = s.sd;
+    const shooterScores = await scoresForMode({
+      mode: "majors",
+      memberNumbers: [s.memberNumber],
+      division,
+    });
+
+    if (now && scores.length) {
+      const reclass = calculateUSPSAClassification(
+        shooterScores.map(cur => ({ ...cur, percent: cur.recPercent })),
+        now,
+      );
+      s.majors = reclass[division]?.percent ?? 0;
+    }
+  }
+
   // best scores correlate better than most recent on 20-01:co
-  const eloCorrelationScores = uniqBy(
-    scores.filter(cur => cur.elo > 0 && cur.hf > 0).sort((a, b) => b.hf - a.hf),
-    cur => cur.memberNumber,
-  );
-  const majorsCorrelationScores = uniqBy(
-    scores.filter(cur => cur.majors > 0 && cur.hf > 0).sort((a, b) => b.hf - a.hf),
-    cur => cur.memberNumber,
-  );
+  const eloCorrelationScores = scores.filter(cur => cur.elo > 0 && cur.hf > 0);
+
+  const majorsCorrelationScores = scores.filter(cur => cur.majors > 0 && cur.hf > 0);
+
   const eloCorrelation =
     eloCorrelationScores.length >= 4
       ? correlation(

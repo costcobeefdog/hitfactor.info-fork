@@ -142,8 +142,8 @@ export const forcedWeibull = (
   const kurt = kurtosis(dataPoints);
   const mse = meanSquaredError(dataPoints, k, lambda);
   const mae = meanAbsoluteError(dataPoints, k, lambda);
-  const smse = meanSquaredError(dataPoints, 3.6, lambda);
-  const smae = meanAbsoluteError(dataPoints, 3.6, lambda);
+  const smse = meanSquaredError(dataPoints, 3.907, lambda);
+  const smae = meanAbsoluteError(dataPoints, 3.907, lambda);
   const me = maximumError(dataPoints, k, lambda);
 
   return {
