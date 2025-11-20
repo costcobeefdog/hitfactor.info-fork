@@ -1,6 +1,55 @@
+import { chromium } from "playwright";
+
 import { PAGE_SIZE } from "../../../shared/constants/pagination";
 import { multisortObj } from "../../../shared/utils/sort";
 import { escapeRegExp } from "../utils";
+
+const getAlgoliaKey = async () => {
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--disable-blink-features=AutomationControlled"],
+  });
+  const context = await browser.newContext({
+    userAgent:
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7390.0 Safari/537.36",
+    viewport: { width: 1280, height: 800 },
+  });
+  const page = await context.newPage();
+
+  const apiResponse = new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error("Timeout waiting for API response")),
+      15_000,
+    );
+
+    const listener = async response => {
+      if (response.url().includes("/api/search/key") && response.status() === 200) {
+        clearTimeout(timeout);
+        page.off("response", listener);
+        const json = await response.json();
+        resolve(json);
+      }
+    };
+
+    page.on("response", listener);
+  });
+
+  await page.goto("https://practiscore.com/results?query=SLPSA", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.getByText("SLPSA USPSA").first().waitFor({ timeout: 30000 });
+  const result: { apiKey?: string } = (await apiResponse) as { apiKey?: string };
+  await browser.close();
+  return result.apiKey;
+};
+
+export const getAlgoliaUrl = async () => {
+  const key = await getAlgoliaKey();
+  const algoliaUrl = process.env.ALGOLIA_URL!;
+  return (
+    algoliaUrl.substring(0, algoliaUrl.lastIndexOf("&x-algolia-api-key=") + 19) + key
+  );
+};
 
 export const percentAggregationOp = (
   value,

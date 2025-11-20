@@ -5,6 +5,8 @@ import { Match, MatchVirtualsNoRefs } from "@data/types/Match";
 import { MatchScore } from "@data/types/MatchScore";
 import { matchLevel } from "@shared/utils/matchLevel";
 
+import { getAlgoliaUrl } from "./utils";
+
 interface AlgoliaMatchNumericFilters {
   timestamp_utc_updated: number;
 }
@@ -123,7 +125,7 @@ const fetchMatchesRange = async (
   const {
     results: [{ hits }],
   } = await (
-    await fetch(process.env.ALGOLIA_URL!, {
+    await fetch(await getAlgoliaUrl(), {
       body: JSON.stringify({
         requests: [
           {
@@ -183,7 +185,7 @@ export const fetchMatchesRangeByTimestamp = async (
   const {
     results: [{ hits }],
   } = await (
-    await fetch(process.env.ALGOLIA_URL!, {
+    await fetch(await getAlgoliaUrl(), {
       body: JSON.stringify({
         requests: [
           {

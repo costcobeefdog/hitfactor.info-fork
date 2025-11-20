@@ -5,10 +5,11 @@ import { mapDivisions } from "../../../dataUtil/divisions";
 import { MatchBumps } from "../../../db/matchBumps";
 import { Matches } from "../../../db/matches";
 import { matchScoresFor } from "../../../db/matchScores";
+import { getAlgoliaKey } from "../../../db/utils";
 
 const searchMatches = async q => {
   try {
-    const client = algoliasearch(process.env.ALGOLIA_APP_ID, process.env.ALGOLIA_API_KEY);
+    const client = algoliasearch(process.env.ALGOLIA_APP_ID, await getAlgoliaKey());
     const index = client.initIndex("postmatches");
     const { hits } = await index.search(q, {
       hitsPerPage: 10,
