@@ -4,7 +4,7 @@ import { PAGE_SIZE } from "../../../shared/constants/pagination";
 import { multisortObj } from "../../../shared/utils/sort";
 import { escapeRegExp } from "../utils";
 
-const getAlgoliaKey = async () => {
+export const getAlgoliaKey = async () => {
   const browser = await chromium.launch({
     headless: true,
     args: ["--disable-blink-features=AutomationControlled"],
