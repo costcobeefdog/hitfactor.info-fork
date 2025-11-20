@@ -19,7 +19,7 @@ export const getAlgoliaKey = async () => {
   const apiResponse = new Promise((resolve, reject) => {
     const timeout = setTimeout(
       () => reject(new Error("Timeout waiting for API response")),
-      15_000,
+      150_000,
     );
 
     const listener = async response => {
