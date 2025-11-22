@@ -4,7 +4,21 @@ import { PAGE_SIZE } from "../../../shared/constants/pagination";
 import { multisortObj } from "../../../shared/utils/sort";
 import { escapeRegExp } from "../utils";
 
-export const getAlgoliaKey = async () => {
+interface AlgoliaKeyMeta {
+  appId: string;
+  apiKey: string;
+  validUntil: number;
+  serverTime: number;
+  success: boolean;
+}
+interface AlgoliaKeyMetaProcessed extends AlgoliaKeyMeta {
+  ttlSeconds: number;
+  lagSeconds: number;
+  refetchAfter: number;
+  safeTTLSeconds: number;
+}
+
+export const getAlgoliaKeyWithMeta = async (): Promise<AlgoliaKeyMetaProcessed> => {
   const browser = await chromium.launch({
     headless: true,
     args: ["--disable-blink-features=AutomationControlled"],
@@ -23,7 +37,7 @@ export const getAlgoliaKey = async () => {
     );
 
     const listener = async response => {
-      if (response.url().includes("/api/search/key") && response.status() === 200) {
+      if (response.url().includes("/api/v1/search/key") && response.status() === 200) {
         clearTimeout(timeout);
         page.off("response", listener);
         const json = await response.json();
@@ -34,13 +48,37 @@ export const getAlgoliaKey = async () => {
     page.on("response", listener);
   });
 
+  const now = new Date().getTime();
   await page.goto("https://practiscore.com/results?query=SLPSA", {
     waitUntil: "domcontentloaded",
   });
   await page.getByText("SLPSA USPSA").first().waitFor({ timeout: 30000 });
-  const result: { apiKey?: string } = (await apiResponse) as { apiKey?: string };
+  const result = (await apiResponse) as AlgoliaKeyMeta;
   await browser.close();
-  return result.apiKey;
+
+  const ttlSeconds = result.validUntil - result.serverTime;
+  const lagSeconds = result.serverTime - now / 1000;
+  const refetchAfter = now + (ttlSeconds * 1000 - 10 * lagSeconds) / 1.5;
+  const safeTTLSeconds = Math.floor((refetchAfter - now) / 1000);
+
+  return {
+    ...result,
+    ttlSeconds,
+    lagSeconds,
+    refetchAfter,
+    safeTTLSeconds,
+  };
+};
+
+let _cachedAlgoliaKeyMeta: AlgoliaKeyMetaProcessed | null = null;
+export const getAlgoliaKey = async () => {
+  const expired = new Date().getTime() >= (_cachedAlgoliaKeyMeta?.refetchAfter ?? 0);
+  if (!expired && _cachedAlgoliaKeyMeta?.apiKey) {
+    return _cachedAlgoliaKeyMeta.apiKey;
+  }
+
+  _cachedAlgoliaKeyMeta = await getAlgoliaKeyWithMeta();
+  return _cachedAlgoliaKeyMeta.apiKey;
 };
 
 export const getAlgoliaUrl = async () => {
