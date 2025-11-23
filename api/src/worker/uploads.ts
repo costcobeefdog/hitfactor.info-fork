@@ -10,6 +10,7 @@ import {
   EmptyMatchResultsFactory,
   EmptySingleMatchResultFactory,
   fetchPS,
+  MatchDef,
 } from "./uploadsCommon";
 
 import { MatchScore } from "../../../data/types/MatchScore";
@@ -35,7 +36,7 @@ import { rehydrateClassifiers } from "../db/classifiers";
 import { DQs } from "../db/dq";
 import { connect } from "../db/index";
 import { matchBumpsForMatchResults, saveMatchBumps } from "../db/matchBumps";
-import { MatchDef, Matches } from "../db/matches";
+import { Matches } from "../db/matches";
 import {
   backfillComboClassifications,
   deleteDQMatchScores,

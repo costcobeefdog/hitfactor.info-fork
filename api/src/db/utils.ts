@@ -71,14 +71,19 @@ export const getAlgoliaKeyWithMeta = async (): Promise<AlgoliaKeyMetaProcessed> 
 };
 
 let _cachedAlgoliaKeyMeta: AlgoliaKeyMetaProcessed | null = null;
-export const getAlgoliaKey = async () => {
+export const getCachedAlgoliaKeyWithMeta = async () => {
   const expired = new Date().getTime() >= (_cachedAlgoliaKeyMeta?.refetchAfter ?? 0);
   if (!expired && _cachedAlgoliaKeyMeta?.apiKey) {
-    return _cachedAlgoliaKeyMeta.apiKey;
+    return _cachedAlgoliaKeyMeta;
   }
 
   _cachedAlgoliaKeyMeta = await getAlgoliaKeyWithMeta();
-  return _cachedAlgoliaKeyMeta.apiKey;
+  return _cachedAlgoliaKeyMeta;
+};
+
+export const getAlgoliaKey = async () => {
+  const meta = await getCachedAlgoliaKeyWithMeta();
+  return meta.apiKey;
 };
 
 export const getAlgoliaUrl = async () => {

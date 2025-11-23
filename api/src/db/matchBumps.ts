@@ -75,10 +75,9 @@ MatchBumpSchema.index({ uploadDivision: 1 });
 MatchBumpSchema.index({ uploadDivision: 1, date: 1 });
 MatchBumpSchema.index({ uploadDivision: 1, date: -1 });
 
-export const MatchBumps = mongoose.model<typeof MatchBumpSchema>(
-  "MatchBumps",
-  MatchBumpSchema,
-);
+export const MatchBumps =
+  mongoose.models.MatchBumps ||
+  mongoose.model<typeof MatchBumpSchema>("MatchBumps", MatchBumpSchema);
 
 const population = (data: MatchScore[], minPercent: number) =>
   data.filter(

@@ -6,6 +6,18 @@ import { Readable } from "stream";
 
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
+// PS match_def.json file structure
+export interface MatchDef {
+  match_id: string;
+  match_name: string;
+  match_type: string;
+  match_subtype: string;
+  match_creationdate: string;
+  match_modifieddate: string;
+  match_date: string; // 2024-12-31 format
+  templateName: string;
+}
+
 export const EmptySingleMatchResultFactory = match => ({
   scores: [],
   match,

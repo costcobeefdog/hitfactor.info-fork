@@ -47,3 +47,22 @@ export const processImportAsyncSeq = async (
 };
 
 export const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const validApiKeys = new Set(
+  (() => {
+    try {
+      return JSON.parse(process.env.API_KEYS ?? "[]");
+    } catch (all) {
+      console.error("BAD API_KEYS env variable");
+      console.error(all);
+    }
+    return [];
+  })(),
+);
+const validApiKeyPreHandler = async (req, res) => {
+  const clientApiKey = req.headers["x-api-key"];
+  if (!clientApiKey || !validApiKeys.has(clientApiKey)) {
+    return res.code(401).send({ error: "Unauthorized" });
+  }
+};
+export const verifyApiKey = { preHandler: validApiKeyPreHandler };
