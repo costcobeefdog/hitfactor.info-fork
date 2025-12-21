@@ -132,6 +132,7 @@ export const ShootersDistributionChart = ({ division, style }) => {
                     annotationColor(0.75),
                   ),
                 ),
+                yLine(`Total ${curModeDataPoints.length}`, 100, annotationColor(0.75)),
               ),
               ...xLine("95%", 95, r5annotationColor(0.5), 2.5),
               ...xLine("85%", 85, r5annotationColor(0.5), 2.5),
@@ -149,7 +150,7 @@ export const ShootersDistributionChart = ({ division, style }) => {
             data: pointsGraph({
               yFn: weibulCDFFactory(k, lambda),
               minX: 0,
-              maxX: 100,
+              maxX: curModeDataPoints[0],
               step: 0.1,
               name: "Weibull",
             }),

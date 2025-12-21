@@ -10,7 +10,7 @@ Chart.register(...registerables);
 Chart.register(annotationPlugin);
 Chart.register(zoomPlugin);
 
-export const yLine = (name, y, color) => ({
+export const yLine = (name, y, color, maxX = 100) => ({
   [name]: {
     type: "line",
     yMin: y,
@@ -20,10 +20,10 @@ export const yLine = (name, y, color) => ({
   },
   [`${name}Label`]: {
     type: "label",
-    xValue: 0,
-    yValue: y - 0.5,
+    xValue: y < 100 ? 0 : 10 + maxX,
+    yValue: y < 100 ? y - 0.5 : y,
     color,
-    position: "start",
+    position: y < 100 ? "start" : "end",
     content: [name],
     font: {
       size: 11,
@@ -121,7 +121,7 @@ export const pointsGraph = ({ yFn, minX, maxX, name, step: stepParam = 0.005 }) 
   const totalPoints = Math.ceil((maxX - minX) / step);
 
   const result = Array.from({ length: totalPoints }, (v, i) => {
-    const x = minX + (i + 1) * step;
+    const x = minX + i * step;
     return {
       y: yFn(x),
       x: x,
