@@ -41,7 +41,8 @@ const fieldModeMap = {
   ELO: "elo",
   Classifiers: "classifiers",
   Majors: "majors",
-  //HQ: "curPercent",
+  HQ: "current",
+  HQHigh: "high",
   // HQ: "curHHFPercent",
   // "HQ High": "curHHFPercentHigh",
   /*

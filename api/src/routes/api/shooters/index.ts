@@ -227,6 +227,8 @@ const shootersRoutes = async fastify => {
         "reclassificationsMajorsCurrent",
         "reclassificationsClassifiersCurrent",
         "elo",
+        "current",
+        "high",
       ])
       .lean()
       .limit(0);
@@ -237,6 +239,8 @@ const shootersRoutes = async fastify => {
       majors: c.reclassificationsMajorsCurrent,
       classifiers: c.reclassificationsClassifiersCurrent,
       memberNumber: c.memberNumber,
+      current: c.current,
+      high: c.high,
     }));
     if (mode === "elo") {
       return mapped;

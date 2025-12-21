@@ -6,6 +6,7 @@ export interface Shooter {
   name: string;
   memberId: string;
   current: number;
+  high: number;
   hqClass: string;
   hqClassRank: number;
   class: string;

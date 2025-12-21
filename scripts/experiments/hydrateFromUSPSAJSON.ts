@@ -37,7 +37,9 @@ export const binaryScoreFromUSPSAScore = (uspsaScore): Score => {
   };
 };
 
-const all = loadAllJSONFromDir("../../data/uspsa").map(binaryScoreFromUSPSAScore);
+const all = loadAllJSONFromDir("../../data/uspsa/classifiers").map(
+  binaryScoreFromUSPSAScore,
+);
 
 const shooters = Object.values(
   all.reduce((acc, cur: Score) => {
