@@ -14,6 +14,7 @@ import {
   wbl1AnnotationColor,
   pointsGraph,
   closestYForX,
+  wbl1COAnnotationColor,
 } from "./common";
 import { useAsyncWeibull } from "./useAsyncWeibull";
 import { WeibullStatus } from "./WeibullStatus";
@@ -147,6 +148,20 @@ export const ShootersDistributionChart = ({ division, style }) => {
       }}
       data={{
         datasets: [
+          {
+            label: "Weibull CO '25",
+            data: pointsGraph({
+              yFn: weibulCDFFactory(3.9185, 61.7583),
+              minX: 0,
+              maxX: curModeDataPoints[0],
+              step: 0.1,
+              name: "Weibull",
+            }),
+            pointRadius: 1,
+            pointBorderColor: "black",
+            pointBorderWidth: 0,
+            pointBackgroundColor: wbl1COAnnotationColor(0.66),
+          },
           {
             label: "Weibull",
             data: pointsGraph({
