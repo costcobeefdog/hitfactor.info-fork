@@ -63,6 +63,11 @@ export const emptyWeibull: WeibullResult = {
 export const weibulCDFFactory = (k: number, lambda: number) => (x: number) =>
   100 - 100 * (1 - Math.exp(-Math.pow(x / lambda, k)));
 
+export const weibulReverseCDFFactory = (k: number, lambda: number) => (y: number) =>
+  lambda * Math.pow(Math.log(100 / y), 1 / k);
+
+export const weibulLambdaPoint = weibulCDFFactory(4, 20)(20);
+
 const probabilityDistributionFn = (x: number, k: number, lambda: number): number =>
   (k / lambda) * Math.pow(x / lambda, k - 1) * Math.exp(-Math.pow(x / lambda, k));
 
@@ -131,7 +136,7 @@ export const forcedWeibull = (
   }
 
   // const cdf = x => 100 - 100 * (1 - Math.exp(-Math.pow(x / lambda, k)));
-  const reverseCDF = y => lambda * Math.pow(Math.log(100 / y), 1 / k);
+  const reverseCDF = weibulReverseCDFFactory(k, lambda);
   const hhf =
     reverseCDF(weibullDifficulty.percentile) / (weibullDifficulty.percent / 100);
   const hhf1 = reverseCDF(1) / 0.95;

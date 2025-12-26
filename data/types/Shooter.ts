@@ -29,6 +29,11 @@ export interface Shooter {
   reclassificationsMajorsCurrent: number;
   reclassificationsClassifiersCurrent: number;
 
+  // history
+  reclassificationsRecPercentHistory: Array<{ p: number; sd: Date }>;
+  reclassificationsMajorsHistory: Array<{ p: number; sd: Date }>;
+  reclassificationsClassifiersHistory: Array<{ p: number; sd: Date }>;
+
   age: number;
   age1: number;
 }

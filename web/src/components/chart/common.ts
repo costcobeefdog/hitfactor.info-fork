@@ -10,7 +10,7 @@ Chart.register(...registerables);
 Chart.register(annotationPlugin);
 Chart.register(zoomPlugin);
 
-export const yLine = (name, y, color, maxX = 100) => ({
+export const yLine = (name, y, color, maxX = 100, opposite = false) => ({
   [name]: {
     type: "line",
     yMin: y,
@@ -20,10 +20,10 @@ export const yLine = (name, y, color, maxX = 100) => ({
   },
   [`${name}Label`]: {
     type: "label",
-    xValue: y < 100 ? 0 : 10 + maxX,
-    yValue: y < 100 ? y - 0.5 : y,
+    xValue: !opposite ? 0 : maxX,
+    yValue: !opposite ? y - 0.5 : y,
     color,
-    position: y < 100 ? "start" : "end",
+    position: !opposite ? "start" : "end",
     content: [name],
     font: {
       size: 11,
@@ -134,6 +134,7 @@ export const pointsGraph = ({ yFn, minX, maxX, name, step: stepParam = 0.005 }) 
 
 export const annotationColor = alpha => `rgba(255, 99, 132, ${alpha * 0.5})`;
 export const r1annotationColor = alpha => `rgba(132, 99, 255, ${alpha * 0.75})`;
+export const r3annotationColor = alpha => `rgba(149, 112, 62, ${alpha})`;
 export const r5annotationColor = alpha => `rgba(99, 255, 132, ${alpha})`;
 export const r15annotationColor = alpha => `rgba(255, 255, 132, ${alpha})`;
 export const wbl1COAnnotationColor = alpha =>

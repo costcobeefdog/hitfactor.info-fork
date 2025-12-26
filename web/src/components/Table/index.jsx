@@ -12,6 +12,41 @@ export const renderPercentDiff = (c, { field }) => {
   return `${value.toFixed(2)}%`;
 };
 
+export const iconForDifficulty = p => {
+  if (p >= 104) {
+    return "💀💀💀";
+  }
+  if (p >= 98) {
+    return "💀💀";
+  }
+  if (p >= 92) {
+    return "💀";
+  }
+  if (p >= 88) {
+    return "🤕";
+  }
+  if (p >= 85) {
+    return "😢";
+  }
+  if (p >= 80) {
+    return "😤";
+  }
+  if (p >= 75) {
+    return "😮‍💨";
+  }
+  if (p >= 70) {
+    return "🙂";
+  }
+  if (p >= 65) {
+    return "🙂🙂";
+  }
+  if (p >= 40) {
+    return "🙂🙂🙂";
+  }
+
+  return "N/A";
+};
+
 export const letterRatingForPercent = p => {
   if (p >= 95) {
     return "AAA";
@@ -72,7 +107,7 @@ export const renderPercentNoZero = (c, { field }, transform = asIs => asIs) => {
   return `${value.toFixed(2)}%`;
 };
 
-export const renderPercent = (c, { field }, transform = asIs => asIs) => {
+export const renderPercent = (c, { field }, transform = asIs => asIs, toFixed = 2) => {
   let value = c[field];
   if (value < 0 || value === undefined) {
     return "—";
@@ -83,7 +118,7 @@ export const renderPercent = (c, { field }, transform = asIs => asIs) => {
   }
   value = transform(value);
 
-  return `${value.toFixed(2)}%`;
+  return `${value.toFixed(toFixed)}%`;
 };
 
 export const renderPercentAndAge = (c, { field }) => {

@@ -21,6 +21,8 @@ import {
   wbl15AnnotationColor,
   r5annotationColor,
   pointsGraph,
+  wbl1COAnnotationColor,
+  r3annotationColor,
 } from "./common";
 import { closestYForX } from "./common";
 import { GraphPoint } from "./common";
@@ -29,7 +31,11 @@ import { WeibullStatus } from "./WeibullStatus";
 
 import { Percent, PositiveOrMinus1 } from "../../../../api/src/dataUtil/numbers";
 import { sportForDivision } from "../../../../shared/constants/divisions";
-import { correlation, weibulCDFFactory } from "../../../../shared/utils/weibull";
+import {
+  correlation,
+  weibulCDFFactory,
+  weibulReverseCDFFactory,
+} from "../../../../shared/utils/weibull";
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";
 
@@ -86,6 +92,7 @@ const colorForPrefix = (prefix, alpha) =>
     "": annotationColor,
     r: r5annotationColor,
     r1: r5annotationColor,
+    r3: r3annotationColor,
     r5: r5annotationColor,
     r15: r5annotationColor,
     wbl1: wbl15AnnotationColor,
@@ -98,6 +105,7 @@ export const extraLabelOffsets = {
   "": 0,
   r: 0,
   r1: 0,
+  r3: 0,
   r5: 0,
   r15: 0,
   wbl1: 0,
@@ -140,7 +148,7 @@ const xLinesForHHF = (prefix: string, hhf: number, onlyHHF: boolean = false) =>
             true,
           ),
           ...xLine(
-            `${prefix}M`,
+            `${prefix}M = ${(0.85 * hhf).toFixed(4)}`,
             0.85 * hhf,
             colorForPrefix(prefix, 0.6),
             extraLabelOffsets[prefix],
@@ -341,7 +349,7 @@ export const ScoresChart = ({
     ];
   }, [data]);
 
-  const { k, lambda, hhf3 } = weibull;
+  const { k, lambda, hhf3, hhf5 } = weibull;
   const recHHF = recHHFProp || hhf3;
   const maxX = useMemo(() => {
     const lastX = data.toSorted((a, b) => b.x - a.x)[0]?.x || 0;
@@ -414,7 +422,17 @@ export const ScoresChart = ({
               ...(yMode !== "Rank"
                 ? {}
                 : Object.assign(
-                    {},
+                    hhf5
+                      ? {
+                          ...yLine(
+                            "Top 5%",
+                            5,
+                            colorForPrefix("r3", 0.75),
+                            hhf5 * 1.1,
+                            true,
+                          ),
+                        }
+                      : {},
                     ...percentiles.map((perc, i) =>
                       yLine(
                         `Top ${perc?.toFixed(2)}% = ${["GM", "M", "A", "B", "C"][i]}`,
@@ -441,6 +459,17 @@ export const ScoresChart = ({
               ...(xMode !== "HF" ? {} : xLinesForHHF("hq", hhf, true)),
               ...(xMode !== "HF" || !oldHHF ? {} : xLinesForHHF("old", oldHHF, true)),
               ...(xMode !== "HF" ? {} : xLinesForHHF("r", recHHF)),
+              ...(xMode !== "HF" || !hhf5
+                ? {}
+                : {
+                    ...xLine(
+                      `${(0.85 * hhf5).toFixed(4)}`,
+                      hhf5 * 0.85,
+                      colorForPrefix("r3", 0.9),
+                      -16,
+                      true,
+                    ),
+                  }),
             },
           },
         },
@@ -467,19 +496,6 @@ export const ScoresChart = ({
                         pointBackgroundColor: wbl1AnnotationColor(0.33),
                       },
                     ]),
-                {
-                  label: "Division Distribution Weibull",
-                  data: pointsGraph({
-                    yFn: weibulCDFFactory(3.907, lambda /*(61.3098 * hhf3) / 100*/),
-                    minX: 0,
-                    maxX,
-                    name: "Division Weibull",
-                  }),
-                  pointRadius: 1,
-                  pointBorderColor: "black",
-                  pointBorderWidth: 0,
-                  pointBackgroundColor: "pink",
-                },
                 {
                   label: "Weibull",
                   data: pointsGraph({

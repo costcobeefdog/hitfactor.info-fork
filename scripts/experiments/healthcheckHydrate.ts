@@ -31,10 +31,9 @@ const go = async () => {
 
   console.error(`Total Shooters to Hydrate: ${shooters.length}`);
 
-  const batchSize = 128;
+  const batchSize = 2048;
   for (let i = 0; i < shooters.length; i += batchSize) {
     const batch = shooters.slice(i, i + batchSize);
-    await Shooters.insertMany(batch as Shooter[]);
     const updates = batch
       .map(({ memberNumberDivision, memberNumber, division, current, high }) => {
         if (!memberNumberDivision || !memberNumber || !division) {
@@ -60,7 +59,7 @@ const go = async () => {
       })
       .flat();
     await Shooters.bulkWrite(updates.filter(Boolean));
-    console.log(`done ${(i + 1) * batchSize}/${shooters.length}`);
+    console.log(`done ${i}/${shooters.length}`);
   }
 
   console.error("\ndone, now run rehydrateForCC");

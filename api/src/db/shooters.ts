@@ -11,7 +11,7 @@ import {
   ClassLetter,
   percentForClass,
 } from "@shared/classification/brackets";
-import { ClassificationState } from "@shared/classification/state";
+import { ClassificationState, PercentWithDate } from "@shared/classification/state";
 
 import { scoresForMode } from "./matchScores";
 
@@ -311,6 +311,7 @@ interface ReclassificationBreakdownResult {
   classHigh: ClassLetter;
   age: number;
   age1: number;
+  history: PercentWithDate[];
 }
 const reclassificationBreakdown = (
   reclassificationInfo: ClassificationState,
@@ -322,6 +323,7 @@ const reclassificationBreakdown = (
   classHigh: classForPercent(reclassificationInfo?.[division]?.highPercent),
   age: reclassificationInfo?.[division]?.age,
   age1: reclassificationInfo?.[division]?.age1,
+  history: reclassificationInfo?.[division]?.percentWithDates,
 });
 
 const recalc = (scores, date: Date, division: string) =>
@@ -356,7 +358,7 @@ export const reclassifyShooters = async shooters => {
           return [];
         }
         const recScores = recScoresByMemberNumber[memberNumber] || [];
-        const recalcDivRecUncapped = recalc(recScores, now, division);
+        const recalcDivRec = recalc(recScores, now, division);
 
         const majorMatchScores = recScores.filter(s => s.source === "Major Match");
         const recalcMajors = recalc(majorMatchScores, now, division);
@@ -428,26 +430,27 @@ export const reclassifyShooters = async shooters => {
                     class: hqClass,
                     memberId: psClassUpdates?.[memberNumber]?.memberId,
 
-                    age: recalcDivRecUncapped?.age,
-                    age1: recalcDivRecUncapped?.age1,
+                    age: recalcDivRec?.age,
+                    age1: recalcDivRec?.age1,
 
                     elo: eloPointForShooter(division, memberNumber)?.rating,
-                    reclassificationsRecPercentUncappedCurrent:
-                      recalcDivRecUncapped.current, //aka recPercentUncapped
-                    reclassificationsRecPercentUncappedHigh: recalcDivRecUncapped.high, // aka recPercentUncappedHigh
+                    reclassificationsRecPercentUncappedCurrent: recalcDivRec.current, //aka recPercentUncapped
+                    reclassificationsRecPercentUncappedHigh: recalcDivRec.high, // aka recPercentUncappedHigh
 
                     reclassificationsMajorsCurrent: recalcMajors.current,
                     reclassificationsClassifiersCurrent: recalcClassifiers.current,
 
-                    recUncappedClassCurrent: recalcDivRecUncapped.classCurrent,
+                    reclassificationsRecPercentHistory: recalcDivRec.history,
+                    reclassificationsMajorsHistory: recalcMajors.history,
+                    reclassificationsClassifiersHistory: recalcClassifiers.history,
+
+                    recUncappedClassCurrent: recalcDivRec.classCurrent,
                     recUncappedClassCurrentRank: percentForClass(
-                      recalcDivRecUncapped.classCurrent,
+                      recalcDivRec.classCurrent,
                     ),
 
-                    recUncappedClassHigh: recalcDivRecUncapped.classHigh,
-                    recUncappedClassHighRank: percentForClass(
-                      recalcDivRecUncapped.classHigh,
-                    ),
+                    recUncappedClassHigh: recalcDivRec.classHigh,
+                    recUncappedClassHighRank: percentForClass(recalcDivRec.classHigh),
                   },
                 },
               ],

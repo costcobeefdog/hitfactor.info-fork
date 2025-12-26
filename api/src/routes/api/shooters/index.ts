@@ -219,6 +219,7 @@ const shootersRoutes = async fastify => {
     const shootersTable = await Shooters.find({
       division,
       reclassificationsRecPercentUncappedCurrent: { $gt: 0 },
+      //age: { $gt: 4 },
     })
       .select([
         "memberNumber",

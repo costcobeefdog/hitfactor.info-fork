@@ -15,6 +15,7 @@ import { HF, Percent } from "@api/dataUtil/numbers";
 import recHHFsPSData from "@data/recHHFsPSData.json";
 import { RecHHF } from "@data/types/RecHHF";
 import { calculateUSPSAClassification } from "@shared/classification/engine";
+import { PercentWithDate } from "@shared/classification/state";
 import { stringSort } from "@shared/utils/sort";
 import { correlation } from "@shared/utils/weibull";
 
@@ -350,33 +351,23 @@ export const singleClassifierExtendedMetaDoc = async (
     .map(curScore => ({
       ...curScore,
       elo: curScore.Shooters?.[0]?.elo as unknown as number,
-      majors: curScore.Shooters?.[0]?.reclassificationsMajorsCurrent as unknown as number,
-      recPercentUncapped: curScore.Shooters?.[0]
-        ?.reclassificationsRecPercentUncappedCurrent as unknown as number,
+      majors:
+        (
+          curScore.Shooters?.[0]
+            ?.reclassificationsMajorsHistory as unknown as PercentWithDate[]
+        )?.findLast(({ sd }) => curScore.sd.getTime() - sd.getTime() > 0)?.p ?? 0,
+      recPercentUncapped:
+        (
+          curScore.Shooters?.[0]
+            ?.reclassificationsRecPercentHistory as unknown as PercentWithDate[]
+        )?.findLast(({ sd }) => curScore.sd.getTime() - sd.getTime() > 0)?.p ?? 0,
     }));
 
-  for (const s of scores) {
-    s.majors = 0;
-    const now = s.sd;
-    const shooterScores = await scoresForMode({
-      mode: "majors",
-      memberNumbers: [s.memberNumber],
-      division,
-    });
-
-    if (now && scores.length) {
-      const reclass = calculateUSPSAClassification(
-        shooterScores.map(cur => ({ ...cur, percent: cur.recPercent })),
-        now,
-      );
-      s.majors = reclass[division]?.percent ?? 0;
-    }
-  }
-
-  // best scores correlate better than most recent on 20-01:co
   const eloCorrelationScores = scores.filter(cur => cur.elo > 0 && cur.hf > 0);
-
   const majorsCorrelationScores = scores.filter(cur => cur.majors > 0 && cur.hf > 0);
+  const classificationCorrelationScores = scores.filter(
+    cur => cur.recPercentUncapped > 0 && cur.hf > 0,
+  );
 
   const eloCorrelation =
     eloCorrelationScores.length >= 4
@@ -392,12 +383,6 @@ export const singleClassifierExtendedMetaDoc = async (
           majorsCorrelationScores.map(cur => cur.hf),
         )
       : 0;
-  const classificationCorrelationScores = uniqBy(
-    scores
-      .filter(cur => cur.recPercentUncapped > 0 && cur.hf > 0)
-      .sort((a, b) => b.hf - a.hf),
-    cur => cur.memberNumber,
-  );
   const classificationCorrelation =
     classificationCorrelationScores.length >= 4
       ? correlation(
