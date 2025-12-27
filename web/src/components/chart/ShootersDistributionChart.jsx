@@ -28,8 +28,8 @@ const fieldModeMap = {
   Majors: "majors",
   Recommended: "recPercentUncapped",
   "Recommended High": "recPercentUncappedHigh",
-  HQ: "current",
-  HQHigh: "high",
+  //HQ: "current",
+  //HQHigh: "high",
 };
 const fieldForMode = mode => fieldModeMap[mode];
 const modes = Object.keys(fieldModeMap);
