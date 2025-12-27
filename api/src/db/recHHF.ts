@@ -190,8 +190,6 @@ const extraHHFsFor25Series = (
     }
 
     case "rev": {
-      // TODO: verify constants from 100% El Prez Revo
-      // TODO: implement split adjustment 0.3 min split/transition, 2.0 min reload, same everything else
       const adjustedRuns = mixedRuns
         .filter(
           s =>
