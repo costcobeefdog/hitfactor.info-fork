@@ -7,32 +7,11 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { SelectButton } from "primereact/selectbutton";
 import { useMemo, useEffect, useState } from "react";
 
-import { eloPointForShooter } from "@api/dataUtil/elo";
-import {
-  classForELO,
-  classForPercent,
-  eloRatings,
-} from "@shared/classification/brackets";
 import { reloadMattersL10 } from "@shared/constants/classifiers";
 import terrenceHHFs from "@shared/constants/terrenceHHF";
-import {
-  covariance,
-  correlation,
-  linearRegression,
-  linearFactory,
-} from "@shared/utils/weibull";
-import {
-  annotationColor,
-  r5annotationColor,
-  xLine,
-  yLine,
-  Scatter,
-  pointsGraph,
-  closestYForX,
-  linearAnnotationColor,
-} from "@web/components/chart/common";
+import { correlation } from "@shared/utils/weibull";
+import { Scatter, pointsGraph } from "@web/components/chart/common";
 import { useApi } from "@web/utils/client";
-import { bgColorForClass } from "@web/utils/color";
 
 import { deprecatedUSPSAClassifiers } from "../../../../../api/src/dataUtil/classifiersData";
 import {
@@ -41,12 +20,7 @@ import {
   numSort,
   stringSort,
 } from "../../../../../shared/utils/sort";
-import {
-  weibulCDFFactory,
-  weibulLambdaPoint,
-  weibulReverseCDFFactory,
-} from "../../../../../shared/utils/weibull";
-import { wbl1AnnotationColor } from "../../../components/chart/common";
+import { weibulCDFFactory } from "../../../../../shared/utils/weibull";
 import ClassifierCell from "../../../components/ClassifierCell";
 import {
   iconForDifficulty,

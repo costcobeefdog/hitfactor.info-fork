@@ -21,7 +21,6 @@ import {
   wbl15AnnotationColor,
   r5annotationColor,
   pointsGraph,
-  wbl1COAnnotationColor,
   r3annotationColor,
 } from "./common";
 import { closestYForX } from "./common";
@@ -31,11 +30,7 @@ import { WeibullStatus } from "./WeibullStatus";
 
 import { Percent, PositiveOrMinus1 } from "../../../../api/src/dataUtil/numbers";
 import { sportForDivision } from "../../../../shared/constants/divisions";
-import {
-  correlation,
-  weibulCDFFactory,
-  weibulReverseCDFFactory,
-} from "../../../../shared/utils/weibull";
+import { correlation, weibulCDFFactory } from "../../../../shared/utils/weibull";
 import { useApi } from "../../utils/client";
 import { bgColorForClass } from "../../utils/color";
 

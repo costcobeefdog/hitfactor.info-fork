@@ -14,12 +14,9 @@ import { hhfsForDivision } from "@api/dataUtil/hhf";
 import { HF, Percent } from "@api/dataUtil/numbers";
 import recHHFsPSData from "@data/recHHFsPSData.json";
 import { RecHHF } from "@data/types/RecHHF";
-import { calculateUSPSAClassification } from "@shared/classification/engine";
-import { PercentWithDate } from "@shared/classification/state";
 import { stringSort } from "@shared/utils/sort";
 import { correlation } from "@shared/utils/weibull";
 
-import { scoresForMode } from "./matchScores";
 import { RecHHFs } from "./recHHF";
 import { ScoreObjectWithVirtuals, Scores, Score } from "./scores";
 
@@ -350,17 +347,15 @@ export const singleClassifierExtendedMetaDoc = async (
     )
     .map(curScore => ({
       ...curScore,
-      elo: curScore.Shooters?.[0]?.elo as unknown as number,
+      elo: curScore.Shooters?.[0]?.elo ?? 0,
       majors:
-        (
-          curScore.Shooters?.[0]
-            ?.reclassificationsMajorsHistory as unknown as PercentWithDate[]
-        )?.findLast(({ sd }) => curScore.sd.getTime() - sd.getTime() > 0)?.p ?? 0,
+        curScore.Shooters?.[0]?.reclassificationsMajorsHistory?.findLast(
+          ({ sd }) => curScore.sd.getTime() - sd.getTime() > 0,
+        )?.p ?? 0,
       recPercentUncapped:
-        (
-          curScore.Shooters?.[0]
-            ?.reclassificationsRecPercentHistory as unknown as PercentWithDate[]
-        )?.findLast(({ sd }) => curScore.sd.getTime() - sd.getTime() > 0)?.p ?? 0,
+        curScore.Shooters?.[0]?.reclassificationsRecPercentHistory?.findLast(
+          ({ sd }) => curScore.sd.getTime() - sd.getTime() > 0,
+        )?.p ?? 0,
     }));
 
   const eloCorrelationScores = scores.filter(cur => cur.elo > 0 && cur.hf > 0);

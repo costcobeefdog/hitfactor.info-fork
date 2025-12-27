@@ -76,7 +76,7 @@ export interface Score {
 }
 
 export interface ScoreVirtuals {
-  Shooters: Record<string, Shooter>[];
+  Shooters: Shooter[];
   HHFs: RecHHF[];
   curHHF: number;
   recHHF: number;
