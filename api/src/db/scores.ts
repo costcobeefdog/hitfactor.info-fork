@@ -2,7 +2,7 @@
 import mongoose, { Model } from "mongoose";
 
 import { curHHFForDivisionClassifier } from "@api/dataUtil/hhf";
-import { N, Percent, PositiveOrMinus1 } from "@api/dataUtil/numbers";
+import { Percent, PositiveOrMinus1 } from "@api/dataUtil/numbers";
 import { processImportAsyncSeq } from "@api/utils";
 import { RecHHF } from "@data/types/RecHHF";
 import { Shooter } from "@data/types/Shooter";

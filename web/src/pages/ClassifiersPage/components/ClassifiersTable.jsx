@@ -149,13 +149,15 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
       size="small"
       className={cx("text-xs md:text-base")}
       style={
-        mode === "Table" ? { width: "fit-content", margin: "auto" } : { width: "100%" }
+        mode === "Table"
+          ? { maxWidth: "100%", width: "fit-content", margin: "auto" }
+          : { width: "100%" }
       }
       tableStyle={mode !== "Table" && { display: "none" }}
       header={
         <div className="flex flex-column justify-content-center align-items-stretch gap-2 mt-2">
-          <div className="flex align-items-end">
-            <div className="flex flex-column gap-1">
+          <div className="flex flex-wrap align-items-end">
+            <div className="flex flex-column gap-1 mb-2">
               <div>{data.length} classifiers</div>
               <div className="text-xs flex gap-2 align-items-center">
                 Nerd Mode
@@ -189,17 +191,17 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
                 )}
               </div>
             </div>
-            <div className="md:flex-grow-1" />
+            <div className="flex-grow-1" />
             {nerdMode && (
               <>
                 <SelectButton
-                  className="compact text-xs"
+                  className="compact text-xs mb-2"
                   allowEmpty={false}
                   options={["Table", "Weibulls", "Params"]}
                   value={mode}
                   onChange={e => setMode(e.value)}
                 />
-                <div className="md:flex-grow-1" />
+                <div className="flex-grow-1" />
               </>
             )}
             {mode === "Table" && (
@@ -237,20 +239,6 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         header="Classifier"
         sortable
         body={c => <ClassifierCell info={c} showScoring />}
-      />
-      <Column
-        hidden={!nerdMode || mode !== "Table"}
-        field="k"
-        header="k"
-        sortable
-        body={(c, { field }) => c[field].toFixed(2)}
-      />
-      <Column
-        hidden={!nerdMode || mode !== "Table"}
-        field="lambdaNormalized"
-        header="lambda"
-        sortable
-        body={c => `${c.lambdaNormalized.toFixed(2)}%`}
       />
       <Column
         hidden={mode !== "Table"}
@@ -652,6 +640,20 @@ const ClassifiersTable = ({ division, onClassifierSelection }) => {
         sortable
         style={{ width: "100px", textAlign: "right" }}
         body={(c, { field }) => c[field]?.toFixed(4) || "?"}
+      />
+      <Column
+        hidden={!nerdMode || mode !== "Table"}
+        field="k"
+        header="K"
+        sortable
+        body={(c, { field }) => c[field].toFixed(2)}
+      />
+      <Column
+        hidden={!nerdMode || mode !== "Table"}
+        field="lambdaNormalized"
+        header="Lambda"
+        sortable
+        body={c => `${c.lambdaNormalized.toFixed(2)}%`}
       />
     </DataTable>
   );
