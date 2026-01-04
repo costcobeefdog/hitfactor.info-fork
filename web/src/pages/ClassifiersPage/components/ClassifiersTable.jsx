@@ -730,7 +730,31 @@ const useParamsChart = data => {
   );
 
   return useMemo(
-    () => ({ correl, datasets: [curModeDataset], xMode, setXMode, yMode, setYMode }),
+    () => ({
+      correl,
+      datasets: [
+        curModeDataset,
+
+        {
+          label: "K/Lambda Quadratic",
+          data: pointsGraph({
+            yFn: lambda => 0.00545 * lambda ** 2 - 0.5276 * lambda + 15.111,
+            minX: 40,
+            maxX: 75,
+            step: 0.1,
+            name: "K/Lambda",
+          }),
+          pointRadius: 1,
+          pointBorderColor: "black",
+          pointBorderWidth: 0,
+          pointBackgroundColor: "red",
+        },
+      ],
+      xMode,
+      setXMode,
+      yMode,
+      setYMode,
+    }),
     [correl, curModeDataset, xMode, yMode],
   );
 };
