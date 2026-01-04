@@ -734,21 +734,22 @@ const useParamsChart = data => {
       correl,
       datasets: [
         curModeDataset,
-
-        {
-          label: "K/Lambda Quadratic",
-          data: pointsGraph({
-            yFn: lambda => 0.00545 * lambda ** 2 - 0.5276 * lambda + 15.111,
-            minX: 40,
-            maxX: 75,
-            step: 0.1,
-            name: "K/Lambda",
-          }),
-          pointRadius: 1,
-          pointBorderColor: "black",
-          pointBorderWidth: 0,
-          pointBackgroundColor: "red",
-        },
+        xMode === "Lambda" && yMode === "K"
+          ? {
+              label: "K/Lambda Quadratic",
+              data: pointsGraph({
+                yFn: lambda => 0.004386 * lambda ** 2 - 0.3935 * lambda + 10.9112,
+                minX: 45,
+                maxX: 70,
+                step: 0.1,
+                name: "K/Lambda",
+              }),
+              pointRadius: 1,
+              pointBorderColor: "black",
+              pointBorderWidth: 0,
+              pointBackgroundColor: "rgba(254, 28, 239, 0.5)",
+            }
+          : {},
       ],
       xMode,
       setXMode,
