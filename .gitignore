@@ -33,3 +33,5 @@ zeta
 
 # uspsa hydration data
 /data/uspsa
+
+.env
