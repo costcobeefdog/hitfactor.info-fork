@@ -9,49 +9,78 @@ HitFactor.Info is a data-driven classification system for action shooting sports
 ## Development Commands
 
 ```bash
-# Install dependencies (all workspaces)
-npm i
+# Install dependencies
+npm install --legacy-peer-deps  # Use legacy-peer-deps for React 19 compatibility
 
 # Start local development
-docker-compose up -d              # Start MongoDB first (required)
-npm run local                     # in api/ folder, starts API against local MongoDB
-npm start                         # in root, starts both API and Web dev servers
+docker-compose up -d            # Start MongoDB first (required)
+npm run dev                     # Starts Next.js dev server (port 3001)
 
 # Run tests (Node.js native test runner with tsx)
-npm run test                                    # run all tests
+npm run test                    # run all tests
 npx tsx --test shared/classification/test/engine.test.js  # run single test file
 
 # Linting
 npm run lint
 
+# Generate Payload types
+npm run generate:types
+
 # Production build
-npm run prod      # builds web and serves from API
+npm run build
+npm run start
 ```
 
 **Requirements:** Node.js 20.x, Docker for local MongoDB
 
 ## Architecture
 
-### Monorepo Structure
-- **api/** - Fastify backend serving REST API and static files
-- **web/** - React (Vite + SWC) frontend with PrimeReact UI
-- **shared/** - Code shared between frontend and backend
-- **data/** - Imported/processed data (JSON files, licensed separately)
-- **scripts/** - Standalone scripts for migrations, uploads, exports
+### Project Structure (PayloadCMS + Next.js)
+
+```
+src/
+├── app/
+│   ├── (frontend)/           # Public site routes (React client components)
+│   │   ├── layout.tsx        # Frontend layout with Navigation/Footer
+│   │   ├── page.tsx          # Home page
+│   │   ├── classifiers/[[...params]]/
+│   │   ├── shooters/[[...params]]/
+│   │   ├── stats/
+│   │   ├── upload/[[...params]]/
+│   │   ├── majors/
+│   │   └── reports/
+│   ├── (payload)/            # PayloadCMS admin
+│   │   └── admin/[[...segments]]/
+│   └── api/                  # API routes
+│       ├── [...slug]/        # Payload REST/GraphQL
+│       └── custom/           # Custom aggregation endpoints
+├── collections/              # PayloadCMS collection definitions
+├── components/               # Shared React components
+├── hooks/                    # Custom React hooks
+├── lib/                      # Utility libraries
+└── scripts/                  # Standalone data processing scripts
+shared/                       # Code shared between frontend and scripts
+├── classification/           # Core classification engine
+├── constants/                # Division mappings, classifiers list
+└── utils/                    # Utility functions
+data/                         # Imported/processed data (JSON files)
+```
 
 ### Key Architectural Patterns
 
-**Backend (api/)**
-- Fastify with `@fastify/autoload` for routes (auto-loads from `api/src/routes/`)
-- Mongoose ODM with MongoDB
-- Routes use virtual fields for computed values (e.g., `curPercent`, `recPercent` on Scores)
-- Compound keys for lookups: `classifierDivision` (e.g., "99-11:co"), `memberNumberDivision` (e.g., "A123456:co")
+**PayloadCMS (Backend)**
+- PayloadCMS 3.x with MongoDB adapter
+- Collection definitions in `src/collections/` with hooks for computed fields
+- afterRead hooks compute virtual fields (e.g., `curPercent`, `recPercent` on Scores)
+- Access control per collection (public read, admin write)
+- Compound keys for lookups: `classifierDivision`, `memberNumberDivision`
 
-**Frontend (web/)**
-- React Router for navigation (lazy-loaded pages)
-- TanStack Query for data fetching
-- PrimeReact + PrimeFlex for UI components
-- Chart.js for visualizations
+**Next.js App Router (Frontend)**
+- Route groups: `(frontend)` for public site, `(payload)` for admin
+- Client components with `"use client"` directive
+- TanStack Query for data fetching via `useApi` hook
+- PrimeReact + PrimeFlex for UI components (soho-dark theme)
+- Catch-all routes `[[...params]]` for dynamic routing
 
 **Shared Classification Engine (shared/classification/)**
 - `engine.ts` - Core USPSA classification calculation algorithm
@@ -69,32 +98,44 @@ The codebase supports multiple sports with division mappings:
 
 Division compatibility maps in `shared/constants/divisions.ts` handle cross-sport score aggregation.
 
-### Database Collections (MongoDB)
-- **Scores** - Individual classifier scores with HF (hit factor) data
-- **Shooters** - Shooter profiles with reclassification data per division
-- **RecHHFs** - Recommended HHF values per classifier/division
-- **MatchScores** - Major match performance data
-- **Matches** - Match metadata from PractiScore
+### Database Collections (MongoDB via PayloadCMS)
+- **scores** - Individual classifier scores with HF (hit factor) data
+- **shooters** - Shooter profiles with reclassification data per division
+- **rechhfs** - Recommended HHF values per classifier/division
+- **matchscores** - Major match performance data
+- **matches** - Match metadata from PractiScore
+- **classifiers** - Classifier stage definitions
+- **reports** - Score/shooter reports for admin review
+- **users** - Admin users with authentication
 
 ### Path Aliases (tsconfig.json)
 ```
-@api/*   -> api/src/*
-@web/*   -> web/src/*
+@/*       -> src/*
 @shared/* -> shared/*
-@data/*  -> data/*
+@data/*   -> data/*
 ```
 
 ## Code Style
 
 - Arrow functions required (`prefer-arrow/prefer-arrow-functions` enforced)
-- TypeScript with `noImplicitAny: false` but `no-explicit-any: error` (avoid `any` type annotations)
+- TypeScript with strict mode
 - Prettier: 90 char width, 2 spaces, no parens for single arrow params
-- Imports ordered: builtin, external, internal (@api, @web, @shared, @data), sibling
-- No `console.log` (use `console.warn` or `console.error` instead)
+- Imports ordered: builtin, external, internal (@shared, @/), sibling
+- Client components require `"use client"` directive at top
+
+## Key Files
+
+- `payload.config.ts` - PayloadCMS configuration
+- `src/collections/*.ts` - Collection schemas with hooks
+- `src/hooks/useApi.ts` - TanStack Query wrapper for API calls
+- `src/components/Navigation.tsx` - Main navigation
+- `src/components/DivisionNavigation.tsx` - Sport/division selector
+- `shared/constants/divisions.ts` - Division mappings
+- `shared/classification/engine.ts` - Core classification algorithm
 
 ## Environment Variables
 
 - `MONGO_URL` - MongoDB connection string (defaults to local)
-- `LOCAL_DEV=1` - Enables local development mode in API
+- `PAYLOAD_SECRET` - Secret for PayloadCMS (required in production)
 - `ALGOLIA_URL` - For search indexing (uploads worker)
 - `PS_S3_ACCESS_KEY_ID`, `PS_S3_SECRET_ACCESS_KEY` - PractiScore S3 access

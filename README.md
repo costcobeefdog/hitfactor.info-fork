@@ -1,104 +1,234 @@
-### HitFactor.Info
+# HitFactor.Info
 
 A Better Classification System for Action Shooting Sports
 
-#### Project Goals
+## Project Goals
 
-1. Pick Data-Driven Recommended HHF for All Classifiers/Divisions.
+1. Pick Data-Driven Recommended HHF for All Classifiers/Divisions
 2. Implement Closer-To-Major-Match-Performance Classification Algorithm
-3. Provide Better Classification System or at least Partial Improvements to All Interested Action Shooting Sport Organizations
+3. Provide Better Classification System or Partial Improvements to All Interested Action Shooting Sport Organizations
 
-#### License
+## Technical Stack
 
-This repository is licensed under the MIT License, except for the contents
-of the following directories:
+- **Framework:** Next.js 16 with App Router
+- **CMS:** PayloadCMS 3.x for admin panel and API
+- **Database:** MongoDB 7.x with Mongoose
+- **Frontend:** React 19, PrimeReact, TanStack Query
+- **Language:** TypeScript
 
-- `data/`
+## Quick Start
 
-See the README files in those directories for more details.
+### Prerequisites
 
-#### Running
+- Node.js 20.x
+- MongoDB 7.x (local or remote)
+- Docker (optional, for local MongoDB)
 
-> [!CAUTION]
-> This README is possibly (most likely) OUTDATED.
-> If you're a developer willing to contribute, join our Discord
+### Development Setup
 
-##### Locally with Docker-Compose
+1. **Clone and install dependencies:**
+   ```bash
+   git clone <repo-url>
+   cd hitfactor.info
+   npm install
+   ```
 
-For faster turn around when developing API, use:
-This starts up the app with a Mongo instance running in Docker.
+2. **Set up environment variables:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your MongoDB URL and PayloadCMS secret
+   ```
+
+3. **Start local MongoDB (optional):**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Seed the database:**
+
+   Option A - Restore from backup:
+   ```bash
+   # Get a mongodump archive from a contributor
+   mongorestore --host localhost:27017 dump/theta -d hitfactor
+   ```
+
+   Option B - Run rehydration after restoring raw data:
+   ```bash
+   npm run hydrate
+   ```
+
+5. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+   Visit http://localhost:3000 for the frontend and http://localhost:3000/admin for the PayloadCMS admin panel.
+
+## Available Scripts
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run tests |
+
+### PayloadCMS
+
+| Command | Description |
+|---------|-------------|
+| `npm run payload` | Run PayloadCMS CLI |
+| `npm run generate:types` | Generate TypeScript types from collections |
+| `npm run generate:importmap` | Generate import map for admin panel |
+
+### Data Import Pipeline
+
+| Command | Description |
+|---------|-------------|
+| `npm run uploadMatches` | Discover new matches from Algolia |
+| `npm run uploadScores` | Import scores from discovered matches |
+| `npm run uploadMeta` | Recalculate statistics and metadata |
+| `npm run hydrate` | Full data rehydration |
+
+### Database Operations
+
+| Command | Description |
+|---------|-------------|
+| `npm run dumpprod` | Backup production database |
+| `npm run dumplocal` | Backup local database |
+| `npm run restoreprod` | Restore to production |
+| `npm run restorelocal` | Restore to local database |
+
+## Project Structure
 
 ```
-npm i
-npm run local
+hitfactor.info/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (frontend)/         # Public site routes
+│   │   │   ├── classifiers/    # Classifier pages
+│   │   │   ├── shooters/       # Shooter pages
+│   │   │   ├── stats/          # Statistics page
+│   │   │   └── upload/         # Match upload tracking
+│   │   ├── (payload)/          # PayloadCMS admin
+│   │   │   └── admin/          # Admin panel routes
+│   │   └── api/                # API routes
+│   │       ├── [...slug]/      # PayloadCMS REST/GraphQL
+│   │       ├── graphql/        # GraphQL endpoint
+│   │       └── custom/         # Custom API endpoints
+│   ├── collections/            # PayloadCMS collection definitions
+│   ├── components/             # React components
+│   ├── hooks/                  # React hooks
+│   ├── lib/                    # Utility libraries
+│   └── scripts/                # Payload-compatible scripts
+├── api/                        # Legacy Fastify API (deprecated)
+├── web/                        # Legacy Vite frontend (deprecated)
+├── shared/                     # Shared code (classification engine, constants)
+├── scripts/                    # Standalone data scripts
+├── data/                       # Imported data files (separate license)
+├── public/                     # Static assets
+├── payload.config.ts           # PayloadCMS configuration
+├── next.config.ts              # Next.js configuration
+└── package.json
 ```
 
-Populate the local database with production data by doing the following:
+## API Endpoints
 
-1. Download a production `mongodump` archive (ask an existing contributor to provide you with the archive).
-2. Extract `zeta` folder to be at the root level of this repo.
-3. Run the following `mongorestore` command:
+### PayloadCMS Auto-generated
 
-```
-mongorestore --host localhost:27017 zeta -d test
-```
+- `GET/POST /api/scores` - Classifier scores
+- `GET/POST /api/shooters` - Shooter profiles
+- `GET/POST /api/classifiers` - Classifier metadata
+- `GET/POST /api/matches` - Match data
+- `POST /api/graphql` - GraphQL endpoint
 
-NOTE: Before running this command, it is highly recommended to increase memory availability in `Docker Desktop` to at least 5 or 6 GB.
+### Custom Endpoints
 
-Otherwise, the restore process may crash due to Docker's OOMKiller.
+- `GET /api/custom/classifiers/:division` - Classifiers list by division
+- `GET /api/custom/classifiers/info/:division/:number` - Classifier details
+- `GET /api/custom/classifiers/scores/:division/:number` - Classifier runs
+- `GET /api/custom/shooters/:division` - Shooters list by division
+- `GET /api/custom/shooters/:division/:memberNumber` - Shooter details
+- `GET /api/custom/classifications` - Classification distribution stats
+- `GET /api/custom/upload/searchMatches` - Search matches via Algolia
+- `POST /api/custom/report` - Submit score report
 
-##### Locally against MONGO_URL
+## Environment Variables
 
-Note: You must supply `MONGO_URL={URL_OF_SANDBOX_DATABASE}` to test in this manner.
+See `.env.example` for all available variables:
 
-```
-npm i
-npm start
-```
+```env
+# Required
+MONGO_URL=mongodb://localhost:27017/hitfactor
+PAYLOAD_SECRET=your-secret-key
 
-Connect to the mongo instance via:
-
-```
-mongosh "mongodb://localhost:27017"
-```
-
-#### Run the Uploads Worker locally
-
-The Uploads Worker fetches matches and populates scores.
-
-To run it locally, run the following:
-
-```
-ALGOLIA_URL='from_env' PS_S3_ACCESS_KEY_ID=from_env PS_S3_SECRET_ACCESS_KEY=from_env MONGO_URL=mongodb://localhost:27017 NODE_OPTIONS='--max-old-space-size=512' node scripts/uploadsWorker.js
+# Optional - for data import
+ALGOLIA_APP_ID=...
+PS_S3_ACCESS_KEY_ID=...
+PS_S3_SECRET_ACCESS_KEY=...
 ```
 
-You may need to tweak scheduling of the runner to run at more frequent intervals for testing purposes.
+## Docker Deployment
 
-###### In Production
+### Build and run with Docker:
 
-Currently deployed on Koyeb using Dockerfiles. To run api/web in prod mode, use:
+```bash
+# Build the image
+docker build -t hitfactor .
 
+# Run the container
+docker run -p 3000:3000 \
+  -e MONGO_URL=mongodb://... \
+  -e PAYLOAD_SECRET=... \
+  hitfactor
 ```
-npm i
-npm run prod
+
+### Using docker-compose for production:
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-Note: `npm` i is required, because it uses vite build as a post-install step and serves frontend files from the node itself, instead of running two processes concurrently.
+## Data Import Workflow
 
-##### Technical Stack
+For ongoing data updates, schedule these cron jobs:
 
-- Main language: JavaScript (ES13), TypeScript when needed
-- Monorepo, Node/Fastify Backend, React (vite-swc) Frontend.
-- Backend serves API and static files: (build of React Frontend, downloadables, etc)
-- Mongo
+1. **Every hour:** `npm run uploadMatches` - Discover new matches
+2. **Every 2 hours:** `npm run uploadScores` - Import scores
+3. **Every 6 hours:** `npm run uploadMeta` - Recalculate stats
 
-##### Folder Structure
+See [scripts/README.md](scripts/README.md) for detailed documentation.
 
-- `scripts/` -- standalone scripts
-- `data/` -- imported (partially processed / split) data, mostly used by backend
-- `shared/` -- source code imported by both front- and backend
-- `api/` -- backend
-- `web/` -- frontend
-- package.json -- monorepo wrapper scripts
+## License
 
-For more info, see READMEs in each root folder
+This repository is licensed under the MIT License, except for the contents of the `data/` directory. See the README files in those directories for more details.
+
+## Contributing
+
+Join our Discord for development discussions. See CLAUDE.md for coding guidelines and architecture details.
+
+---
+
+## Migration Notes (v2.0)
+
+This version migrated from Fastify + Vite to PayloadCMS + Next.js:
+
+**What changed:**
+- Frontend moved from `web/` to `src/app/(frontend)/`
+- API moved from `api/src/routes/` to `src/app/api/custom/`
+- Admin panel now at `/admin` (PayloadCMS)
+- Collections defined in `src/collections/`
+- Scripts remain in `scripts/` but can also use Payload Local API via `src/scripts/`
+
+**Legacy directories (deprecated):**
+- `api/` - Old Fastify backend (kept for reference and utility imports)
+- `web/` - Old Vite frontend (kept for reference)
+
+**New features:**
+- Visual admin panel for data management
+- Built-in authentication and access control
+- Auto-generated REST and GraphQL APIs
+- Unified Next.js deployment

@@ -1,5 +1,23 @@
-FROM node:20.11
-WORKDIR /
-COPY . .
-RUN npm ci
-CMD ["npm", "run", "uploadsWorker"]
+# Uploads Worker Container
+# Used for running background jobs (matches, scores, meta uploads)
+# Run with: docker run <image> npm run uploadMatches
+#       or: docker run <image> npm run uploadScores
+#       or: docker run <image> npm run uploadMeta
+
+FROM node:20.11-alpine
+WORKDIR /app
+
+# Install dependencies needed for native modules
+RUN apk add --no-cache libc6-compat
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy source code and shared modules
+COPY shared ./shared
+COPY scripts ./scripts
+COPY src ./src
+COPY payload.config.ts tsconfig.json ./
+
+# Default command - override with specific upload script
+CMD ["npm", "run", "uploadMeta"]

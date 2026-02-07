@@ -1,0 +1,118 @@
+:root {
+  color-scheme: only dark;
+  color: var(--surface-900);
+  background-color: #282936;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a:link:not(.p-menuitem-link),
+a:visited:not(.p-menuitem-link) {
+  color: var(--primary-500);
+}
+
+/* primereact tables don't want to take full height without this */
+.h-full .p-datatable-wrapper {
+  height: 100%;
+}
+
+.p-selectbutton.p-buttonset.p-component {
+  font-size: 1em;
+}
+.p-selectbutton .p-button {
+  font-size: 1em;
+}
+
+.compact .p-button.p-component {
+  padding: 10px 10px;
+}
+.less-compact .p-button.p-component {
+  padding: 10px 14px;
+}
+
+.p-0 a.p-tabview-nav-link {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+.p-paginator.p-component {
+  padding: 0;
+  font-size: 1em;
+  justify-content: space-around;
+}
+
+.p-paginator.p-component .p-link {
+  font-size: 1em;
+}
+
+.shooters-table-paginator.p-paginator .p-paginator-left-content,
+.shooters-table-paginator.p-paginator .p-paginator-right-content {
+  flex-grow: 1;
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page,
+.p-paginator .p-paginator-prev.p-paginator-element,
+.p-paginator .p-paginator-next.p-paginator-element,
+.p-paginator .p-paginator-first.p-paginator-element,
+.p-paginator .p-paginator-last.p-paginator-element {
+  margin: 1em 0.125em;
+  max-width: 3rem;
+  max-height: 3rem;
+
+  min-width: unset;
+  width: 9vw;
+  height: 9vw;
+}
+
+.p-tabmenu .p-tabmenu-nav .p-tabmenuitem:not(.p-highlight) .p-menuitem-link.no-highlight,
+.p-tabmenu
+  .p-tabmenu-nav
+  .p-tabmenuitem:not(.p-highlight):not(.p-disabled):hover
+  .p-menuitem-link.no-highlight {
+  border-color: #3e4053;
+}
+
+.p-datatable .p-datatable-thead > tr > th,
+.p-datatable .p-datatable-tbody > tr > td,
+.p-datatable .p-datatable-tbody > tr > td .p-inputtext,
+.p-datatable .p-datatable-tbody > tr > td .p-inputtext::placeholder {
+  font-size: 1em;
+  padding: 1em 1em;
+}
+
+.p-datatable .p-datatable-tbody .p-component {
+  font-size: 1em;
+}
+
+.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td {
+  padding: 0.5em 0.5em;
+}
+
+.compact.p-datatable .p-datatable-thead > tr > th {
+  padding: 0 0.4em;
+  max-width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.compact.p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.4em 0.4em;
+  max-width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.p-datatable.p-datatable-sm .p-datatable-header {
+  padding: 0.5rem 0;
+  border: none;
+}
+
+.p-menu .p-menu-list .focused-menu-item {
+  background-color: var(--surface-border);
+}
+
+.less-padding-table thead > tr > th {
+  padding: 0.25rem 0.5rem !important;
+}

@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
-  // Your Next.js config here
+  // Enable standalone output for optimized Docker deployment
+  output: "standalone",
   reactCompiler: false,
 };
 
