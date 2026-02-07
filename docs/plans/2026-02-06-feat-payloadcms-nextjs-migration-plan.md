@@ -782,11 +782,11 @@ export function ShooterClient({ initialData, division }: Props) {
 **Deliverable:** All collections visible in admin with existing data
 
 ### Phase 3: Computed Fields & Access Control (Week 3-4)
-- [ ] Implement afterRead hooks for virtual fields (curPercent, recPercent, etc.)
-- [ ] Configure access control per collection
-- [ ] Test public read access
-- [ ] Test admin write access
-- [ ] Implement report submission flow
+- [x] Implement afterRead hooks for virtual fields (curPercent, recPercent, etc.)
+- [x] Configure access control per collection
+- [x] Test public read access
+- [x] Test admin write access
+- [x] Implement report submission flow
 
 **Deliverable:** Computed fields work, access control enforced
 

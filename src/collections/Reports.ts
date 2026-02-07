@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 
 export const Reports: CollectionConfig = {
   slug: "reports",
+  dbName: "reports", // Use existing MongoDB collection
   admin: {
     useAsTitle: "memberNumber",
     group: "Admin",

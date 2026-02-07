@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 
 export const MatchScores: CollectionConfig = {
   slug: "matchscores",
+  dbName: "matchscores", // Use existing MongoDB collection
   admin: {
     useAsTitle: "memberNumber",
     group: "Data",

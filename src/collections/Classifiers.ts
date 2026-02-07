@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 
 export const Classifiers: CollectionConfig = {
   slug: "classifiers",
+  dbName: "classifiers", // Use existing MongoDB collection
   admin: {
     useAsTitle: "classifier",
     group: "Data",

@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 
 export const Shooters: CollectionConfig = {
   slug: "shooters",
+  dbName: "shooters", // Use existing MongoDB collection
   admin: {
     useAsTitle: "memberNumber",
     group: "Data",

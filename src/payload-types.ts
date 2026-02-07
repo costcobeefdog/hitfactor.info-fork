@@ -251,6 +251,10 @@ export interface Score {
    */
   hfuHF?: number | null;
   /**
+   * True if this is a major match score (no classifier)
+   */
+  isMajor?: boolean | null;
+  /**
    * Current percentage (computed from hf/curHHF)
    */
   curPercent?: number | null;
@@ -1035,6 +1039,7 @@ export interface ScoresSelect<T extends boolean = true> {
   recHHF?: T;
   oldHHF?: T;
   hfuHF?: T;
+  isMajor?: T;
   curPercent?: T;
   recPercent?: T;
   oldPercent?: T;

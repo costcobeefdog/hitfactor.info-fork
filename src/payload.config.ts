@@ -39,7 +39,10 @@ export default buildConfig({
     MatchScores,
   ],
   db: mongooseAdapter({
-    url: process.env.MONGO_URL || "mongodb://localhost:27017/test",
+    url:
+      process.env.MONGO_URL ||
+      process.env.MONGODB_CONNECTIONSTRING ||
+      "mongodb://localhost:27017/hitfactor",
   }),
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "development-secret-change-in-production",

@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 
 export const RecHHFs: CollectionConfig = {
   slug: "rechhfs",
+  dbName: "rechhfs", // Use existing MongoDB collection
   admin: {
     useAsTitle: "classifierDivision",
     group: "Data",

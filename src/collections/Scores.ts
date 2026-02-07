@@ -11,42 +11,96 @@ const Percent = (n: Numberish, total: number, fix?: number): number =>
 
 const PositiveOrMinus1 = (n: number): number => (n >= 0 ? n : -1);
 
+// Simple in-memory cache for HHF lookups to avoid repeated queries
+const hhfCache = new Map<string, { curHHF: number; recHHF: number; oldHHF: number }>();
+const HHF_CACHE_TTL = 60000; // 1 minute
+let lastCacheClear = Date.now();
+
 // afterRead hook to compute virtual fields
-const computeVirtualFields: CollectionAfterReadHook = async ({ doc }) => {
+const computeVirtualFields: CollectionAfterReadHook = async ({ doc, req }) => {
   if (!doc) return doc;
 
-  // Compute isMajor
-  doc.isMajor = !doc.classifier;
+  // Skip if already computed (prevents double computation)
+  if (doc._computed) return doc;
 
-  // Compute percentage fields
-  if (doc.hf !== undefined && doc.hf !== null) {
-    // curPercent - from current HHF
-    if (doc.curHHF && doc.curHHF > 0) {
-      doc.curPercent = PositiveOrMinus1(N(Percent(doc.hf, doc.curHHF, 4), 4));
-    } else {
-      doc.curPercent = -1;
-    }
+  // Compute isMajor - a score is a "major match" score if it has no classifier
+  doc.isMajor = !doc.classifier || doc.source === "Major Match";
 
-    // recPercent - from recommended HHF
-    if (doc.recHHF && doc.recHHF > 0) {
-      doc.recPercent = PositiveOrMinus1(N(Percent(doc.hf, doc.recHHF, 4), 4));
-    } else {
-      doc.recPercent = -1;
-    }
-
-    // oldPercent - from old HHF
-    if (doc.oldHHF && doc.oldHHF > 0) {
-      doc.oldPercent = PositiveOrMinus1(N(Percent(doc.hf, doc.oldHHF, 4), 4));
-    } else {
-      doc.oldPercent = -1;
-    }
+  // For major match scores, use the stored percent value directly
+  if (doc.isMajor) {
+    doc.curPercent = doc.percent ?? -1;
+    doc.recPercent = doc.percent ?? -1;
+    doc.oldPercent = doc.percent ?? -1;
+    doc._computed = true;
+    return doc;
   }
 
+  // For classifier scores, we need HHF values to compute percentages
+  if (doc.hf !== undefined && doc.hf !== null && doc.classifierDivision) {
+    let hhfData = { curHHF: doc.curHHF, recHHF: doc.recHHF, oldHHF: doc.oldHHF };
+
+    // If HHF values aren't stored on the doc, fetch from RecHHFs
+    const needsHHFLookup = !doc.curHHF && !doc.recHHF && !doc.oldHHF;
+
+    if (needsHHFLookup && req?.payload) {
+      // Clear cache periodically
+      if (Date.now() - lastCacheClear > HHF_CACHE_TTL) {
+        hhfCache.clear();
+        lastCacheClear = Date.now();
+      }
+
+      // Check cache first
+      const cached = hhfCache.get(doc.classifierDivision);
+      if (cached) {
+        hhfData = cached;
+      } else {
+        try {
+          const result = await req.payload.find({
+            collection: "rechhfs",
+            where: { classifierDivision: { equals: doc.classifierDivision } },
+            limit: 1,
+            depth: 0,
+          });
+
+          if (result.docs[0]) {
+            hhfData = {
+              curHHF: result.docs[0].curHHF ?? 0,
+              recHHF: result.docs[0].recHHF ?? 0,
+              oldHHF: result.docs[0].oldHHF ?? 0,
+            };
+            hhfCache.set(doc.classifierDivision, hhfData);
+          }
+        } catch {
+          // If lookup fails, continue with stored/default values
+        }
+      }
+    }
+
+    // Store HHF values on doc for reference
+    doc.curHHF = hhfData.curHHF ?? doc.curHHF ?? 0;
+    doc.recHHF = hhfData.recHHF ?? doc.recHHF ?? 0;
+    doc.oldHHF = hhfData.oldHHF ?? doc.oldHHF ?? 0;
+
+    // Compute percentage fields
+    doc.curPercent =
+      doc.curHHF > 0 ? PositiveOrMinus1(N(Percent(doc.hf, doc.curHHF, 4), 4)) : -1;
+    doc.recPercent =
+      doc.recHHF > 0 ? PositiveOrMinus1(N(Percent(doc.hf, doc.recHHF, 4), 4)) : -1;
+    doc.oldPercent =
+      doc.oldHHF > 0 ? PositiveOrMinus1(N(Percent(doc.hf, doc.oldHHF, 4), 4)) : -1;
+  } else {
+    doc.curPercent = -1;
+    doc.recPercent = -1;
+    doc.oldPercent = -1;
+  }
+
+  doc._computed = true;
   return doc;
 };
 
 export const Scores: CollectionConfig = {
   slug: "scores",
+  dbName: "scores", // Use existing MongoDB collection
   admin: {
     useAsTitle: "memberNumber",
     group: "Data",
@@ -174,7 +228,15 @@ export const Scores: CollectionConfig = {
       },
     },
 
-    // Computed percentage fields (populated by afterRead hook)
+    // Computed fields (populated by afterRead hook, not stored)
+    {
+      name: "isMajor",
+      type: "checkbox",
+      admin: {
+        readOnly: true,
+        description: "True if this is a major match score (no classifier)",
+      },
+    },
     {
       name: "curPercent",
       type: "number",
